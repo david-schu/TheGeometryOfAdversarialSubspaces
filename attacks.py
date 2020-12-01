@@ -3,22 +3,20 @@ sys.path.insert(0, './../')
 sys.path.insert(0,'../../foolbox/examples/zoo/mnist')
 
 import torch
-import torch.nn as nn
-from torchvision import datasets, transforms
 
 import numpy as np
 from random import randint
 from matplotlib import pyplot as plt
-import seaborn as sns
 import foolbox
 from foolbox import attacks as fa
 from foolbox.distances import LpDistance
+import packyou
+
+from packyou.github.bethgelab.AnalysisBySynthesis.abs_models import utils as u
+from packyou.github.bethgelab.AnalysisBySynthesis.abs_models import models as mz
 
 # own modules
-from abs_models import utils as u
-from abs_models import models as mz
-from abs_models import attack_utils as au
-
+from utils import classification, orth_check, dirs_to_attack_format
 
 def orth_check(adv_dirs):
     orth = np.eye(len(adv_dirs))
