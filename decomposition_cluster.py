@@ -1,61 +1,19 @@
 import sys
 sys.path.insert(0, './../')
-sys.path.insert(0,'../../foolbox/examples/zoo/mnist')
 
 import torch
-import torch.nn as nn
-from torchvision import datasets, transforms
 
 import numpy as np
 from random import randint
-from matplotlib import pyplot as plt
-import seaborn as sns
 import foolbox
-from foolbox import attacks as fa
-from foolbox.distances import LpDistance
 
 # own modules
-from abs_models import utils as u
-from abs_models import models as mz
-from abs_models import attack_utils as au
+import packyou
+from packyou.github.bethgelab.AnalysisBySynthesis.abs_models import utils as u
+from packyou.github.bethgelab.AnalysisBySynthesis.abs_models import models as mz
 
-
-def orth_check(adv_dirs):
-    orth = np.eye(len(adv_dirs))
-    for i in range(len(adv_dirs)):
-        for j in range(i + 1, len(adv_dirs)):
-            orth[i, j] = np.dot(adv_dirs[i].T, adv_dirs[j])
-            orth[j, i] = orth[i, j]
-
-    return orth
-
-
-def classification(img, model):
-    pred = model(img).detach().numpy()
-    img_class = np.argmax(pred,axis=-1)
-    return img_class
-
-def dirs_to_attack_format(dirs):
-    max_dim = max(len(elem) for elem in dirs)
-    attack_dirs=np.zeros([len(dirs),max_dim,dirs[0].shape[-1]])
-    for i,dir in enumerate(dirs):
-        attack_dirs[i,:len(dir)] = dir
-    return torch.tensor(attack_dirs)
-
-
-class attack_orth(fa.base.MinimizationAttack):
-    def __init__(self,input_attack,params, adv_dirs=[],orth_const=50):
-        super(attack_orth,self).__init__()
-        self.input_attack = input_attack(**params)
-        self.distance = LpDistance(2)
-        self.dirs = adv_dirs
-        self.orth_const = orth_const
-
-
-    def run(self,model,inputs,criterion,**kwargs):
-        return self.input_attack.run(model,inputs,criterion,dirs=self.dirs,orth_const=self.orth_const, **kwargs)
-    def distance(self):
-        ...
+from utils import classification, dirs_to_attack_format
+from attacks import OrthogonalAttack, CarliniWagner
 
 
 # model = mz.get_VAE(n_iter=10)              # ABS, do n_iter=50 for original model
@@ -76,8 +34,8 @@ fmodel = foolbox.models.PyTorchModel(model,   # return logits in shape (bs, n_cl
 # # labels = labels[rand].unsqueeze(0)
 # labels = labels.long()
 
-images = torch.load('images.pt')
-labels = torch.load('labels.pt')
+images = torch.load('data/images.pt')
+labels = torch.load('data/labels.pt')
 
 # user initialization
 n_adv_dims = 1
@@ -86,7 +44,7 @@ show_plots = False
 early_stop = 3
 norm_order = 2
 steps = 500
-input_attack = fa.L2CarliniWagnerAttack
+input_attack = CarliniWagner
 epsilons = [None]
 
 # variable initializations
@@ -117,7 +75,7 @@ for orth_const in orth_consts:
     for run in range(max_runs):
         print('Run %d - Adversarial Dimension %d...' % (run+1, min_dim + 1))
 
-        attack = attack_orth(input_attack=input_attack, params=attack_params,adv_dirs=dirs,orth_const=orth_const)
+        attack = OrthogonalAttack(input_attack=input_attack, params=attack_params,adv_dirs=dirs,orth_const=orth_const)
         adv, _, success = attack(fmodel, images, labels, epsilons=epsilons)
 
         # check if adversarials were found and stop early if not
