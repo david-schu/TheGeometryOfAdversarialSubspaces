@@ -44,7 +44,7 @@ def plot_pert_lengths(adv_class,pert_lengths):
                     pert_lengths[np.array(adv_class) == c],
                     label='target class ' + str(c))
     plt.xlabel('n')
-    plt.ylabel('adversarial vector length ($l_2$)')
+    plt.ylabel('adversarial vector length ($l2-norm$)')
     plt.legend()
     plt.show()
     return
@@ -55,13 +55,13 @@ def plot_losses(losses,):
 
     fig, ax = plt.subplots(2, 2, squeeze=False)
     fig.subplots_adjust(hspace=0.5)
-    ax[0, 0].set_title('loss')
+    ax[0, 0].set_title('overall loss')
     ax[0, 0].plot(range(idx), losses[0, :idx])
-    ax[0, 1].set_title('is_adversarial_loss')
+    ax[0, 1].set_title('is_adversarial loss')
     ax[0, 1].plot(range(idx), losses[1, :idx])
-    ax[1, 0].set_title('squared_norms')
+    ax[1, 0].set_title('squared_norms loss')
     ax[1, 0].plot(range(idx), losses[2, :idx])
-    ax[1, 1].set_title('is_orth')
+    ax[1, 1].set_title('is_orth loss')
     ax[1, 1].plot(range(idx), losses[3, :idx])
     return fig, ax
 
