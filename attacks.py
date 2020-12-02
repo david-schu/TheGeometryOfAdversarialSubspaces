@@ -6,7 +6,9 @@ import numpy as np
 from matplotlib import pyplot as plt
 import eagerpy as ep
 from foolbox import attacks as fa
-from foolbox import distances, devutils, models, criteria
+from foolbox import distances, models, criteria
+from foolbox import devutils
+
 
 class OrthogonalAttack(fa.base.MinimizationAttack):
     def __init__(self,input_attack,params, adv_dirs=[],orth_const=50):
