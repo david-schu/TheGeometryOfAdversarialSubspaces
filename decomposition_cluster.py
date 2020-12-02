@@ -6,12 +6,9 @@ import torch
 import numpy as np
 from random import randint
 import foolbox
+from abs_models import models as mz
 
 # own modules
-import packyou
-from packyou.github.bethgelab.AnalysisBySynthesis.abs_models import utils as u
-from packyou.github.bethgelab.AnalysisBySynthesis.abs_models import models as mz
-
 from utils import classification, dirs_to_attack_format
 from attacks import OrthogonalAttack, CarliniWagner
 
