@@ -119,4 +119,4 @@ data = {
     "labels": labels
 }
 
-np.save('temp.npy', data)
+np.save('/home/bethge/dschultheiss/data/temp.npy', data)
