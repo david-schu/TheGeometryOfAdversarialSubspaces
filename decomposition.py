@@ -1,5 +1,6 @@
 import sys
 sys.path.insert(0, './../')
+sys.path.insert(0, './../AnalysisBySynthesis')
 
 import torch
 import numpy as np
