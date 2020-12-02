@@ -1,37 +1,18 @@
-from foolbox import attacks as fa
-from foolbox.distances import LpDistance
 from plots import plot_losses
-
 
 from typing import Union, Tuple, Any, Optional
 from functools import partial
 import numpy as np
 from matplotlib import pyplot as plt
 import eagerpy as ep
-import torch
+from foolbox import attacks as fa
+from foolbox import distances, devutils, models, criteria
 
-from foolbox.devutils import flatten
-from foolbox.devutils import atleast_kd
-
-from foolbox.models import Model
-
-
-from foolbox.criteria import Misclassification
-from foolbox.criteria import TargetedMisclassification
-
-from foolbox.attacks.base import MinimizationAttack
-from foolbox.attacks.base import T
-from foolbox.attacks.base import get_criterion
-from foolbox.attacks.base import raise_if_kwargs
-
-from foolbox.attacks.carlini_wagner import _to_attack_space, _to_model_space, best_other_classes, AdamOptimizer
-
-
-class OrthogonalAttack(MinimizationAttack):
+class OrthogonalAttack(fa.base.MinimizationAttack):
     def __init__(self,input_attack,params, adv_dirs=[],orth_const=50):
         super(OrthogonalAttack,self).__init__()
         self.input_attack = input_attack(**params)
-        self.distance = LpDistance(2)
+        self.distance = distances.LpDistance(2)
         self.dirs = adv_dirs
         self.orth_const = orth_const
 
@@ -45,28 +26,28 @@ class OrthogonalAttack(MinimizationAttack):
 class CarliniWagner(fa.L2CarliniWagnerAttack):
     def run(
         self,
-        model: Model,
-        inputs: T,
-        criterion: Union[Misclassification, TargetedMisclassification, T],
+        model: models.Model,
+        inputs: fa.base.T,
+        criterion: Union[criteria.Misclassification, criteria.TargetedMisclassification, fa.base.T],
         *,
         early_stop: Optional[float] = None,
         dirs: Optional[Any] = [],
         orth_const: Optional[float] = 50,
         ** kwargs: Any,
-    ) -> T:
-        raise_if_kwargs(kwargs)
+    ) -> fa.base.T:
+        fa.base.raise_if_kwargs(kwargs)
         x, restore_type = ep.astensor_(inputs)
-        criterion_ = get_criterion(criterion)
+        criterion_ = fa.base.get_criterion(criterion)
         dirs = ep.astensor(dirs)  ##################
         del inputs, criterion, kwargs
 
         N = len(x)
 
-        if isinstance(criterion_, Misclassification):
+        if isinstance(criterion_, criteria.Misclassification):
             targeted = False
             classes = criterion_.labels
             change_classes_logits = self.confidence
-        elif isinstance(criterion_, TargetedMisclassification):
+        elif isinstance(criterion_, criteria.TargetedMisclassification):
             targeted = True
             classes = criterion_.target_classes
             change_classes_logits = -self.confidence
@@ -85,8 +66,8 @@ class CarliniWagner(fa.L2CarliniWagnerAttack):
             )
 
         bounds = model.bounds
-        to_attack_space = partial(_to_attack_space, bounds=bounds)
-        to_model_space = partial(_to_model_space, bounds=bounds)
+        to_attack_space = partial(fa.carlini_wagner._to_attack_space, bounds=bounds)
+        to_model_space = partial(fa.carlini_wagner._to_model_space, bounds=bounds)
 
         x_attack = to_attack_space(x)
         reconstructed_x = to_model_space(x_attack)
@@ -125,11 +106,11 @@ class CarliniWagner(fa.L2CarliniWagnerAttack):
             ###############################
 
             if targeted:
-                c_minimize = best_other_classes(logits, classes)
+                c_minimize = fa.carlini_wagner.best_other_classes(logits, classes)
                 c_maximize = classes  # target_classes
             else:
                 c_minimize = classes  # labels
-                c_maximize = best_other_classes(logits, classes)
+                c_maximize = fa.carlini_wagner.best_other_classes(logits, classes)
 
             is_adv_loss = logits[rows, c_minimize] - logits[rows, c_maximize]
             assert is_adv_loss.shape == (N,)
@@ -137,7 +118,7 @@ class CarliniWagner(fa.L2CarliniWagnerAttack):
             is_adv_loss = is_adv_loss + self.confidence
             is_adv_loss = ep.maximum(0, is_adv_loss)
             is_adv_loss = is_adv_loss * consts
-            squared_norms = flatten(adv - reconstructed_x).square().sum(axis=-1)
+            squared_norms = devutils.flatten(adv - reconstructed_x).square().sum(axis=-1)
 
             ######## by David ############
             loss = is_adv_loss.sum() + squared_norms.sum() + is_orth.sum()
@@ -150,7 +131,6 @@ class CarliniWagner(fa.L2CarliniWagnerAttack):
         loss_aux_and_grad = ep.value_and_grad_fn(x, loss_fun, has_aux=True)
 
         losses = np.zeros([self.binary_search_steps, 4, self.steps])
-        diffs = np.zeros([self.binary_search_steps, self.steps])
         best_binary_search_step = 0
 
         consts = self.initial_const * np.ones((N,))
@@ -171,7 +151,7 @@ class CarliniWagner(fa.L2CarliniWagnerAttack):
 
             # create a new optimizer find the delta that minimizes the loss
             delta = ep.zeros_like(x_attack)
-            optimizer = AdamOptimizer(delta)
+            optimizer = fa.carlini_wagner.AdamOptimizer(delta)
 
             # tracks whether adv with the current consts was found
             found_advs = np.full((N,), fill_value=False)
@@ -192,11 +172,11 @@ class CarliniWagner(fa.L2CarliniWagnerAttack):
                 found_advs_iter = is_adversarial(perturbed, logits)
                 found_advs = np.logical_or(found_advs, found_advs_iter.numpy())
 
-                norms = flatten(perturbed - x).norms.l2(axis=-1)
+                norms = devutils.flatten(perturbed - x).norms.l2(axis=-1)
                 closer = norms < best_advs_norms
                 new_best = ep.logical_and(closer, found_advs_iter)
 
-                new_best_ = atleast_kd(new_best, best_advs.ndim)
+                new_best_ = devutils.atleast_kd(new_best, best_advs.ndim)
                 best_advs = ep.where(new_best_, perturbed, best_advs)
                 best_advs_norms = ep.where(new_best, norms, best_advs_norms)
 
