@@ -1,33 +1,36 @@
+import sys
+sys.path.insert(0, './../')
+
 import torch
 import numpy as np
 from random import randint
 
 import foolbox
 
-import packyou
-from packyou.github.bethgelab.AnalysisBySynthesis.abs_models import utils as u
-from packyou.github.bethgelab.AnalysisBySynthesis.abs_models import models as mz
+from abs_models import models as mz
 
 # own modules
 from utils import classification, dirs_to_attack_format
 from attacks import OrthogonalAttack, CarliniWagner
 import plots as p
 
-import sys
-sys.path.insert(0, './../')
-
 # model = mz.get_VAE(n_iter=10)              # ABS, do n_iter=50 for original model
 # model = mz.get_VAE(binary=True)           # ABS with scaling and binaryzation
-# model = mz.get_binary_CNN()               # Binary CNN
-model = mz.get_CNN()  # Vanilla CNN
+model = mz.get_binary_CNN()               # Binary CNN
+# model = mz.get_CNN()  # Vanilla CNN
 # model = mz.get_NearestNeighbor()          # Nearest Neighbor, "nearest L2 dist to each class"=logits
 # model = mz.get_madry()                    # Robust network from Madry et al. in tf
 # model = create()
 
+
 model.eval()
+if torch.cuda.is_available():
+    dev = 'cuda:0'
+else:
+    dev = 'cpu'
 fmodel = foolbox.models.PyTorchModel(model,  # return logits in shape (bs, n_classes)
                                      bounds=(0., 1.),  # num_classes=10,
-                                     device=u.dev())
+                                     device=dev)
 
 # images, labels = foolbox.utils.samples(fmodel, dataset="mnist", batchsize=2)  # returns random batch as torch tensor
 # # rand = randint(0,19)
@@ -59,7 +62,7 @@ attack_params = {
 
 n_images = len(images)
 n_pixel = images.shape[-1] ** 2
-x_orig = u.t2n(images).reshape([n_images, n_pixel])
+x_orig = images.numpy().reshape([n_images, n_pixel])
 orth_consts = [50]
 
 for orth_const in orth_consts:
@@ -121,6 +124,6 @@ for orth_const in orth_consts:
 
     # visualization images
     if show_plots:
-        p.plot_advs(u.t2n(images[0][0]), advs[0], 5)
+        p.plot_advs(images[0][0].numpy(), advs[0], 5)
         p.show_orth(adv_dirs[0])
         p.plot_pert_lengths(adv_class[0], pert_lengths[0])
