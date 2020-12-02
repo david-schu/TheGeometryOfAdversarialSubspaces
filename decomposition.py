@@ -1,6 +1,3 @@
-import sys
-sys.path.insert(0, './../')
-
 import torch
 import numpy as np
 from random import randint
@@ -16,6 +13,8 @@ from utils import classification, dirs_to_attack_format
 from attacks import OrthogonalAttack, CarliniWagner
 import plots as p
 
+import sys
+sys.path.insert(0, './../')
 
 # model = mz.get_VAE(n_iter=10)              # ABS, do n_iter=50 for original model
 # model = mz.get_VAE(binary=True)           # ABS with scaling and binaryzation
