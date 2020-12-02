@@ -7,7 +7,7 @@ from matplotlib import pyplot as plt
 import eagerpy as ep
 from foolbox import attacks as fa
 from foolbox import distances, models, criteria
-from foolbox import devutils
+from foolbox import devutils as du
 
 
 class OrthogonalAttack(fa.base.MinimizationAttack):
@@ -120,7 +120,7 @@ class CarliniWagner(fa.L2CarliniWagnerAttack):
             is_adv_loss = is_adv_loss + self.confidence
             is_adv_loss = ep.maximum(0, is_adv_loss)
             is_adv_loss = is_adv_loss * consts
-            squared_norms = devutils.flatten(adv - reconstructed_x).square().sum(axis=-1)
+            squared_norms = du.flatten(adv - reconstructed_x).square().sum(axis=-1)
 
             ######## by David ############
             loss = is_adv_loss.sum() + squared_norms.sum() + is_orth.sum()
@@ -174,11 +174,11 @@ class CarliniWagner(fa.L2CarliniWagnerAttack):
                 found_advs_iter = is_adversarial(perturbed, logits)
                 found_advs = np.logical_or(found_advs, found_advs_iter.numpy())
 
-                norms = devutils.flatten(perturbed - x).norms.l2(axis=-1)
+                norms = du.flatten(perturbed - x).norms.l2(axis=-1)
                 closer = norms < best_advs_norms
                 new_best = ep.logical_and(closer, found_advs_iter)
 
-                new_best_ = devutils.atleast_kd(new_best, best_advs.ndim)
+                new_best_ = du.atleast_kd(new_best, best_advs.ndim)
                 best_advs = ep.where(new_best_, perturbed, best_advs)
                 best_advs_norms = ep.where(new_best, norms, best_advs_norms)
 
