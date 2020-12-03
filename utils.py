@@ -33,4 +33,7 @@ def load_data(n, bounds=(0., 1.)):
     images = images / 255 * (bounds[1] - bounds[0]) + bounds[0]
     images = images.unsqueeze(1)
     labels = mnist.targets[:n]
+
+    images = torch.as_tensor(images,device=u.dev())
+    labels = torch.as_tensor(labels, device=u.dev())
     return images, labels
