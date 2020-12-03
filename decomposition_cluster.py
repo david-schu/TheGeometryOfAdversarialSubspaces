@@ -8,7 +8,7 @@ import numpy as np
 
 from random import randint
 import foolbox
-#from abs_models import models as mz
+from abs_models import models as mz
 
 # own modules
 from utils import classification, dirs_to_attack_format
