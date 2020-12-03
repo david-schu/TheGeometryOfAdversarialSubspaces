@@ -26,9 +26,13 @@ model = mz.get_CNN()                      # Vanilla CNN
 # model = mz.get_madry()                    # Robust network from Madry et al. in tf
 # model = create()
 model.eval()
+if torch.cuda.is_available():
+    dev = 'cuda:0'
+else:
+    dev = 'cpu'
 fmodel = foolbox.models.PyTorchModel(model,   # return logits in shape (bs, n_classes)
                                      bounds=(0., 1.), #num_classes=10,
-                                     device=u.dev())
+                                     device=dev)
 
 # images, labels = foolbox.utils.samples(fmodel, dataset="mnist", batchsize=2)  # returns random batch as torch tensor
 # # rand = randint(0,19)
