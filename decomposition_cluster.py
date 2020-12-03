@@ -32,18 +32,18 @@ n_images = 50
 images, labels = load_data(n_images,bounds=(0.,1.))
 
 # user initialization
-n_adv_dims = 3
-max_runs = 100
+n_adv_dims = 10
+max_runs = 1000
 show_plots = False
 early_stop = 3
 norm_order = 2
-steps = 500
+steps = 10000
 input_attack = CarliniWagner
-epsilons = [None]
+epsilons = [0.3]
 
 # variable initializations
 attack_params = {
-        'binary_search_steps':9,
+        'binary_search_steps':12,
         'initial_const':1e-2,
         'steps':steps,
         'confidence':1,
