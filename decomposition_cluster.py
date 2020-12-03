@@ -12,6 +12,7 @@ import numpy as np
 from random import randint
 import foolbox
 from abs_models import models as mz
+from abs_models import utils as u
 
 # own modules
 from utils import classification, dirs_to_attack_format
@@ -64,7 +65,7 @@ attack_params = {
 
 n_images = len(images)
 n_pixel = images.shape[-1]**2
-x_orig = images.numpy().reshape([n_images,n_pixel])
+x_orig = u.t2n(images).reshape([n_images,n_pixel])
 
 orth_consts = [50]
 
@@ -98,7 +99,7 @@ for orth_const in orth_consts:
         classes = classification(adv[0],model)
         min_dim = n_adv_dims
         for i, a in enumerate(adv[0]):
-            a_ = a.flatten().numpy()
+            a_ = u.t2n(a.flatten())
             pert_length = np.linalg.norm(a_ - x_orig[i], ord=2)
             if run == 0:
                 min_dim = 1
