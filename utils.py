@@ -3,6 +3,7 @@ import torch
 import torchvision.datasets as datasets
 from abs_models import utils as u
 
+
 def orth_check(adv_dirs):
     orth = np.eye(len(adv_dirs))
     for i in range(len(adv_dirs)):
