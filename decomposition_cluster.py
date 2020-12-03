@@ -67,7 +67,11 @@ for orth_const in orth_consts:
     for run in range(max_runs):
         print('Run %d - Adversarial Dimension %d...' % (run+1, min_dim + 1))
 
-        attack = OrthogonalAttack(input_attack=input_attack, params=attack_params,adv_dirs=dirs,orth_const=orth_const)
+        attack = OrthogonalAttack(input_attack=input_attack,
+                                  params=attack_params,
+                                  adv_dirs=dirs,
+                                  orth_const=orth_const,
+                                  plot_loss=False)
         adv, _, success = attack(fmodel, images, labels, epsilons=epsilons)
 
         # check if adversarials were found and stop early if not

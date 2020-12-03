@@ -14,15 +14,16 @@ from foolbox.attacks.base import MinimizationAttack, T, get_criterion, raise_if_
 
 
 class OrthogonalAttack(MinimizationAttack):
-    def __init__(self,input_attack,params, adv_dirs=[],orth_const=50):
+    def __init__(self,input_attack,params, adv_dirs=[],orth_const=50,plot_loss=False):
         super(OrthogonalAttack,self).__init__()
         self.input_attack = input_attack(**params)
         self.distance = LpDistance(2)
         self.dirs = adv_dirs
         self.orth_const = orth_const
+        self.plot_loss = plot_loss
 
     def run(self,model,inputs,criterion,**kwargs):
-        return self.input_attack.run(model,inputs,criterion,dirs=self.dirs,orth_const=self.orth_const, **kwargs)
+        return self.input_attack.run(model, inputs, criterion, dirs=self.dirs, orth_const=self.orth_const, plot_loss=self.plot_loss, **kwargs)
 
     def distance(self):
         ...
@@ -38,6 +39,7 @@ class CarliniWagner(fa.L2CarliniWagnerAttack):
         early_stop: Optional[float] = None,
         dirs: Optional[Any] = [],
         orth_const: Optional[float] = 50,
+        plot_loss: bool = False,
         ** kwargs: Any,
     ) -> T:
         raise_if_kwargs(kwargs)
