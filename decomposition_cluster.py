@@ -34,14 +34,14 @@ fmodel = foolbox.models.PyTorchModel(model,   # return logits in shape (bs, n_cl
                                      bounds=(0., 1.), #num_classes=10,
                                      device=dev)
 
-# images, labels = foolbox.utils.samples(fmodel, dataset="mnist", batchsize=2)  # returns random batch as torch tensor
-# # rand = randint(0,19)
-# # images = images[rand].unsqueeze(0)
-# # labels = labels[rand].unsqueeze(0)
-# labels = labels.long()
+images, labels = foolbox.utils.samples(fmodel, dataset="mnist", batchsize=2)  # returns random batch as torch tensor
+# rand = randint(0,19)
+# images = images[rand].unsqueeze(0)
+# labels = labels[rand].unsqueeze(0)
+labels = labels.long()
 
-images = torch.load('/home/bethge/dschultheiss/AdversarialDecomposition/data/images.pt')
-labels = torch.load('/home/bethge/dschultheiss/AdversarialDecomposition/data/labels.pt')
+# images = torch.load('/home/bethge/dschultheiss/AdversarialDecomposition/data/images.pt')
+# labels = torch.load('/home/bethge/dschultheiss/AdversarialDecomposition/data/labels.pt')
 
 # user initialization
 n_adv_dims = 1
