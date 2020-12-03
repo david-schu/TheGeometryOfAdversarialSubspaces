@@ -45,7 +45,7 @@ labels = labels.long()
 # labels = torch.load('/home/bethge/dschultheiss/AdversarialDecomposition/data/labels.pt')
 
 # user initialization
-n_adv_dims = 1
+n_adv_dims = 3
 max_runs = 10
 show_plots = False
 early_stop = 3
