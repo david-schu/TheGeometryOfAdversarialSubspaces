@@ -1,11 +1,9 @@
 import sys
-import os
 sys.path.insert(0, './../')
 sys.path.insert(0, '/home/bethge/dschultheiss/AnalysisBySynthesis')
-print(sys.path)
-print(os.getcwd())
 
 import torch
+
 
 import numpy as np
 
@@ -15,7 +13,7 @@ from abs_models import models as mz
 from abs_models import utils as u
 
 # own modules
-from utils import classification, dirs_to_attack_format
+from utils import classification, dirs_to_attack_format, load_data
 from attacks import OrthogonalAttack, CarliniWagner
 
 
@@ -27,22 +25,13 @@ model = mz.get_CNN()                      # Vanilla CNN
 # model = mz.get_madry()                    # Robust network from Madry et al. in tf
 # model = create()
 model.eval()
-if torch.cuda.is_available():
-    dev = 'cuda:0'
-else:
-    dev = 'cpu'
+
+
 fmodel = foolbox.models.PyTorchModel(model,   # return logits in shape (bs, n_classes)
                                      bounds=(0., 1.), #num_classes=10,
-                                     device=dev)
-
-images, labels = foolbox.utils.samples(fmodel, dataset="mnist", batchsize=2)  # returns random batch as torch tensor
-# rand = randint(0,19)
-# images = images[rand].unsqueeze(0)
-# labels = labels[rand].unsqueeze(0)
-labels = labels.long()
-
-# images = torch.load('/home/bethge/dschultheiss/AdversarialDecomposition/data/images.pt')
-# labels = torch.load('/home/bethge/dschultheiss/AdversarialDecomposition/data/labels.pt')
+                                     device=u.dev())
+n_images = 50
+images, labels = load_data(n_images,bounds=(0.,1.))
 
 # user initialization
 n_adv_dims = 3
@@ -63,10 +52,8 @@ attack_params = {
         'abort_early':True
     }
 
-n_images = len(images)
 n_pixel = images.shape[-1]**2
 x_orig = u.t2n(images).reshape([n_images,n_pixel])
-
 orth_consts = [50]
 
 for orth_const in orth_consts:
