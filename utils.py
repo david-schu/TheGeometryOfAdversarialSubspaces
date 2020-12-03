@@ -23,4 +23,4 @@ def dirs_to_attack_format(dirs):
     attack_dirs = np.zeros([len(dirs), max_dim, dirs[0].shape[-1]])
     for i, dir in enumerate(dirs):
         attack_dirs[i, :len(dir)] = dir
-    return torch.tensor(attack_dirs)
+    return torch.tensor(attack_dirs,device=u.dev())

@@ -9,6 +9,7 @@ from random import randint
 import foolbox
 
 from abs_models import models as mz
+from abs_models import utils as u
 
 # own modules
 from utils import classification, dirs_to_attack_format
@@ -25,13 +26,9 @@ model = mz.get_binary_CNN()               # Binary CNN
 
 
 model.eval()
-if torch.cuda.is_available():
-    dev = 'cuda:0'
-else:
-    dev = 'cpu'
 fmodel = foolbox.models.PyTorchModel(model,  # return logits in shape (bs, n_classes)
                                      bounds=(0., 1.),  # num_classes=10,
-                                     device=dev)
+                                     device=u.dev())
 
 # images, labels = foolbox.utils.samples(fmodel, dataset="mnist", batchsize=2)  # returns random batch as torch tensor
 # # rand = randint(0,19)
@@ -63,7 +60,7 @@ attack_params = {
 
 n_images = len(images)
 n_pixel = images.shape[-1] ** 2
-x_orig = images.numpy().reshape([n_images, n_pixel])
+x_orig = u.t2n(images).reshape([n_images, n_pixel])
 orth_consts = [50]
 
 for orth_const in orth_consts:
@@ -100,7 +97,7 @@ for orth_const in orth_consts:
 
         # save found adversarials and check if they are smaller than previously found adversarials
         for i, a in enumerate(adv[0]):
-            a_ = a.flatten().numpy()
+            a_ = u.t2n(a.flatten())
             pert_length = np.linalg.norm(a_ - x_orig[i], ord=2)
             if run == 0:
                 min_dim = 1
