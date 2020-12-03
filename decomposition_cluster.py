@@ -57,7 +57,7 @@ attack_params = {
 
 n_images = len(images)
 n_pixel = images.shape[-1]**2
-x_orig = u.t2n(images).reshape([n_images,n_pixel])
+x_orig = images.numpy().reshape([n_images,n_pixel])
 
 orth_consts = [50]
 
