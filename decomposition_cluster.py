@@ -1,7 +1,9 @@
 import sys
+import os
 sys.path.insert(0, './../')
-sys.path.insert(0, './../AnalysisBySynthesis')
+sys.path.insert(0, '/home/bethge/dschultheiss/AnalysisBySynthesis')
 print(sys.path)
+print(os.getcwd())
 
 import torch
 
