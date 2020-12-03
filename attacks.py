@@ -7,14 +7,17 @@ from matplotlib import pyplot as plt
 import eagerpy as ep
 import foolbox as fb
 from foolbox import attacks as fa
-from foolbox import distances, models, criteria
+from foolbox.models import Model
+from foolbox.distances import LpDistance
+from foolbox.criteria import Misclassification, TargetedMisclassification
+from foolbox.attacks.base import MinimizationAttack, T, get_criterion, raise_if_kwargs
 
 
-class OrthogonalAttack(fa.base.MinimizationAttack):
+class OrthogonalAttack(MinimizationAttack):
     def __init__(self,input_attack,params, adv_dirs=[],orth_const=50):
         super(OrthogonalAttack,self).__init__()
         self.input_attack = input_attack(**params)
-        self.distance = distances.LpDistance(2)
+        self.distance = LpDistance(2)
         self.dirs = adv_dirs
         self.orth_const = orth_const
 
@@ -28,28 +31,28 @@ class OrthogonalAttack(fa.base.MinimizationAttack):
 class CarliniWagner(fa.L2CarliniWagnerAttack):
     def run(
         self,
-        model: models.Model,
-        inputs: fa.base.T,
-        criterion: Union[criteria.Misclassification, criteria.TargetedMisclassification, fa.base.T],
+        model: Model,
+        inputs: T,
+        criterion: Union[Misclassification, TargetedMisclassification, T],
         *,
         early_stop: Optional[float] = None,
         dirs: Optional[Any] = [],
         orth_const: Optional[float] = 50,
         ** kwargs: Any,
-    ) -> fa.base.T:
-        fa.base.raise_if_kwargs(kwargs)
+    ) -> T:
+        raise_if_kwargs(kwargs)
         x, restore_type = ep.astensor_(inputs)
-        criterion_ = fa.base.get_criterion(criterion)
+        criterion_ = get_criterion(criterion)
         dirs = ep.astensor(dirs)  ##################
         del inputs, criterion, kwargs
 
         N = len(x)
 
-        if isinstance(criterion_, criteria.Misclassification):
+        if isinstance(criterion_, Misclassification):
             targeted = False
             classes = criterion_.labels
             change_classes_logits = self.confidence
-        elif isinstance(criterion_, criteria.TargetedMisclassification):
+        elif isinstance(criterion_, TargetedMisclassification):
             targeted = True
             classes = criterion_.target_classes
             change_classes_logits = -self.confidence
@@ -183,7 +186,7 @@ class CarliniWagner(fa.L2CarliniWagnerAttack):
                 best_advs_norms = ep.where(new_best, norms, best_advs_norms)
 
                 # if new_best:
-                #     best_binary_search_step = binary_search_step
+                # best_binary_search_step = binary_search_step
 
             upper_bounds = np.where(found_advs, consts, upper_bounds)
             lower_bounds = np.where(found_advs, lower_bounds, consts)
