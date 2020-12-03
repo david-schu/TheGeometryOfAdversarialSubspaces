@@ -40,8 +40,8 @@ fmodel = foolbox.models.PyTorchModel(model,   # return logits in shape (bs, n_cl
 # # labels = labels[rand].unsqueeze(0)
 # labels = labels.long()
 
-images = torch.load('data/images.pt')
-labels = torch.load('data/labels.pt')
+images = torch.load('/home/bethge/dschultheiss/AdversarialDecomposition/data/images.pt')
+labels = torch.load('/home/bethge/dschultheiss/AdversarialDecomposition/data/labels.pt')
 
 # user initialization
 n_adv_dims = 1
