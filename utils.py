@@ -1,6 +1,6 @@
 import numpy as np
 import torch
-
+from abs_models import utils as u
 
 def orth_check(adv_dirs):
     orth = np.eye(len(adv_dirs))
@@ -13,7 +13,7 @@ def orth_check(adv_dirs):
 
 
 def classification(img, model):
-    pred = model(img).detach().numpy()
+    pred = u.t2n(model(img))
     img_class = np.argmax(pred, axis=-1)
     return img_class
 
