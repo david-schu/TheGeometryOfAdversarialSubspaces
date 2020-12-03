@@ -4,10 +4,8 @@ sys.path.insert(0, '/home/bethge/dschultheiss/AnalysisBySynthesis')
 
 import torch
 
-
 import numpy as np
 
-from random import randint
 import foolbox
 from abs_models import models as mz
 from abs_models import utils as u
@@ -35,7 +33,7 @@ images, labels = load_data(n_images,bounds=(0.,1.))
 
 # user initialization
 n_adv_dims = 3
-max_runs = 10
+max_runs = 100
 show_plots = False
 early_stop = 3
 norm_order = 2
