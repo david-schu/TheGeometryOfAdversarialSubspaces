@@ -35,10 +35,9 @@ params = {
     'max_runs': 10000,
     'early_stop': 3,
     'input_attack': CarliniWagner,
-    'plot_loss': False
+    'plot_loss': True
 }
 
-show_plots = True
 orth_consts = [0.05,0.1,0.5,1,5,10,50,100,500]
 pert_lengths = []
 advs = []
