@@ -73,4 +73,4 @@ def run_batch(fmodel,
         if min_dim == n_adv_dims:
             break
 
-    return np.array(advs), np.array(adv_dirs), np.array(adv_class), np.array(pert_lengths)
+    return advs, adv_dirs, adv_class, pert_lengths
