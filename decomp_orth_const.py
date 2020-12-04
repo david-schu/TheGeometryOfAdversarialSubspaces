@@ -28,7 +28,7 @@ model.eval()
 fmodel = foolbox.models.PyTorchModel(model,   # return logits in shape (bs, n_classes)
                                      bounds=(0., 1.), #num_classes=10,
                                      device=u.dev())
-n_images = 40
+n_images = 20
 images, labels = load_data(n_images, bounds=(0., 1.))
 
 # user initialization
@@ -41,9 +41,6 @@ norm_order = 2
 steps = 10000
 input_attack = CarliniWagner
 epsilons = [0.3]
-
-if batchsize > n_images:
-    raise ValueError('Batchsize larger than data points')
 
 # variable initializations
 attack_params = {

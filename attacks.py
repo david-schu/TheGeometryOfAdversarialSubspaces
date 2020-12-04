@@ -14,7 +14,7 @@ from foolbox.attacks.base import MinimizationAttack, T, get_criterion, raise_if_
 
 
 class OrthogonalAttack(MinimizationAttack):
-    def __init__(self,input_attack,params, adv_dirs=[],orth_const=50,plot_loss=False):
+    def __init__(self, input_attack, params, adv_dirs=[], orth_const=50, plot_loss=False):
         super(OrthogonalAttack,self).__init__()
         self.input_attack = input_attack(**params)
         self.distance = LpDistance(2)
@@ -22,7 +22,7 @@ class OrthogonalAttack(MinimizationAttack):
         self.orth_const = orth_const
         self.plot_loss = plot_loss
 
-    def run(self,model,inputs,criterion,**kwargs):
+    def run(self, model, inputs, criterion, **kwargs):
         return self.input_attack.run(model, inputs, criterion, dirs=self.dirs, orth_const=self.orth_const, plot_loss=self.plot_loss, **kwargs)
 
     def distance(self):
@@ -91,7 +91,7 @@ class CarliniWagner(fa.L2CarliniWagnerAttack):
 
             ######## by David ############
 
-            if (len(dirs) == 0):
+            if len(dirs) == 0:
                 logits = model(adv)
                 is_orth = ep.zeros(delta, 1)
             else:
@@ -201,6 +201,6 @@ class CarliniWagner(fa.L2CarliniWagnerAttack):
         if plot_loss and len(dirs):
             fig, ax = plot_losses(losses[best_binary_search_step])
             plt.suptitle('Loss functions for orth_const = ' + str(orth_const))
-            plt.show()
+            plt.savefig('./data/figures/losses/losses' + str(orth_const) + '.png')
 
         return restore_type(best_advs)

@@ -1,6 +1,7 @@
 import matplotlib
 matplotlib.use('TkAgg')
 from matplotlib import pyplot as plt
+from matplotlib.ticker import FormatStrFormatter
 import numpy as np
 from utils import orth_check
 
