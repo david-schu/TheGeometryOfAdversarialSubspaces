@@ -55,12 +55,12 @@ params = {
     'max_runs': 10,
     'early_stop': 3,
     'input_attack': CarliniWagner,
-    'epsilons': [0.5],
+    'epsilons': [None],
     'plot_loss': True
 }
 
 show_plots = True
-orth_consts = [0.1,10]
+orth_consts = [50]
 
 for orth_const in orth_consts:
     new_advs, new_dirs, new_classes, new_pert_lengths = run_batch(fmodel,images,labels,attack_params,orth_const,**params)
