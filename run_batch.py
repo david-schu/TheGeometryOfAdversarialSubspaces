@@ -18,18 +18,17 @@ def run_batch(fmodel,
     ):
 
     # initialize variables
+    n_pixel = images.shape[-1] ** 2
+    n_images = images.shape[0]
+    x_orig = u.t2n(images).reshape([n_images, n_pixel])
+
     count = 0
     min_dim = 0
-    adv_dirs = []
     pert_lengths = []
     advs = []
     dirs = torch.tensor([])
     adv_dirs = []
     adv_class = []
-
-    n_images = len(images)
-    n_pixel = images.shape[-1] ** 2
-    x_orig = u.t2n(images).reshape([n_images, n_pixel])
 
     for run in range(max_runs):
         print('Run %d - Adversarial Dimension %d...' % (run + 1, min_dim + 1))
@@ -38,7 +37,7 @@ def run_batch(fmodel,
                                   params=attack_params,
                                   adv_dirs=dirs,
                                   orth_const=orth_const,
-                                  plot_loss=plot_loss)
+                                  plot_loss=False)
         adv, _, success = attack(fmodel, images, labels, epsilons=epsilons)
 
         # check if adversarials were found and stop early if not
@@ -54,8 +53,6 @@ def run_batch(fmodel,
 
         classes = classification(adv[0], fmodel)
         min_dim = n_adv_dims
-
-        # save found adversarials and check if they are smaller than previously found adversarials
         for i, a in enumerate(adv[0]):
             a_ = u.t2n(a.flatten())
             pert_length = np.linalg.norm(a_ - x_orig[i], ord=2)
@@ -72,12 +69,8 @@ def run_batch(fmodel,
                 adv_dirs[i] = np.vstack([adv_dirs[i][:dim], (a_ - x_orig[i]) / pert_length])
                 adv_class[i] = np.append(adv_class[i][:dim], classes[i])
                 pert_lengths[i] = np.append(pert_lengths[i][:dim], pert_length)
-
-        # convert adversarial directions to attack format
         dirs = dirs_to_attack_format(adv_dirs)
-
-        # break if n-dim is reached
         if min_dim == n_adv_dims:
             break
 
-    return advs, adv_dirs, adv_class, pert_lengths
+    return np.array(advs), np.array(adv_dirs), np.array(adv_class), np.array(pert_lengths)

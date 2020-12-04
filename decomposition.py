@@ -1,62 +1,44 @@
 import sys
 sys.path.insert(0, './../')
-sys.path.insert(0, './../AnalysisBySynthesis')
+# sys.path.insert(0, '/home/bethge/dschultheiss/AnalysisBySynthesis')
 
-import torch
 import numpy as np
-from random import randint
 
 import foolbox
-
 from abs_models import models as mz
 from abs_models import utils as u
+from run_batch import run_batch
 
 # own modules
-from run_batch import run_batch
+from utils import load_data
 from attacks import CarliniWagner
-import plots as p
+
 
 # model = mz.get_VAE(n_iter=10)              # ABS, do n_iter=50 for original model
 # model = mz.get_VAE(binary=True)           # ABS with scaling and binaryzation
-model = mz.get_binary_CNN()               # Binary CNN
-# model = mz.get_CNN()  # Vanilla CNN
-# model = mz.get_NearestNeighbor()          # Nearest Neighbor, "nearest L2 dist to each class"=logits
+model = mz.get_CNN()                      # Vanilla CNN
 # model = mz.get_madry()                    # Robust network from Madry et al. in tf
-# model = create()
-
-
 model.eval()
-fmodel = foolbox.models.PyTorchModel(model,  # return logits in shape (bs, n_classes)
-                                     bounds=(0., 1.),  # num_classes=10,
+fmodel = foolbox.models.PyTorchModel(model,   # return logits in shape (bs, n_classes)
+                                     bounds=(0., 1.), #num_classes=10,
                                      device=u.dev())
+n_images = 1
+images, labels = load_data(n_images, bounds=(0., 1.))
 
-images, labels = foolbox.utils.samples(fmodel, dataset="mnist", batchsize=2)  # returns random batch as torch tensor
-# rand = randint(0,19)
-# images = images[rand].unsqueeze(0)
-# labels = labels[rand].unsqueeze(0)
-labels = labels.long()
-
-# images = torch.load('data/images.pt')
-# labels = torch.load('data/labels.pt')
-
-
-
-# user initializations
+# user initialization
 attack_params = {
-    'binary_search_steps': 12,
-    'initial_const': 1e-2,
-    'steps': 5000,
-    'confidence': 1,
-    'abort_early': True
-}
-
+        'binary_search_steps':12,
+        'initial_const':1e-2,
+        'steps':1000,
+        'confidence':1,
+        'abort_early':True
+    }
 params = {
-    'n_adv_dims':2,
-    'max_runs': 10,
+    'n_adv_dims':3,
+    'max_runs': 1000,
     'early_stop': 3,
     'input_attack': CarliniWagner,
-    'epsilons': [None],
-    'plot_loss': True
+    'plot_loss': False
 }
 
 show_plots = True
@@ -71,3 +53,4 @@ for orth_const in orth_consts:
     #     p.plot_advs(images[0][0].numpy(), advs[0], 5)
     #     p.show_orth(adv_dirs[0])
     #     p.plot_pert_lengths(adv_class[0], pert_lengths[0])
+print('DONE!')
