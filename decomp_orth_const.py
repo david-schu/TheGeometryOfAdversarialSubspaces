@@ -19,7 +19,7 @@ model.eval()
 fmodel = foolbox.models.PyTorchModel(model,   # return logits in shape (bs, n_classes)
                                      bounds=(0., 1.), #num_classes=10,
                                      device=u.dev())
-n_images = 4
+n_images = 10
 images, labels = load_data(n_images, bounds=(0., 1.))
 
 # user initialization
@@ -32,7 +32,7 @@ attack_params = {
     }
 params = {
     'n_adv_dims': 2,
-    'max_runs': 30,
+    'max_runs': 100,
     'early_stop': 3,
     'input_attack': CarliniWagner,
     'plot_loss': True
