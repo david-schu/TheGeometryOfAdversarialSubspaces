@@ -37,7 +37,7 @@ def run_batch(fmodel,
                                   params=attack_params,
                                   adv_dirs=dirs,
                                   orth_const=orth_const,
-                                  plot_loss=False)
+                                  plot_loss=plot_loss)
         adv, _, success = attack(fmodel, images, labels, epsilons=epsilons)
 
         # check if adversarials were found and stop early if not
