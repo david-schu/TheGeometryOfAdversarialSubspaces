@@ -19,6 +19,7 @@ model.eval()
 fmodel = foolbox.models.PyTorchModel(model,
                                      bounds=(0., 1.),
                                      device=u.dev())
+print(u.dev())
 n_images = 20
 images, labels = load_data(n_images, bounds=(0., 1.))
 
