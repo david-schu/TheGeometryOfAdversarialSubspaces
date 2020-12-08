@@ -125,7 +125,7 @@ class CarliniWagner(fa.L2CarliniWagnerAttack):
             is_adv_loss = is_adv_loss + self.confidence
             is_adv_loss = ep.maximum(0, is_adv_loss)
             is_adv_loss = is_adv_loss * consts
-            squared_norms = fb.devutils.flatten(adv - reconstructed_x).square().sum(axis=-1)
+            squared_norms = (adv - reconstructed_x).flatten().square().sum(axis=-1)
 
             ######## by David ############
             loss = is_adv_loss.sum() + squared_norms.sum() + is_orth.sum()
@@ -179,7 +179,7 @@ class CarliniWagner(fa.L2CarliniWagnerAttack):
                 found_advs_iter = is_adversarial(perturbed, logits)
                 found_advs = np.logical_or(found_advs, found_advs_iter.numpy())
 
-                norms = fb.devutils.flatten(perturbed - x).norms.l2(axis=-1)
+                norms = (perturbed - x).flatten().norms.l2(axis=-1)
                 closer = norms < best_advs_norms
                 new_best = ep.logical_and(closer, found_advs_iter)
 
@@ -201,6 +201,6 @@ class CarliniWagner(fa.L2CarliniWagnerAttack):
         if plot_loss and len(dirs):
             fig, ax = plot_losses(losses[best_binary_search_step])
             plt.suptitle('Loss functions for orth_const = ' + str(orth_const))
-            plt.savefig('/home/bethge/dschultheiss/AdversarialDecomposition/data/figures/losses/losses' + str(orth_const) + '.png')
+            # plt.savefig('/home/bethge/dschultheiss/AdversarialDecomposition/data/figures/losses/losses' + str(orth_const) + '.png')
 
         return restore_type(best_advs)

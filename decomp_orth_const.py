@@ -16,8 +16,8 @@ from attacks import CarliniWagner
 
 model = mz.get_CNN()                      # Vanilla CNN
 model.eval()
-fmodel = foolbox.models.PyTorchModel(model,   # return logits in shape (bs, n_classes)
-                                     bounds=(0., 1.), #num_classes=10,
+fmodel = foolbox.models.PyTorchModel(model,
+                                     bounds=(0., 1.),
                                      device=u.dev())
 n_images = 10
 images, labels = load_data(n_images, bounds=(0., 1.))
@@ -26,7 +26,7 @@ images, labels = load_data(n_images, bounds=(0., 1.))
 attack_params = {
         'binary_search_steps': 12,
         'initial_const': 1e-2,
-        'steps': 10000,
+        'steps': 500,
         'confidence': 1,
         'abort_early': True
     }
