@@ -19,7 +19,7 @@ model.eval()
 fmodel = foolbox.models.PyTorchModel(model,
                                      bounds=(0., 1.),
                                      device=u.dev())
-n_images = 10
+n_images = 20
 images, labels = load_data(n_images, bounds=(0., 1.))
 
 # user initialization
@@ -44,8 +44,8 @@ advs = []
 
 for orth_const in orth_consts:
     new_advs, _, _, new_pert_lengths = run_batch(fmodel,images,labels,attack_params,orth_const,**params)
-    advs.append(np.array(new_advs))
-    pert_lengths.append(np.array(new_pert_lengths))
+    advs.append(new_advs)
+    pert_lengths.append(new_pert_lengths)
 data = {
     'advs':advs,
     'pert_lengths':pert_lengths

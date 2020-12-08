@@ -24,11 +24,12 @@ def run_batch(fmodel,
 
     count = 0
     min_dim = 0
-    pert_lengths = []
-    advs = []
+    pert_lengths = np.zeros((n_images, n_adv_dims))
+    adv_class = np.zeros((n_images, n_adv_dims))
+    advs = np.zeros((n_images, n_adv_dims, n_pixel))
+    adv_dirs = np.zeros((n_images, n_adv_dims, n_pixel))
     dirs = torch.tensor([])
-    adv_dirs = []
-    adv_class = []
+    adv_found = np.full((n_images, n_adv_dims), False, dtype=bool)
 
     for run in range(max_runs):
         print('Run %d - Adversarial Dimension %d...' % (run + 1, min_dim + 1))
@@ -57,26 +58,22 @@ def run_batch(fmodel,
                 continue
             a_ = u.t2n(a.flatten())
             pert_length = np.linalg.norm(a_ - x_orig[i], ord=2)
-            if run == 0:
-                advs.append(np.array([a_]))
-                pert_lengths.append(np.array([pert_length]))
-                adv_dirs.append(np.array([(a_ - x_orig[i]) / pert_length]))
-                adv_class.append(np.array([classes[i]]))
-            else:
-                dim = np.sum(pert_lengths[i] < pert_length)
-                if dim >= n_adv_dims:
-                    continue
-                advs[i] = np.vstack([advs[i][:dim], a_])
-                adv_dirs[i] = np.vstack([adv_dirs[i][:dim], (a_ - x_orig[i]) / pert_length])
-                adv_class[i] = np.append(adv_class[i][:dim], classes[i])
-                pert_lengths[i] = np.append(pert_lengths[i][:dim], pert_length)
+            dim = np.sum(pert_lengths[i][np.nonzero(pert_lengths[i])] < pert_length)
+
+            if dim >= n_adv_dims:
+                continue
+
+            advs[i, dim] = a_
+            adv_dirs[i, dim] = (a_ - x_orig[i]) / pert_length
+            adv_class[i, dim] = classes[i]
+            pert_lengths[i, dim] = pert_length
+            adv_found[i, dim] = True
+            adv_found[i,dim+1:] = False
+
+        advs[~adv_found] = adv_dirs[~adv_found] = adv_class[~adv_found] = pert_lengths[~adv_found] = 0
 
         dirs = dirs_to_attack_format(adv_dirs)
-        if len(pert_lengths) < n_images:
-            min_dim = 0
-        else:
-            min_dim = min([len(x) for x in pert_lengths])
-
+        min_dim = np.amax(np.sum(adv_found, axis=1))
         if min_dim == n_adv_dims:
             break
 
