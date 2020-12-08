@@ -33,7 +33,7 @@ attack_params = {
     }
 params = {
     'n_adv_dims': 2,
-    'max_runs': 100,
+    'max_runs': 3,
     'early_stop': 3,
     'input_attack': CarliniWagner,
     'plot_loss': True
