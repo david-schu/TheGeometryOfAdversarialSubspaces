@@ -52,15 +52,12 @@ def run_batch(fmodel,
         count = 0
 
         classes = classification(adv[0], fmodel)
-        min_dim = n_adv_dims
         for i, a in enumerate(adv[0]):
             if not success[0][i]:
-                min_dim = len(pert_lengths[i])
                 continue
             a_ = u.t2n(a.flatten())
             pert_length = np.linalg.norm(a_ - x_orig[i], ord=2)
             if run == 0:
-                min_dim = 1
                 advs.append(np.array([a_]))
                 pert_lengths.append(np.array([pert_length]))
                 adv_dirs.append(np.array([(a_ - x_orig[i]) / pert_length]))
@@ -69,12 +66,17 @@ def run_batch(fmodel,
                 dim = np.sum(pert_lengths[i] < pert_length)
                 if dim >= n_adv_dims:
                     continue
-                min_dim = np.minimum(min_dim, dim + 1)
                 advs[i] = np.vstack([advs[i][:dim], a_])
                 adv_dirs[i] = np.vstack([adv_dirs[i][:dim], (a_ - x_orig[i]) / pert_length])
                 adv_class[i] = np.append(adv_class[i][:dim], classes[i])
                 pert_lengths[i] = np.append(pert_lengths[i][:dim], pert_length)
+
         dirs = dirs_to_attack_format(adv_dirs)
+        if len(pert_lengths) < n_images:
+            min_dim = 0
+        else:
+            min_dim = min([len(x) for x in pert_lengths])
+
         if min_dim == n_adv_dims:
             break
 
