@@ -3,15 +3,18 @@ sys.path.insert(0, 'AnalysisBySynthesis')
 
 import numpy as np
 import torch
-
-
 import foolbox
+
 from abs_models import models as mz, utils as u
 from run_batch import run_batch
 
 # own modules
 from utils import load_data
 from attacks import CarliniWagner
+
+
+print(torch.__version__)
+print(foolbox.__version__)
 
 np.random.seed(0)
 torch.manual_seed(0)
