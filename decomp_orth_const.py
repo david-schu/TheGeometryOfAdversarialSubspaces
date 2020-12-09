@@ -25,7 +25,7 @@ fmodel = foolbox.models.PyTorchModel(model,
                                      bounds=(0., 1.),
                                      device=u.dev())
 
-n_images = 20
+n_images = 5
 images, labels = load_data(n_images, bounds=(0., 1.))
 
 # user initialization

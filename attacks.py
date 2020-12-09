@@ -1,5 +1,5 @@
 from plots import plot_losses
-import pathlib
+import sys
 
 from typing import Union, Tuple, Any, Optional
 from functools import partial
@@ -200,9 +200,9 @@ class CarliniWagner(fa.L2CarliniWagnerAttack):
                 np.isinf(upper_bounds), consts_exponential_search, consts_binary_search
             )
         if plot_loss and len(dirs):
-            print(pathlib.Path().absolute())
+            print(sys.path)
             fig, ax = plot_losses(losses[best_binary_search_step])
             plt.suptitle('Loss functions for orth_const = ' + str(orth_const))
-            # plt.savefig('data/figures/losses/losses' + str(orth_const) + '.png')
+            plt.savefig('./data/figures/losses/losses' + str(orth_const) + '.png')
 
         return restore_type(best_advs)
