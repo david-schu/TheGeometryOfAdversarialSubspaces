@@ -21,26 +21,26 @@ fmodel = foolbox.models.PyTorchModel(model,
                                      bounds=(0., 1.),
                                      device=u.dev())
 
-n_images = 20
+n_images = 1
 images, labels = load_data(n_images, bounds=(0., 1.))
 
 # user initialization
 attack_params = {
         'binary_search_steps': 12,
         'initial_const': 1e-2,
-        'steps': 10000,
+        'steps': 500,
         'confidence': 1,
         'abort_early': True
     }
 params = {
-    'n_adv_dims': 2,
-    'max_runs': 5,
+    'n_adv_dims': 5,
+    'max_runs': 10,
     'early_stop': 3,
     'input_attack': CarliniWagner,
     'plot_loss': True
 }
 
-orth_consts = [0.01, 0.05, 0.1, 0.5, 1, 5, 10, 50, 100, 500]
+orth_consts = [50] #[0.01, 0.05, 0.1, 0.5, 1, 5, 10, 50, 100, 500]
 pert_lengths = []
 advs = []
 
@@ -53,4 +53,4 @@ data = {
     'pert_lengths':pert_lengths,
     'orth_consts': orth_consts
 }
-np.save('./data/orth_consts.npy', data)
+np.save('./../data/orth_consts.npy', data)
