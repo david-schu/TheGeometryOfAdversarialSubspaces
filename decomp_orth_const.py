@@ -1,6 +1,6 @@
 import sys
-sys.path.insert(0, './../')
-sys.path.insert(0, '/home/bethge/dschultheiss/AnalysisBySynthesis')
+sys.path.insert(0, './AdversarialDecomposition')
+sys.path.insert(0, './AnalysisBySynthesis')
 
 import numpy as np
 import torch
@@ -55,4 +55,4 @@ data = {
     'advs':advs,
     'pert_lengths':pert_lengths
 }
-np.save('./orth_consts.npy', data)
+np.save('./data/orth_consts.npy', data)
