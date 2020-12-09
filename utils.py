@@ -14,6 +14,8 @@ def orth_check(adv_dirs):
 
 
 def classification(img, model):
+    if not torch.is_tensor(img):
+        img = torch.tensor(img)
     pred = u.t2n(model(img))
     img_class = np.argmax(pred, axis=-1)
     return img_class

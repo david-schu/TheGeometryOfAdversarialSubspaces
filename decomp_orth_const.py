@@ -3,6 +3,8 @@ sys.path.insert(0, './../')
 sys.path.insert(0, '/home/bethge/dschultheiss/AnalysisBySynthesis')
 
 import numpy as np
+import torch
+
 
 import foolbox
 from abs_models import models as mz
@@ -13,13 +15,15 @@ from run_batch import run_batch
 from utils import load_data
 from attacks import CarliniWagner
 
+np.random.seed(0)
+torch.manual_seed(0)
 
 model = mz.get_CNN()                      # Vanilla CNN
 model.eval()
 fmodel = foolbox.models.PyTorchModel(model,
                                      bounds=(0., 1.),
                                      device=u.dev())
-print(u.dev())
+
 n_images = 20
 images, labels = load_data(n_images, bounds=(0., 1.))
 
@@ -51,4 +55,4 @@ data = {
     'advs':advs,
     'pert_lengths':pert_lengths
 }
-np.save('/home/bethge/dschultheiss/data/orth_consts.npy', data)
+np.save('./orth_consts.npy', data)
