@@ -12,10 +12,6 @@ from run_batch import run_batch
 from utils import load_data
 from attacks import CarliniWagner
 
-
-print(torch.__version__)
-print(foolbox.__version__)
-
 np.random.seed(0)
 torch.manual_seed(0)
 
@@ -25,7 +21,7 @@ fmodel = foolbox.models.PyTorchModel(model,
                                      bounds=(0., 1.),
                                      device=u.dev())
 
-n_images = 1
+n_images = 20
 images, labels = load_data(n_images, bounds=(0., 1.))
 
 # user initialization
@@ -37,14 +33,14 @@ attack_params = {
         'abort_early': True
     }
 params = {
-    'n_adv_dims': 10,
-    'max_runs': 3,
+    'n_adv_dims': 2,
+    'max_runs': 5,
     'early_stop': 3,
     'input_attack': CarliniWagner,
     'plot_loss': True
 }
 
-orth_consts = [5]
+orth_consts = [0.01, 0.05, 0.1, 0.5, 1, 5, 10, 50, 100, 500]
 pert_lengths = []
 advs = []
 
@@ -54,6 +50,7 @@ for orth_const in orth_consts:
     pert_lengths.append(new_pert_lengths)
 data = {
     'advs':advs,
-    'pert_lengths':pert_lengths
+    'pert_lengths':pert_lengths,
+    'orth_consts': orth_consts
 }
 np.save('./data/orth_consts.npy', data)

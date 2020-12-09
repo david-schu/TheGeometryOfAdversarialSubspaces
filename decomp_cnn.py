@@ -20,7 +20,7 @@ fmodel = foolbox.models.PyTorchModel(model,   # return logits in shape (bs, n_cl
                                      bounds=(0., 1.), #num_classes=10,
                                      device=u.dev())
 n_images = 1000
-batchsize = 20
+batchsize = 5
 images, labels = load_batched_data(n_images,batchsize, bounds=(0., 1.))
 
 # user initialization
@@ -32,17 +32,17 @@ attack_params = {
         'abort_early':True
     }
 params = {
-    'n_adv_dims':5,
-    'max_runs': 100,
+    'n_adv_dims': 5,
+    'max_runs': 50,
     'early_stop': 3,
     'input_attack': CarliniWagner,
     'plot_loss': False
 }
 
-advs = np.array([], shape=(0, params['n_adv_dims'], images.shape[-1]**2))
-dirs = np.array([], shape=(0, params['n_adv_dims'], images.shape[-1]**2))
-pert_lengths = np.array([], shape=(0, params['n_adv_dims']))
-adv_class = np.array([], shape=(0, params['n_adv_dims']))
+advs = np.array([]).reshape((0, params['n_adv_dims'], images[0].shape[-1]**2))
+dirs = np.array([]).reshape((0, params['n_adv_dims'], images[0].shape[-1]**2))
+pert_lengths = np.array([]).reshape((0, params['n_adv_dims']))
+adv_class = np.array([]).reshape((0, params['n_adv_dims']))
 
 
 for i in range(len(images)):
