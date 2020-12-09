@@ -2,11 +2,8 @@ import sys
 sys.path.insert(0, './../')
 # sys.path.insert(0, '/home/bethge/dschultheiss/AnalysisBySynthesis')
 
-import numpy as np
-
 import foolbox
-from abs_models import models as mz
-from abs_models import utils as u
+from abs_models import models as mz, utils as u
 from run_batch import run_batch
 
 # own modules
