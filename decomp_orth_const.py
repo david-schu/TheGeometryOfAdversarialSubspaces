@@ -1,3 +1,6 @@
+import sys
+sys.path.insert(0, 'AnalysisBySynthesis')
+
 import numpy as np
 import torch
 
