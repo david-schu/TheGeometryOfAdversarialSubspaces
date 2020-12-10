@@ -200,8 +200,6 @@ class CarliniWagner(fa.L2CarliniWagnerAttack):
                 np.isinf(upper_bounds), consts_exponential_search, consts_binary_search
             )
         if plot_loss and len(dirs):
-            fig, ax = plot_losses(losses[best_binary_search_step])
-            plt.suptitle('Loss functions for orth_const = ' + str(orth_const))
-            plt.savefig('../data/orth_const/losses' + str(orth_const) + '.png')
+            np.save('./../data/losses' + str(orth_const) + '.npy', losses[best_binary_search_step])
 
         return restore_type(best_advs)
