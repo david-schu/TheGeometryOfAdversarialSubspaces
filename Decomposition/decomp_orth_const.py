@@ -1,5 +1,6 @@
 import sys
-sys.path.insert(0, 'AnalysisBySynthesis')
+sys.path.insert(0, '../AnalysisBySynthesis')
+sys.path.insert(0, '../data')
 
 import numpy as np
 import torch

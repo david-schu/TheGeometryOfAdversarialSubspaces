@@ -30,7 +30,7 @@ def dirs_to_attack_format(dirs):
 
 
 def load_data(n, bounds=(0., 1.)):
-    mnist = datasets.MNIST(root='./data', download=True)
+    mnist = datasets.MNIST(root='../data', download=True)
     images = mnist.data[:n]
     images = images / 255 * (bounds[1] - bounds[0]) + bounds[0]
     images = images.unsqueeze(1)
