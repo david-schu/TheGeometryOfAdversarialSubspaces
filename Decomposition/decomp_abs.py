@@ -15,7 +15,7 @@ from run_batch import run_batch
 np.random.seed(0)
 torch.manual_seed(0)
 
-model = mz.get_CNN()                      # Vanilla CNN
+model = mz.get_VAE(n_iter=50)                      # ABS
 model.eval()
 fmodel = foolbox.models.PyTorchModel(model,   # return logits in shape (bs, n_classes)
                                      bounds=(0., 1.), #num_classes=10,
@@ -61,4 +61,4 @@ data = {
     'adv_class': adv_class,
     'pert_lengths': pert_lengths
 }
-np.save('/home/bethge/dschultheiss/AdversarialDecomposition/data/cnn.npy', data)
+np.save('/home/bethge/dschultheiss/AdversarialDecomposition/data/abs.npy', data)
