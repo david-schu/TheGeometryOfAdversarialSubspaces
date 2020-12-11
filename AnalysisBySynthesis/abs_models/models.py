@@ -260,14 +260,16 @@ def get_NearestNeighbor():
     return NN
 
 
-def get_madry(load_path='./../madry/mnist_challenge/models/secret/'):
-    import tensorflow as tf
+def get_madry(load_path='./../AnalysisBySynthesis/madry/mnist_challenge/models/adv_trained'):
+    import tensorflow.compat.v1 as tf
+    tf.disable_v2_behavior()
+    tf.enable_eager_execution()
     from madry.mnist_challenge.model import Model
-    sess = tf.InteractiveSession()
+    sess = tf.Session()
     model = Model()
-    model_file = tf.train.latest_checkpoint(load_path)
+    checkpoint = tf.train.latest_checkpoint(load_path)
     restorer = tf.train.Saver()
-    restorer.restore(sess, model_file)
+    restorer.restore(sess, checkpoint)
     model.code_base = 'tensorflow'
     model.logit_scale = 1.
     model.confidence_level = 60.

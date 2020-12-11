@@ -1,10 +1,6 @@
-from plots import plot_losses
-import sys
-
 from typing import Union, Tuple, Any, Optional
 from functools import partial
 import numpy as np
-from matplotlib import pyplot as plt
 import eagerpy as ep
 import foolbox as fb
 from foolbox import attacks as fa

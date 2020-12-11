@@ -1,4 +1,3 @@
-import torch
 import numpy as np
 from attacks import OrthogonalAttack,CarliniWagner
 from utils import classification, dirs_to_attack_format
@@ -28,8 +27,9 @@ def run_batch(fmodel,
     adv_class = np.zeros((n_images, n_adv_dims))
     advs = np.zeros((n_images, n_adv_dims, n_pixel))
     adv_dirs = np.zeros((n_images, n_adv_dims, n_pixel))
-    dirs = torch.tensor([])
     adv_found = np.full((n_images, n_adv_dims), False, dtype=bool)
+
+
 
     for run in range(max_runs):
         print('Run %d - Adversarial Dimension %d...' % (run + 1, min_dim + 1))
