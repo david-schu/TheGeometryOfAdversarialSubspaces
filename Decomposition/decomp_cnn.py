@@ -55,10 +55,10 @@ for i in range(len(images)):
     adv_class = np.concatenate([adv_class, new_classes], axis=0)
     pert_lengths = np.concatenate([pert_lengths, new_pert_lengths], axis=0)
 
-data = {
-    'advs': advs,
-    'dirs': dirs,
-    'adv_class': adv_class,
-    'pert_lengths': pert_lengths
-}
-np.save('/home/bethge/dschultheiss/AdversarialDecomposition/data/cnn.npy', data)
+    data = {
+        'advs': advs,
+        'dirs': dirs,
+        'adv_class': adv_class,
+        'pert_lengths': pert_lengths
+    }
+    np.save('/home/bethge/dschultheiss/AdversarialDecomposition/data/cnn.npy', data)
