@@ -32,7 +32,7 @@ def run_batch(fmodel,
 
 
     for run in range(max_runs):
-        print('Run %d - Adversarial Dimension %d...' % (run + 1, min_dim + 1))
+        #print('Run %d - Adversarial Dimension %d...' % (run + 1, min_dim + 1))
 
         attack = OrthogonalAttack(input_attack=input_attack,
                                   params=attack_params,
