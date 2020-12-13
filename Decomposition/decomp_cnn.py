@@ -20,8 +20,8 @@ model.eval()
 fmodel = foolbox.models.PyTorchModel(model,   # return logits in shape (bs, n_classes)
                                      bounds=(0., 1.), #num_classes=10,
                                      device=u.dev())
-n_images = 1000
-batchsize = 5
+n_images = 500
+batchsize = 20
 images, labels = load_batched_data(n_images,batchsize, bounds=(0., 1.))
 
 # user initialization
@@ -47,7 +47,7 @@ adv_class = np.array([]).reshape((0, params['n_adv_dims']))
 
 
 for i in range(len(images)):
-
+    print('Batch %d of %d: %.0d ')
     new_advs, new_dirs, new_classes, new_pert_lengths = run_batch(fmodel, images[i], labels[i], attack_params, **params)
 
     advs = np.concatenate([advs, new_advs], axis=0)
