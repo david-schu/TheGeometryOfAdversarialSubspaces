@@ -1,4 +1,5 @@
 import sys
+sys.path.insert(0, './..')
 sys.path.insert(0, '../AnalysisBySynthesis')
 sys.path.insert(0, '../data')
 
