@@ -40,8 +40,4 @@ def load_data(n, bounds=(0., 1.)):
     labels = torch.as_tensor(labels, device=u.dev())
     return images, labels
 
-def load_batched_data(n,batchsize,bounds=(0.,1.)):
-    images,labels = load_data(n=n,bounds=bounds)
-    batched_images = torch.split(images, batchsize, dim=0)
-    batched_labels = torch.split(labels, batchsize, dim=0)
-    return batched_images,batched_labels
+

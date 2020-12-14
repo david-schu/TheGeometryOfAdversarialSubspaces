@@ -1,23 +1,32 @@
 import matplotlib
 matplotlib.use('TkAgg')
 from matplotlib import pyplot as plt
-from matplotlib.ticker import FormatStrFormatter
 import numpy as np
 from utils import orth_check
+from matplotlib.ticker import FormatStrFormatter
 
+def plot_advs(advs, orig=None, n=10):
+    if not orig==None:
+        j=1
+    else:
+        j = 0
 
-def plot_advs(orig, advs, n):
     n = np.minimum(n,len(advs)) + 1
+    advs = np.reshape(advs,[-1,28,28])
     fig, ax = plt.subplots(1, n, squeeze=False)
-    ax[0, 0].set_title('original')
-    ax[0, 0].imshow(orig, cmap='gray', vmin=0, vmax=1)
-    ax[0, 0].set_xticks([])
-    ax[0, 0].set_yticks([])
+
+    if not orig==None:
+        orig = np.reshape(orig, [28, 28])
+        ax[0, 0].set_title('original')
+        ax[0, 0].imshow(orig, cmap='gray', vmin=0, vmax=1)
+        ax[0, 0].set_xticks([])
+        ax[0, 0].set_yticks([])
+
     for i, a in enumerate(advs[:n]):
-        ax[0, i + 1].set_title('Adversarial ' + str(i + 1))
-        ax[0, i + 1].imshow(a.reshape([28, 28]), cmap='gray', vmin=0, vmax=1)
-        ax[0, i + 1].set_xticks([])
-        ax[0, i + 1].set_yticks([])
+        ax[0, i + j].set_title('Adversarial ' + str(i + 1))
+        ax[0, i + j].imshow(a.reshape([28, 28]), cmap='gray', vmin=0, vmax=1)
+        ax[0, i + j].set_xticks([])
+        ax[0, i + j].set_yticks([])
     plt.show()
     return
 
@@ -51,18 +60,20 @@ def plot_pert_lengths(adv_class,pert_lengths):
     return
 
 
-def plot_losses(losses,):
+def plot_losses(losses, orth_const):
     idx = np.argmin(losses)
-
     fig, ax = plt.subplots(2, 2, squeeze=False)
     fig.subplots_adjust(hspace=0.5)
+    plt.suptitle('orth_const =' + str(orth_const))
     ax[0, 0].set_title('overall loss')
     ax[0, 0].plot(range(idx), losses[0, :idx])
     ax[0, 1].set_title('is_adversarial loss')
     ax[0, 1].plot(range(idx), losses[1, :idx])
     ax[1, 0].set_title('squared_norms loss')
     ax[1, 0].plot(range(idx), losses[2, :idx])
+    ax[1, 0].yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
     ax[1, 1].set_title('is_orth loss')
     ax[1, 1].plot(range(idx), losses[3, :idx])
+
     return fig, ax
 

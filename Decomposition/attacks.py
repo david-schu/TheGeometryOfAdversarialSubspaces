@@ -90,12 +90,12 @@ class CarliniWagner(fa.L2CarliniWagnerAttack):
 
             if len(dirs) == 0:
                 logits = model(adv)
-                is_orth = ep.zeros(delta, 1)
+                #is_orth = ep.zeros(delta, 1)
             else:
-                new_dir = (adv - reconstructed_x).reshape([dirs.shape[0], 1, dirs.shape[-1]])
-                is_orth = (new_dir * dirs).sum(axis=-1)
-                is_orth = is_orth.square().sum(axis=-1)
-                is_orth = is_orth * orth_const
+                # new_dir = (adv - reconstructed_x).reshape([dirs.shape[0], 1, dirs.shape[-1]])
+                # is_orth = (new_dir * dirs).sum(axis=-1)
+                # is_orth = is_orth.square().sum(axis=-1)
+                # is_orth = is_orth * orth_const
 
                 s = adv - reconstructed_x
                 gram_schmidt = ep.zeros_like(s)
@@ -125,9 +125,9 @@ class CarliniWagner(fa.L2CarliniWagnerAttack):
             squared_norms = (adv - reconstructed_x).flatten().square().sum(axis=-1)
 
             ######## by David ############
-            loss = is_adv_loss.sum() + squared_norms.sum() + is_orth.sum()
-            losses[binary_search_step, :, step] = np.array(
-                [loss.item(), is_adv_loss.sum().item(), squared_norms.sum().item(), is_orth.sum().item()])
+            loss = is_adv_loss.sum() + squared_norms.sum() #+ is_orth.sum()
+            # losses[binary_search_step, :, step] = np.array(
+            #     [loss.item(), is_adv_loss.sum().item(), squared_norms.sum().item(), is_orth.sum().item()])
             ###############################
 
             return loss, (adv, logits)
@@ -195,7 +195,7 @@ class CarliniWagner(fa.L2CarliniWagnerAttack):
             consts = np.where(
                 np.isinf(upper_bounds), consts_exponential_search, consts_binary_search
             )
-        if plot_loss and len(dirs):
-            np.save('./../data/losses' + str(orth_const) + '.npy', losses[best_binary_search_step])
+        # if plot_loss and len(dirs):
+        #     np.save('./../data/losses' + str(orth_const) + '.npy', losses[best_binary_search_step])
 
         return restore_type(best_advs)

@@ -14,7 +14,8 @@ def run_batch(fmodel,
               max_runs=100,
               early_stop=3,
               epsilons=[None],
-              plot_loss=False
+              plot_loss=False,
+              verbose=False
     ):
 
     # initialize variables
@@ -33,7 +34,8 @@ def run_batch(fmodel,
 
 
     for run in range(max_runs):
-        #print('Run %d - Adversarial Dimension %d...' % (run + 1, min_dim + 1))
+        if verbose:
+            print('Run %d - Adversarial Dimension %d...' % (run + 1, min_dim + 1))
 
         attack = OrthogonalAttack(input_attack=input_attack,
                                   params=attack_params,
@@ -74,7 +76,7 @@ def run_batch(fmodel,
         advs[~adv_found] = adv_dirs[~adv_found] = adv_class[~adv_found] = pert_lengths[~adv_found] = 0
 
         dirs = dirs_to_attack_format(adv_dirs)
-        min_dim = np.amax(np.sum(adv_found, axis=1))
+        min_dim = np.amin(np.sum(adv_found, axis=1))
         if min_dim == n_adv_dims:
             break
 
