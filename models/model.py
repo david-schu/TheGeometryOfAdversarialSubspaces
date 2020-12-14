@@ -142,7 +142,7 @@ class madry(torch.nn.Module):
         self.conv1 = torch.nn.Conv2d(1, 32, 5, padding=2)
         self.maxPool1 = torch.nn.MaxPool2d(kernel_size=2, stride=2)
         self.conv2 = torch.nn.Conv2d(32, 64, 5, padding=2)
-        self.maxPool2 = torch.nn.MaxPool2d(kernel_size=2,stride=2)
+        self.maxPool2 = torch.nn.MaxPool2d(kernel_size=2, stride=2)
         self.fc1 = nn.Linear(64 * 7 * 7, 1024)
         self.fc2 = nn.Linear(1024, 10)
 
@@ -153,7 +153,7 @@ class madry(torch.nn.Module):
         x = self.maxPool2(x)
         x = x.view(-1, 64 * 7 * 7)
         x = F.relu(self.fc1(x))
-        self.fc2(x)
+        x = self.fc2(x)
         return F.log_softmax(x, dim=-1)
 
     def trainTorch(self,

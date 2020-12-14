@@ -8,7 +8,7 @@ import foolbox
 from abs_models import models as mz, utils as u
 
 # own modules
-from utils import load_batched_data
+from utils import load_data
 from attacks import CarliniWagner
 from run_batch import run_batch
 

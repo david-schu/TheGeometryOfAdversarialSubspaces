@@ -3,13 +3,13 @@ from torchvision import datasets, transforms
 from models import model, eval
 
 # Initialize model and data loader
-model_normal = model.LeNet5()
-model_adv = model.LeNet5()
+model_normal = model.madry()
+model_adv = model.madry()
 if torch.cuda.is_available():
     model_normal = model_normal.cuda()
 nb_epochs = 8
 batch_size = 128
-learning_rate = 0.01
+learning_rate = 0.001
 
 train_loader = torch.utils.data.DataLoader(
     datasets.MNIST('./../data', train=True, download=True,

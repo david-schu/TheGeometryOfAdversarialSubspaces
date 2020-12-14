@@ -263,7 +263,6 @@ def get_NearestNeighbor():
 def get_madry(load_path='./../AnalysisBySynthesis/madry/mnist_challenge/models/adv_trained'):
     import tensorflow.compat.v1 as tf
     tf.disable_v2_behavior()
-    tf.enable_eager_execution()
     from madry.mnist_challenge.model import Model
     sess = tf.Session()
     model = Model()
