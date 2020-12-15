@@ -1,8 +1,7 @@
 import numpy as np
 import torch
 from attacks import OrthogonalAttack,CarliniWagner
-from utils import classification, dirs_to_attack_format
-from abs_models import utils as u
+from utils import classification, dirs_to_attack_format, dev
 
 def run_batch(fmodel,
               images,
@@ -21,7 +20,7 @@ def run_batch(fmodel,
     # initialize variables
     n_pixel = images.shape[-1] ** 2
     n_images = images.shape[0]
-    x_orig = u.t2n(images).reshape([n_images, n_pixel])
+    x_orig = images.detach().numpy().reshape([n_images, n_pixel])
 
     count = 0
     min_dim = 0
