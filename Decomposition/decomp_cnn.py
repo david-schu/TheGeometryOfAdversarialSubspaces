@@ -16,7 +16,7 @@ np.random.seed(0)
 torch.manual_seed(0)
 
 model = model.madry()
-model.load_state_dict(torch.load('./../models/normal.pt'))
+model.load_state_dict(torch.load('./../models/normal.pt', map_location=torch.device(dev())))
 model.eval()
 fmodel = foolbox.models.PyTorchModel(model,   # return logits in shape (bs, n_classes)
                                      bounds=(0., 1.), #num_classes=10,
