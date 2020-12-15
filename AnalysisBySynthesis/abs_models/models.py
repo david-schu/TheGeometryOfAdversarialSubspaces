@@ -260,7 +260,7 @@ def get_NearestNeighbor():
     return NN
 
 
-def get_madry(load_path='./../AnalysisBySynthesis/madry/mnist_challenge/models/adv_trained'):
+def get_madry(load_path='./../AnalysisBySynthesis/madry/mnist_challenge/tfModels/adv_trained'):
     import tensorflow.compat.v1 as tf
     tf.disable_v2_behavior()
     from madry.mnist_challenge.model import Model

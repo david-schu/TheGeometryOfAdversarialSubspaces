@@ -7,7 +7,8 @@ model_normal = model.madry()
 model_adv = model.madry()
 if torch.cuda.is_available():
     model_normal = model_normal.cuda()
-nb_epochs = 8
+    model_adv = model_adv.cuda()
+nb_epochs = 100
 batch_size = 128
 learning_rate = 0.001
 
@@ -20,12 +21,6 @@ test_loader = torch.utils.data.DataLoader(
     datasets.MNIST('./../data', train=False,
                    transform=transforms.ToTensor()),
     batch_size=batch_size)
-
-# Training the model
-model_madry = model.madry()
-model_madry.trainTorch(train_loader,nb_epochs,learning_rate)
-
-
 
 print("Training Model")
 model_normal.trainTorch(train_loader, nb_epochs, learning_rate)

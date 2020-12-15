@@ -23,7 +23,7 @@ fmodel = foolbox.models.PyTorchModel(model,   # return logits in shape (bs, n_cl
                                      device=u.dev())
 n_images = 500
 batchsize = 20
-images, labels = load_data(n_images,bounds=(0., 1.))
+images, labels = load_data(n_images, bounds=(0., 1.))
 batched_images = torch.split(images, batchsize, dim=0)
 batched_labels = torch.split(labels, batchsize, dim=0)
 # user initialization

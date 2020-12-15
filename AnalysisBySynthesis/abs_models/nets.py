@@ -167,7 +167,7 @@ class ConvDecoder(nn.Sequential):
             self.add_module('nl_%i' % i, act_fct())
 
 
-# Other models
+# Other tfModels
 # ------------
 
 class NN(Architectures):
