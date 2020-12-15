@@ -20,7 +20,7 @@ def run_batch(fmodel,
     # initialize variables
     n_pixel = images.shape[-1] ** 2
     n_images = images.shape[0]
-    x_orig = images.detach().numpy().reshape([n_images, n_pixel])
+    x_orig = images.cpu().detach().numpy().reshape([n_images, n_pixel])
 
     count = 0
     min_dim = 0
