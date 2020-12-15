@@ -8,7 +8,7 @@ model_adv = model.madry()
 if torch.cuda.is_available():
     model_normal = model_normal.cuda()
     model_adv = model_adv.cuda()
-nb_epochs = 100
+nb_epochs = 15
 batch_size = 128
 learning_rate = 0.001
 
