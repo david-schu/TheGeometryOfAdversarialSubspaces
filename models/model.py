@@ -52,7 +52,7 @@ class madry(torch.nn.Module):
                 loss = nn.CrossEntropyLoss()
                 output = loss(preds, ys)
                 output.backward()  # calc gradients
-                train_loss.append(loss.data.item())
+                train_loss.append(output.data.item())
                 optimizer.step()  # update gradients
 
                 preds_np = preds.cpu().detach().numpy()
@@ -93,7 +93,7 @@ class madry(torch.nn.Module):
                 loss = nn.CrossEntropyLoss()
                 output = loss(preds, ys)
                 output.backward()  # calc gradients
-                train_loss.append(loss.data.item())
+                train_loss.append(output.data.item())
                 optimizer.step()  # update gradients
                 preds_np = preds.cpu().detach().numpy()
                 correct += (np.argmax(preds_np, axis=1) == ys.cpu().detach().numpy()).sum()
@@ -114,9 +114,9 @@ class madry(torch.nn.Module):
                     xs, ys = xs.cuda(), ys.cuda()
                 optimizer.zero_grad()
                 preds = self(xs)
-                loss = nn.CrossEntropyLoss(preds, ys)
-                loss.backward()  # calc gradients
-                train_loss.append(loss.data.item())
+                output = loss(preds, ys)
+                output.backward()  # calc gradients
+                train_loss.append(output.data.item())
                 optimizer.step()  # update gradients
                 preds_np = preds.cpu().detach().numpy()
                 correctAdv += (np.argmax(preds_np, axis=1) == ys.cpu().detach().numpy()).sum()
