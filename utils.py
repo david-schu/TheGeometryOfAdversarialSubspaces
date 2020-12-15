@@ -1,8 +1,6 @@
 import numpy as np
 import torch
 import torchvision.datasets as datasets
-from abs_models import utils as u
-
 
 def orth_check(adv_dirs):
     orth = np.eye(len(adv_dirs))
@@ -26,7 +24,7 @@ def dirs_to_attack_format(dirs):
     attack_dirs = np.zeros([len(dirs), max_dim, dirs[0].shape[-1]])
     for i, d in enumerate(dirs):
         attack_dirs[i, :len(d)] = d
-    return torch.tensor(attack_dirs, device=u.dev())
+    return torch.tensor(attack_dirs, device=dev())
 
 
 def load_data(n, bounds=(0., 1.)):
@@ -36,8 +34,8 @@ def load_data(n, bounds=(0., 1.)):
     images = images.unsqueeze(1)
     labels = mnist.targets[:n]
 
-    images = torch.as_tensor(images, device=u.dev())
-    labels = torch.as_tensor(labels, device=u.dev())
+    images = torch.as_tensor(images, device=dev())
+    labels = torch.as_tensor(labels, device=dev())
     return images, labels
 
 def dev():
