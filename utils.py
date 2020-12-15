@@ -40,4 +40,9 @@ def load_data(n, bounds=(0., 1.)):
     labels = torch.as_tensor(labels, device=u.dev())
     return images, labels
 
+def dev():
+    if torch.cuda.is_available():
+        return 'cuda:0'
+    else:
+        return 'cpu'
 

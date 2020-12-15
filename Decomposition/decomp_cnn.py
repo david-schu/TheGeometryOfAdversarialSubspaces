@@ -1,31 +1,32 @@
 import sys
 sys.path.insert(0, './..')
-sys.path.insert(0, '../AnalysisBySynthesis')
 sys.path.insert(0, '../data')
 
 import numpy as np
 import torch
 import foolbox
-from abs_models import models as mz, utils as u
 
 # own modules
-from utils import load_data
+from utils import load_data, dev
 from attacks import CarliniWagner
 from run_batch import run_batch
+from models import model
 
 np.random.seed(0)
 torch.manual_seed(0)
 
-model = mz.get_CNN()                      # Vanilla CNN
+model = model.madry()
+model.load_state_dict(torch.load('./../models/normal.pt'))
 model.eval()
 fmodel = foolbox.models.PyTorchModel(model,   # return logits in shape (bs, n_classes)
                                      bounds=(0., 1.), #num_classes=10,
-                                     device=u.dev())
+                                     device=dev())
 n_images = 500
 batchsize = 20
 images, labels = load_data(n_images, bounds=(0., 1.))
 batched_images = torch.split(images, batchsize, dim=0)
 batched_labels = torch.split(labels, batchsize, dim=0)
+
 # user initialization
 attack_params = {
         'binary_search_steps':9,

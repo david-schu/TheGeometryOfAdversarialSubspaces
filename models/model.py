@@ -3,7 +3,7 @@ from torch import nn
 from torch.autograd import Variable
 from torch import optim
 import numpy as np
-from abs_models import utils as u
+import utils as u
 
 
 NB_EPOCHS = 4

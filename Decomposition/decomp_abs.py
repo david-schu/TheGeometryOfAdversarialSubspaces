@@ -49,7 +49,7 @@ pert_lengths = np.array([]).reshape((0, params['n_adv_dims']))
 adv_class = np.array([]).reshape((0, params['n_adv_dims']))
 
 
-for i in range(len(images)):
+for i in range(len(batched_images)):
     print('Batch %d of %d: %.0d%% done ...' % (i+1,len(images),i*100/len(images)))
     new_advs, new_dirs, new_classes, new_pert_lengths = run_batch(fmodel, batched_images[i], batched_labels[i], attack_params, **params)
 
