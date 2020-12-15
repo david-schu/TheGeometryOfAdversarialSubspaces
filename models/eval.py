@@ -1,10 +1,9 @@
 import torch
 from torch.autograd import Variable
 import numpy as np
-from abs_models import utils as u
 import foolbox
 from foolbox import attacks as fa
-
+import utils as u
 
 # Evaluate results on clean data
 def evalClean(model1=None, test_loader=None):
