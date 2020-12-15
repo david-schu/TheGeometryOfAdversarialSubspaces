@@ -24,7 +24,7 @@ test_loader = torch.utils.data.DataLoader(
                    transform=transforms.ToTensor()),
     batch_size=eval_batch_size)
 
-nb_epochs = int(max_num_training_steps/len(train_loader)) + 1
+nb_epochs = 8  #int(max_num_training_steps/len(train_loader)) + 1
 
 print("Training Model")
 model_normal.trainTorch(train_loader, nb_epochs, learning_rate)

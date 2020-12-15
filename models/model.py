@@ -105,7 +105,7 @@ class madry(torch.nn.Module):
                                                      bounds=(0., 1.),  # num_classes=10,
                                                      device=u.dev())
                 attack = fa.LinfProjectedGradientDescentAttack(abs_stepsize=0.01,
-                                                               steps=40,
+                                                               steps=100,
                                                                random_start=True, )
                 xs, _, success = attack(fmodel, xs, ys, epsilons=[0.3])
 
