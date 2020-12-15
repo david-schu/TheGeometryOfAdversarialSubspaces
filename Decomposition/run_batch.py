@@ -58,7 +58,7 @@ def run_batch(fmodel,
         for i, a in enumerate(adv[0]):
             if not success[0][i]:
                 continue
-            a_ = u.t2n(a.flatten())
+            a_ = a.flatten().cpu().detach.numpy()
             pert_length = np.linalg.norm(a_ - x_orig[i], ord=2)
             dim = np.sum(pert_lengths[i][np.nonzero(pert_lengths[i])] < pert_length)
 
