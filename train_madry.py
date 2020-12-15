@@ -12,7 +12,7 @@ if torch.cuda.is_available():
 max_num_training_steps = 100000
 train_batch_size = 50
 eval_batch_size = 200
-learning_rate = 0.001
+learning_rate = 1e-4
 
 train_loader = torch.utils.data.DataLoader(
     datasets.MNIST('./../data', train=True, download=True,
