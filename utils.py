@@ -21,10 +21,10 @@ def classification(img, model):
 
 def dirs_to_attack_format(dirs):
     max_dim = max(len(elem) for elem in dirs)
-    attack_dirs = np.zeros([len(dirs), max_dim, dirs[0].shape[-1]])
+    attack_dirs = torch.zeros([len(dirs), max_dim, dirs[0].shape[-1]])
     for i, d in enumerate(dirs):
         attack_dirs[i, :len(d)] = d
-    return torch.tensor(attack_dirs, device=dev())
+    return attack_dirs
 
 
 def load_data(n, bounds=(0., 1.)):
