@@ -21,7 +21,7 @@ model.eval()
 fmodel = foolbox.models.PyTorchModel(model,   # return logits in shape (bs, n_classes)
                                      bounds=(0., 1.), #num_classes=10,
                                      device=u.dev())
-n_images = 500
+n_images = 40
 batchsize = 20
 images, labels = load_data(n_images, bounds=(0., 1.))
 batched_images = torch.split(images, batchsize, dim=0)
