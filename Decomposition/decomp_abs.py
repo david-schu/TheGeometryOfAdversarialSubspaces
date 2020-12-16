@@ -9,7 +9,7 @@ import foolbox
 from abs_models import models as mz, utils as u
 
 # own modules
-from utils import load_data
+from utils import load_data,dev
 from attacks import CarliniWagner
 from run_batch import run_batch
 
@@ -43,10 +43,10 @@ params = {
     'plot_loss': False
 }
 
-advs = torch.tensor([]).reshape((0, params['n_adv_dims'], batched_images[0].shape[-1]**2))
-dirs = torch.tensor([]).reshape((0, params['n_adv_dims'], batched_images[0].shape[-1]**2))
-pert_lengths = torch.tensor([]).reshape((0, params['n_adv_dims']))
-adv_class = torch.tensor([]).reshape((0, params['n_adv_dims']))
+advs = torch.tensor([], device=dev()).reshape((0, params['n_adv_dims'], batched_images[0].shape[-1]**2))
+dirs = torch.tensor([], device=dev()).reshape((0, params['n_adv_dims'], batched_images[0].shape[-1]**2))
+pert_lengths = torch.tensor([], device=dev()).reshape((0, params['n_adv_dims']))
+adv_class = torch.tensor([], device=dev()).reshape((0, params['n_adv_dims']))
 
 
 for i in range(len(batched_images)):

@@ -1,6 +1,6 @@
 import torch
 from attacks import OrthogonalAttack,CarliniWagner
-from utils import classification, dirs_to_attack_format
+from utils import classification, dirs_to_attack_format, dev
 
 def run_batch(fmodel,
               images,
@@ -23,12 +23,12 @@ def run_batch(fmodel,
 
     count = 0
     min_dim = 0
-    pert_lengths = torch.zeros((n_images, n_adv_dims))
-    adv_class = torch.zeros((n_images, n_adv_dims))
-    advs = torch.zeros((n_images, n_adv_dims, n_pixel))
-    adv_dirs = torch.zeros((n_images, n_adv_dims, n_pixel))
-    adv_found = torch.full((n_images, n_adv_dims), False, dtype=bool)
-    dirs = torch.tensor([])
+    pert_lengths = torch.zeros((n_images, n_adv_dims), device=dev())
+    adv_class = torch.zeros((n_images, n_adv_dims), device=dev())
+    advs = torch.zeros((n_images, n_adv_dims, n_pixel), device=dev())
+    adv_dirs = torch.zeros((n_images, n_adv_dims, n_pixel), device=dev())
+    adv_found = torch.full((n_images, n_adv_dims), False, dtype=bool, device=dev())
+    dirs = torch.tensor([],device=dev())
 
 
     for run in range(max_runs):
