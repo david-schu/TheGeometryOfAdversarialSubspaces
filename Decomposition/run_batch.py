@@ -28,7 +28,7 @@ def run_batch(fmodel,
     advs = torch.zeros((n_images, n_adv_dims, n_pixel), device=dev())
     adv_dirs = torch.zeros((n_images, n_adv_dims, n_pixel), device=dev())
     adv_found = torch.full((n_images, n_adv_dims), False, dtype=bool, device=dev())
-    dirs = torch.tensor([],device=dev())
+    dirs = torch.tensor([], device=dev())
 
 
     for run in range(max_runs):
