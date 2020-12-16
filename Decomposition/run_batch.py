@@ -77,5 +77,5 @@ def run_batch(fmodel,
         min_dim = torch.min(torch.sum(adv_found, dim=1))
         if min_dim == n_adv_dims:
             break
-
+    print('Runs needed for %d directions: %d' % (n_adv_dims, run))
     return advs, adv_dirs, adv_class, pert_lengths
