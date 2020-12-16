@@ -1,7 +1,6 @@
-import numpy as np
 import torch
 from attacks import OrthogonalAttack,CarliniWagner
-from utils import classification, dirs_to_attack_format, dev
+from utils import classification, dirs_to_attack_format
 
 def run_batch(fmodel,
               images,
@@ -20,15 +19,15 @@ def run_batch(fmodel,
     # initialize variables
     n_pixel = images.shape[-1] ** 2
     n_images = images.shape[0]
-    x_orig = images.cpu().detach().numpy().reshape([n_images, n_pixel])
+    x_orig = images.reshape([n_images, n_pixel])
 
     count = 0
     min_dim = 0
-    pert_lengths = np.zeros((n_images, n_adv_dims))
-    adv_class = np.zeros((n_images, n_adv_dims))
-    advs = np.zeros((n_images, n_adv_dims, n_pixel))
-    adv_dirs = np.zeros((n_images, n_adv_dims, n_pixel))
-    adv_found = np.full((n_images, n_adv_dims), False, dtype=bool)
+    pert_lengths = torch.zeros((n_images, n_adv_dims))
+    adv_class = torch.zeros((n_images, n_adv_dims))
+    advs = torch.zeros((n_images, n_adv_dims, n_pixel))
+    adv_dirs = torch.zeros((n_images, n_adv_dims, n_pixel))
+    adv_found = torch.full((n_images, n_adv_dims), False, dtype=bool)
     dirs = torch.tensor([])
 
 
@@ -58,9 +57,9 @@ def run_batch(fmodel,
         for i, a in enumerate(adv[0]):
             if not success[0][i]:
                 continue
-            a_ = a.flatten().cpu().detach().numpy()
-            pert_length = np.linalg.norm(a_ - x_orig[i], ord=2)
-            dim = np.sum(pert_lengths[i][np.nonzero(pert_lengths[i])] < pert_length)
+            a_ = a.flatten()
+            pert_length = torch.norm(a_ - x_orig[i])
+            dim = torch.sum(pert_lengths[i][torch.nonzero(pert_lengths[i])] < pert_length)
 
             if dim >= n_adv_dims:
                 continue
@@ -75,7 +74,7 @@ def run_batch(fmodel,
         advs[~adv_found] = adv_dirs[~adv_found] = adv_class[~adv_found] = pert_lengths[~adv_found] = 0
 
         dirs = dirs_to_attack_format(adv_dirs)
-        min_dim = np.amin(np.sum(adv_found, axis=1))
+        min_dim = torch.min(torch.sum(adv_found, dim=1))
         if min_dim == n_adv_dims:
             break
 

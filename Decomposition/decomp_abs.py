@@ -31,7 +31,7 @@ batched_labels = torch.split(labels, batchsize, dim=0)
 attack_params = {
         'binary_search_steps':9,
         'initial_const':1e-2,
-        'steps':100,
+        'steps':5000,
         'confidence':1,
         'abort_early':True
     }
@@ -43,14 +43,14 @@ params = {
     'plot_loss': False
 }
 
-advs = np.array([]).reshape((0, params['n_adv_dims'], batched_images[0].shape[-1]**2))
-dirs = np.array([]).reshape((0, params['n_adv_dims'], batched_images[0].shape[-1]**2))
-pert_lengths = np.array([]).reshape((0, params['n_adv_dims']))
-adv_class = np.array([]).reshape((0, params['n_adv_dims']))
+advs = torch.tensor([]).reshape((0, params['n_adv_dims'], batched_images[0].shape[-1]**2))
+dirs = torch.tensor([]).reshape((0, params['n_adv_dims'], batched_images[0].shape[-1]**2))
+pert_lengths = torch.tensor([]).reshape((0, params['n_adv_dims']))
+adv_class = torch.tensor([]).reshape((0, params['n_adv_dims']))
 
 
 for i in range(len(batched_images)):
-    print('Batch %d of %d: %.0d%% done ...' % (i+1,len(images),i*100/len(images)))
+    print('Batch %d of %d: %.0d%% done ...' % (i+1,len(batched_images),i*100/len(batched_images)))
     new_advs, new_dirs, new_classes, new_pert_lengths = run_batch(fmodel, batched_images[i], batched_labels[i], attack_params, **params)
 
     advs = np.concatenate([advs, new_advs], axis=0)
@@ -63,7 +63,7 @@ for i in range(len(batched_images)):
         'dirs': dirs,
         'adv_class': adv_class,
         'pert_lengths': pert_lengths,
-        'images': images,
-        'labels': labels
+        'images': images.cpu().detach().numpy(),
+        'labels': labels.cpu().detach().numpy()
     }
     np.save('/home/bethge/dschultheiss/AdversarialDecomposition/data/abs.npy', data)

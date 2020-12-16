@@ -14,11 +14,12 @@ from matplotlib.ticker import FormatStrFormatter
 # plt.ylabel('l2 Perturbation Length')
 # plt.legend()
 
-data = np.load('../data/cnn.npy', allow_pickle=True).item()
-advs = data['advs']
+data = np.load('../data/cnn.npy', allow_pickle=True)
 pert_lengths = data['pert_lengths']
 classes = data['adv_class']
 dirs = data['dirs']
+images = data['images']
+labels = data['labels']
 
 # pl.show_orth(dirs[0])
 pl.plot_advs()
