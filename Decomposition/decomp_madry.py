@@ -53,10 +53,10 @@ for i in range(len(batched_images)):
     print('Batch %d of %d: %.0d%% done ...' % (i+1,len(batched_images),i*100/len(batched_images)))
     new_advs, new_dirs, new_classes, new_pert_lengths = run_batch(fmodel, batched_images[i], batched_labels[i], attack_params, **params)
 
-    advs = torch.concat([advs, new_advs], 0)
-    dirs = torch.concat([dirs, new_dirs], 0)
-    adv_class = torch.concat([adv_class, new_classes], 0)
-    pert_lengths = torch.concat([pert_lengths, new_pert_lengths], 0)
+    advs = torch.cat([advs, new_advs], 0)
+    dirs = torch.cat([dirs, new_dirs], 0)
+    adv_class = torch.cat([adv_class, new_classes], 0)
+    pert_lengths = torch.cat([pert_lengths, new_pert_lengths], 0)
 
     data = {
         'advs': advs.cpu().detach().numpy(),
