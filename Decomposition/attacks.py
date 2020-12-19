@@ -11,16 +11,17 @@ from foolbox.attacks.base import MinimizationAttack, T, get_criterion, raise_if_
 
 
 class OrthogonalAttack(MinimizationAttack):
-    def __init__(self, input_attack, params, adv_dirs=[], orth_const=50, plot_loss=False):
+    def __init__(self, input_attack, params, adv_dirs=[], orth_const=50, plot_loss=False, random_start=False):
         super(OrthogonalAttack,self).__init__()
         self.input_attack = input_attack(**params)
         self.distance = LpDistance(2)
         self.dirs = adv_dirs
         self.orth_const = orth_const
         self.plot_loss = plot_loss
+        self.random_start = random_start
 
     def run(self, model, inputs, criterion, **kwargs):
-        return self.input_attack.run(model, inputs, criterion, dirs=self.dirs, orth_const=self.orth_const, plot_loss=self.plot_loss, **kwargs)
+        return self.input_attack.run(model, inputs, criterion, dirs=self.dirs, orth_const=self.orth_const, plot_loss=self.plot_loss, random_start=self.random_start, **kwargs)
 
     def distance(self):
         ...
@@ -34,6 +35,7 @@ class CarliniWagner(fa.L2CarliniWagnerAttack):
         criterion: Union[Misclassification, TargetedMisclassification, T],
         *,
         early_stop: Optional[float] = None,
+        random_start: Optional[float] = None,
         dirs: Optional[Any] = [],
         orth_const: Optional[float] = 50,
         plot_loss: bool = False,
@@ -155,6 +157,9 @@ class CarliniWagner(fa.L2CarliniWagnerAttack):
 
             # create a new optimizer find the delta that minimizes the loss
             delta = ep.zeros_like(x_attack)
+            if random_start:
+                delta = delta.uniform(shape=delta.shape, low=0, high=0.1)
+
             optimizer = fa.carlini_wagner.AdamOptimizer(delta)
 
             # tracks whether adv with the current consts was found

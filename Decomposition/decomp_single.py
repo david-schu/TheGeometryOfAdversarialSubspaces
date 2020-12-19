@@ -16,42 +16,42 @@ np.random.seed(0)
 torch.manual_seed(0)
 
 model = model.madry()
-model.load_state_dict(torch.load('./../models/adv_trained.pt', map_location=torch.device(dev())))
+model.load_state_dict(torch.load('./../models/normal.pt', map_location=torch.device(dev())))
 model.eval()
 fmodel = foolbox.models.PyTorchModel(model,   # return logits in shape (bs, n_classes)
                                      bounds=(0., 1.), #num_classes=10,
                                      device=dev())
-n_images = 500
-batchsize = 20
+n_images = 1
+n_runs = 5
 images, labels = load_data(n_images, bounds=(0., 1.))
-batched_images = torch.split(images, batchsize, dim=0)
-batched_labels = torch.split(labels, batchsize, dim=0)
 
 # user initialization
 attack_params = {
         'binary_search_steps':9,
         'initial_const':1e-2,
-        'steps': 5000,
+        'steps':1000,
         'confidence':1,
-        'abort_early':True,
+        'abort_early':True
     }
+
 params = {
-    'n_adv_dims': 5,
+    'n_adv_dims': 10,
     'max_runs': 50,
     'early_stop': 3,
     'input_attack': CarliniWagner,
-    'plot_loss': False
+    'plot_loss': False,
+    'random_start': True
 }
 
-advs = torch.tensor([], device=dev()).reshape((0, params['n_adv_dims'], batched_images[0].shape[-1]**2))
-dirs = torch.tensor([], device=dev()).reshape((0, params['n_adv_dims'], batched_images[0].shape[-1]**2))
+advs = torch.tensor([], device=dev()).reshape((0, params['n_adv_dims'], images[0].shape[-1]**2))
+dirs = torch.tensor([], device=dev()).reshape((0, params['n_adv_dims'], images[0].shape[-1]**2))
 pert_lengths = torch.tensor([], device=dev()).reshape((0, params['n_adv_dims']))
 adv_class = torch.tensor([], device=dev()).reshape((0, params['n_adv_dims']))
 
 
-for i in range(len(batched_images)):
-    print('Batch %d of %d: %.0d%% done ...' % (i+1,len(batched_images),i*100/len(batched_images)))
-    new_advs, new_dirs, new_classes, new_pert_lengths = run_batch(fmodel, batched_images[i], batched_labels[i], attack_params, **params)
+for i in range(n_runs):
+    print('Run %d of %d: %.0d%% done ...' % (i+1, n_runs, i*100/n_runs))
+    new_advs, new_dirs, new_classes, new_pert_lengths = run_batch(fmodel, images, labels, attack_params, **params)
 
     advs = torch.cat([advs, new_advs], 0)
     dirs = torch.cat([dirs, new_dirs], 0)
@@ -66,4 +66,4 @@ for i in range(len(batched_images)):
         'images': images.cpu().detach().numpy(),
         'labels': labels.cpu().detach().numpy()
     }
-    np.save('/home/bethge/dschultheiss/AdversarialDecomposition/data/madry.npy', data)
+    np.save('/home/bethge/dschultheiss/AdversarialDecomposition/data/cnn_single.npy', data)

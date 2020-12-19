@@ -40,7 +40,8 @@ params = {
     'max_runs': 50,
     'early_stop': 3,
     'input_attack': CarliniWagner,
-    'plot_loss': False
+    'plot_loss': False,
+    'random_start': True
 }
 
 advs = torch.tensor([], device=dev()).reshape((0, params['n_adv_dims'], batched_images[0].shape[-1]**2))
@@ -50,7 +51,7 @@ adv_class = torch.tensor([], device=dev()).reshape((0, params['n_adv_dims']))
 
 
 for i in range(len(batched_images)):
-    print('Batch %d of %d: %.0d%% done ...' % (i+1,len(batched_images),i*100/len(batched_images)))
+    print('Batch %d of %d: %.0d%% done ...' % (i+1, len(batched_images), i*100/len(batched_images)))
     new_advs, new_dirs, new_classes, new_pert_lengths = run_batch(fmodel, batched_images[i], batched_labels[i], attack_params, **params)
 
     advs = torch.cat([advs, new_advs], 0)

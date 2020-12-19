@@ -7,6 +7,7 @@ def run_batch(fmodel,
               labels,
               attack_params,
               orth_const=50,
+              random_start=False,
               input_attack=CarliniWagner,
               n_adv_dims=3,
               max_runs=100,
@@ -39,7 +40,8 @@ def run_batch(fmodel,
                                   params=attack_params,
                                   adv_dirs=dirs,
                                   orth_const=orth_const,
-                                  plot_loss=plot_loss)
+                                  plot_loss=plot_loss,
+                                  random_start=random_start)
         adv, _, success = attack(fmodel, images, labels, epsilons=epsilons)
 
         # check if adversarials were found and stop early if not
