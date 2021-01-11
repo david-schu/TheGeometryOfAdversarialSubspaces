@@ -5,28 +5,47 @@ import numpy as np
 from utils import orth_check
 from matplotlib.ticker import FormatStrFormatter
 
-def plot_advs(advs, orig=None, n=10):
-    if not orig==None:
-        j=1
-    else:
+def plot_advs(advs, orig=None, classes=None, orig_class=None, n=10,vmin=0,vmax=1):
+    if orig is None:
         j = 0
+    else:
+        j = 1
+    with_classes = True
+    if classes is None:
+        with_classes = False
+    n = np.minimum(n, len(advs))
+    advs = np.reshape(advs, [-1,28,28])
+    fig, ax = plt.subplots(1, n + j, squeeze=False)
 
-    n = np.minimum(n,len(advs)) + 1
-    advs = np.reshape(advs,[-1,28,28])
-    fig, ax = plt.subplots(1, n, squeeze=False)
-
-    if not orig==None:
+    if not (orig is None):
         orig = np.reshape(orig, [28, 28])
         ax[0, 0].set_title('original')
-        ax[0, 0].imshow(orig, cmap='gray', vmin=0, vmax=1)
+        ax[0, 0].imshow(orig, cmap='gray', vmin=vmin, vmax=vmax)
         ax[0, 0].set_xticks([])
         ax[0, 0].set_yticks([])
 
     for i, a in enumerate(advs[:n]):
         ax[0, i + j].set_title('Adversarial ' + str(i + 1))
-        ax[0, i + j].imshow(a.reshape([28, 28]), cmap='gray', vmin=0, vmax=1)
+        if with_classes:
+            ax[0, i + j].set_xlabel(str(orig_class) + ' \u279E ' + str(int(classes[i])))
+        ax[0, i + j].imshow(a.reshape([28, 28]), cmap='gray', vmin=vmin, vmax=vmax)
         ax[0, i + j].set_xticks([])
         ax[0, i + j].set_yticks([])
+    plt.show()
+    return
+
+
+def plot_dirs(dirs, n=10, vmin=0, vmax=1):
+    n = np.minimum(n, len(dirs))
+    dirs = np.reshape(dirs, [-1,28,28])
+    fig, ax = plt.subplots(1, n, squeeze=False)
+
+    for i, d in enumerate(dirs[:n]):
+        ax[0, i].set_title('Perturbation ' + str(i + 1))
+        ax[0, i].imshow(d.reshape([28, 28]), cmap='gray', vmin=vmin, vmax=vmax)
+        ax[0, i].set_xticks([])
+        ax[0, i].set_yticks([])
+    plt.suptitle('Perturbations with magnification factor %.2f' % (1/vmax))
     plt.show()
     return
 
@@ -41,8 +60,8 @@ def show_orth(adv_dirs):
     plt.xticks([])
     plt.yticks([])
     plt.box()
-    plt.title('Orthorgonality of adversarial directions')
-    plt.show()
+    plt.title('Orthorgonality of adversarial directions', y=0.1)
+    # plt.show()
     return
 
 
@@ -50,9 +69,10 @@ def plot_pert_lengths(adv_class,pert_lengths):
     plt.figure(figsize=(7, 5))
     classes = np.unique(adv_class)
     for c in classes:
-        plt.scatter(np.argwhere(np.array(adv_class) == c),
+        plt.scatter(np.argwhere(np.array(adv_class) == c)+1,
                     pert_lengths[np.array(adv_class) == c],
                     label='target class ' + str(c))
+    plt.title('Perturbation lengths of first ' + str(len(pert_lengths)) + 'adversarial directions')
     plt.xlabel('n')
     plt.ylabel('adversarial vector length ($l2-norm$)')
     plt.legend()

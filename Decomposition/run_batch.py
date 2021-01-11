@@ -42,7 +42,7 @@ def run_batch(fmodel,
                                   orth_const=orth_const,
                                   plot_loss=plot_loss,
                                   random_start=random_start)
-        adv, _, success = attack(fmodel, images, labels, epsilons=epsilons)
+        _, adv, success = attack(fmodel, images, labels, epsilons=epsilons)
 
         # check if adversarials were found and stop early if not
         if success.sum() == 0:
