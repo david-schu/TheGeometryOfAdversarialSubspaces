@@ -1,6 +1,11 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import plots as pl
+from models import model
+import torch
+from utils import dev
+import foolbox
+import utils as u
 from matplotlib.ticker import FormatStrFormatter
 # data = np.load('../data/orth_const/orth_consts.npy',allow_pickle=True).item()
 
@@ -22,61 +27,21 @@ classes = data['adv_class']
 dirs = data['dirs']
 images = data['images']
 labels = data['labels']
-#
-# # pert_lengths=pert_lengths[:, :7]
-# pert_lengths[pert_lengths==0] = np.nan
-# pert_lengths_mean = np.nanmean(pert_lengths,axis=0)
-# pert_lengths_var = np.nanstd(pert_lengths, axis=0)
-# plt.errorbar(np.arange(len(pert_lengths_mean))+1, pert_lengths_mean, pert_lengths_var, fmt='o', alpha=0.7)
 
-### madry
-data = np.load('../data/madry.npy', allow_pickle=True).item()
-advs = data['advs']
-pert_lengths = data['pert_lengths']
-classes = data['adv_class']
-dirs = data['dirs']
-images = data['images']
-labels = data['labels']
+model = model.madry()
+model.load_state_dict(torch.load('./../models/normal.pt', map_location=torch.device(dev())))
+model.eval()
+fmodel = foolbox.models.PyTorchModel(model,
+                                     bounds=(0., 1.),
+                                     device=u.dev())
 
-# pert_lengths=pert_lengths[:, :7]n
-# pert_lengths[pert_lengths==0] = np.nan
-# pert_lengths_mean = np.nanmean(pert_lengths,axis=0)
-# pert_lengths_var = np.nanstd(pert_lengths, axis=0)
-# plt.errorbar(np.arange(len(pert_lengths_mean))+1, pert_lengths_mean, pert_lengths_var, fmt='o', alpha=0.7)
-#
-# plt.title('Perturbation length of first ' + str(pert_lengths.shape[-1]) + ' adversarial directions')
-# plt.xlabel('n')
-# plt.xticks(np.arange(len(pert_lengths_mean))+1)
-# plt.ylabel('adversarial vector length ($l2-norm$)')
-# plt.ylim(0)
-# plt.legend(["CNN - no adversarial training", "CNN - with adversarial training"], loc='lower right')
-# plt.show()
-
-### ABS
-data = np.load('../data/abs.npy', allow_pickle=True).item()
-advs = data['advs']
-pert_lengths = data['pert_lengths']
-classes = data['adv_class']
-dirs = data['dirs']
-images = data['images']
-labels = data['labels']
-
-# pert_lengths=pert_lengths[:, :7]
-pert_lengths[pert_lengths==0] = np.nan
-pert_lengths_mean = np.nanmean(pert_lengths,axis=0)
-pert_lengths_var = np.nanstd(pert_lengths, axis=0)
-plt.errorbar(np.arange(len(pert_lengths_mean))+1, pert_lengths_mean, pert_lengths_var, fmt='o')
+pl.plot_cw_surface(images[0],advs[0,0], advs[0,1], model)
 
 
-plt.title('Perturbation length of first ' + str(pert_lengths.shape[-1]) + ' adversarial directions')
-plt.xlabel('n')
-plt.xticks(np.arange(len(pert_lengths_mean))+1)
-plt.ylabel('adversarial vector length ($l2-norm$)')
-plt.ylim(0)
 
-plt.legend(["ABS"])
-plt.show()
-print('Done')
+classes[pert_lengths==0] = np.nan
+pl.plot_label_heatmap(classes, labels, show_all=False)
+
 
 
 cnn = np.load('../data/cnn.npy', allow_pickle=True).item()

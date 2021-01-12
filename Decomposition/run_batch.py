@@ -25,7 +25,7 @@ def run_batch(fmodel,
     count = 0
     min_dim = 0
     pert_lengths = torch.zeros((n_images, n_adv_dims), device=dev())
-    adv_class = torch.zeros((n_images, n_adv_dims), device=dev())
+    adv_class = torch.zeros((n_images, n_adv_dims), device=dev(), dtype=int)
     advs = torch.zeros((n_images, n_adv_dims, n_pixel), device=dev())
     adv_dirs = torch.zeros((n_images, n_adv_dims, n_pixel), device=dev())
     adv_found = torch.full((n_images, n_adv_dims), False, dtype=bool, device=dev())
@@ -79,5 +79,5 @@ def run_batch(fmodel,
         min_dim = torch.min(torch.sum(adv_found, dim=1))
         if min_dim == n_adv_dims:
             break
-    print('Runs needed for %d directions: %d' % (n_adv_dims, run))
+    print('Runs needed for %d directions: %d' % (n_adv_dims, run + 1 ))
     return advs, adv_dirs, adv_class, pert_lengths

@@ -21,8 +21,8 @@ model.eval()
 fmodel = foolbox.models.PyTorchModel(model,   # return logits in shape (bs, n_classes)
                                      bounds=(0., 1.), #num_classes=10,
                                      device=dev())
-n_images = 500
-batchsize = 20
+n_images = 100
+batchsize = 10
 images, labels = load_data(n_images, bounds=(0., 1.))
 batched_images = torch.split(images, batchsize, dim=0)
 batched_labels = torch.split(labels, batchsize, dim=0)
@@ -58,12 +58,18 @@ for i in range(len(batched_images)):
     adv_class = torch.cat([adv_class, new_classes], 0)
     pert_lengths = torch.cat([pert_lengths, new_pert_lengths], 0)
 
-    data = {
-        'advs': advs.cpu().detach().numpy(),
-        'dirs': dirs.cpu().detach().numpy(),
-        'adv_class': adv_class.cpu().detach().numpy(),
-        'pert_lengths': pert_lengths.cpu().detach().numpy(),
-        'images': images.cpu().detach().numpy(),
-        'labels': labels.cpu().detach().numpy()
-    }
-    np.save('/home/bethge/dschultheiss/AdversarialDecomposition/data/madry.npy', data)
+pert_lengths = pert_lengths.cpu().detach().numpy()
+adv_class = adv_class.cpu().detach().numpy()
+pert_lengths[pert_lengths==0] = np.nan
+adv_class[pert_lengths==0] = np.nan
+
+
+data = {
+    'advs': advs.cpu().detach().numpy(),
+    'dirs': dirs.cpu().detach().numpy(),
+    'adv_class': adv_class,
+    'pert_lengths': pert_lengths,
+    'images': images.cpu().detach().numpy(),
+    'labels': labels.cpu().detach().numpy()
+}
+np.save('/home/bethge/dschultheiss/AdversarialDecomposition/data/madry.npy', data)
