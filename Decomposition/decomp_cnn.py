@@ -31,12 +31,12 @@ batched_labels = torch.split(labels, batchsize, dim=0)
 attack_params = {
         'binary_search_steps':9,
         'initial_const':1e-2,
-        'steps':5000,
+        'steps':500,
         'confidence':1,
         'abort_early':True
     }
 params = {
-    'n_adv_dims': 5,
+    'n_adv_dims': 1,
     'max_runs': 50,
     'early_stop': 3,
     'input_attack': CarliniWagner,
