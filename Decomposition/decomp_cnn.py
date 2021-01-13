@@ -31,7 +31,7 @@ batched_labels = torch.split(labels, batchsize, dim=0)
 attack_params = {
         'binary_search_steps':9,
         'initial_const':1e-2,
-        'steps':500,
+        'steps':5000,
         'confidence':1,
         'abort_early':True
     }
