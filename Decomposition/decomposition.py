@@ -4,23 +4,11 @@ import plots as pl
 from models import model
 import torch
 from utils import dev
-import foolbox
-import utils as u
 from matplotlib.ticker import FormatStrFormatter
-# data = np.load('../data/orth_const/orth_consts.npy',allow_pickle=True).item()
-
-# pert_lengths = data['pert_lengths'][::2]
-# orth_consts = data['orth_consts'][::2]
-# plt.figure()
-# for i, p in enumerate(pert_lengths):
-#     mean_pert_lengths = np.mean(p[p[:,1]>0], axis=0)
-#     plt.scatter([0,1],mean_pert_lengths, label=str(orth_consts[i]))
-# plt.xlabel('Adversarial Dimension')
-# plt.ylabel('l2 Perturbation Length')
-# plt.legend()
 
 
-data = np.load('../data/cnn.npy', allow_pickle=True).item()
+
+data = np.load('../data/cnn_single.npy', allow_pickle=True).item()
 advs = data['advs']
 pert_lengths = data['pert_lengths']
 classes = data['adv_class']
@@ -31,9 +19,7 @@ labels = data['labels']
 model = model.madry()
 model.load_state_dict(torch.load('./../models/normal.pt', map_location=torch.device(dev())))
 model.eval()
-fmodel = foolbox.models.PyTorchModel(model,
-                                     bounds=(0., 1.),
-                                     device=u.dev())
+
 
 pl.plot_cw_surface(images[0],advs[0,0], advs[0,1], model)
 

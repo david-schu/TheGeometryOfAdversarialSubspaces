@@ -187,7 +187,10 @@ def plot_cw_surface(orig, adv1, adv2, model):
     advs = orig + (dir1*np.ravel(X)[:,np.newaxis] + dir2*np.ravel(Y)[:, np.newaxis])
     advs = np.array(np.reshape(advs, (-1,1,28,28)).astype('float64'),dtype='float32')
 
-    preds = model(torch.tensor(advs)).detach().cpu().numpy()
+    input = torch.split(torch.tensor(advs),20)
+    preds = np.empty((0,10))
+    for batch in input:
+        preds = np.concatenate((preds, model(batch).detach().cpu().numpy()),axis=0)
     preds = np.exp(preds) / np.sum(np.exp(preds), axis=-1)[:, np.newaxis]
     orig_pred = model(torch.tensor(np.reshape(orig, (1, 1, 28, 28)))).detach().cpu().numpy()
     label = np.argmax(orig_pred)
