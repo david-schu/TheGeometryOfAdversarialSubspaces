@@ -29,11 +29,11 @@ batched_labels = torch.split(labels, batchsize, dim=0)
 
 # user initialization
 attack_params = {
-        'binary_search_steps':9,
-        'initial_const':1e-2,
+        'binary_search_steps': 9,
+        'initial_const': 1e-2,
         'steps': 5000,
-        'confidence':1,
-        'abort_early':True,
+        'confidence': 1,
+        'abort_early': True,
     }
 params = {
     'n_adv_dims': 5,

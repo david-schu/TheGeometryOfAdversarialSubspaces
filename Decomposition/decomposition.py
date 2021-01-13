@@ -8,7 +8,7 @@ from matplotlib.ticker import FormatStrFormatter
 
 
 
-data = np.load('../data/cnn_single.npy', allow_pickle=True).item()
+data = np.load('../data/jo.npy', allow_pickle=True).item()
 advs = data['advs']
 pert_lengths = data['pert_lengths']
 classes = data['adv_class']
@@ -16,9 +16,13 @@ dirs = data['dirs']
 images = data['images']
 labels = data['labels']
 
+pl.plot_mean_advs(advs, images, classes, labels, pert_lengths)
+
+
 model = model.madry()
-model.load_state_dict(torch.load('./../models/normal.pt', map_location=torch.device(dev())))
+model.load_state_dict(torch.load('./../models/natural.pt', map_location=torch.device(dev())))
 model.eval()
+
 
 
 pl.plot_cw_surface(images[0],advs[0,0], advs[0,1], model)

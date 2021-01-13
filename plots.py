@@ -4,6 +4,7 @@ from matplotlib import pyplot as plt
 import numpy as np
 from utils import orth_check
 from matplotlib.ticker import FormatStrFormatter
+import matplotlib.patches as mpatches
 import torch
 
 
@@ -34,6 +35,15 @@ def plot_advs(advs, orig=None, classes=None, orig_class=None, n=10,vmin=0,vmax=1
         ax[0, i + j].set_xticks([])
         ax[0, i + j].set_yticks([])
     plt.show()
+    return
+
+
+def plot_mean_advs(advs, images, classes, labels, pert_lengths, n=10, vmin=0, vmax=1):
+
+    mean_pert_length = np.mean(pert_lengths, axis=0)
+    dist_to_mean = np.sum(np.abs(pert_lengths - mean_pert_length), axis=-1)
+    min_idx = np.argmin(dist_to_mean)
+    plot_advs(advs[min_idx], images[min_idx], classes[min_idx], labels[min_idx], n=n, vmin=vmin, vmax=vmax)
     return
 
 
@@ -68,17 +78,16 @@ def show_orth(adv_dirs):
 
 
 def plot_pert_lengths(pert_lengths, n=5, labels=None):
-    n = np.minimum(n, pert_lengths.shape[-1])
+    n = np.minimum(n, pert_lengths[0].shape[-1])
 
     for p in pert_lengths:
         p = p[:, :n]
         p[p == 0] = np.nan
-        pert_lengths_mean = np.nanmean(p, axis=0)
-        pert_lengths_std = np.nanstd(p, axis=0)
-        plt.errorbar(np.arange(len(pert_lengths_mean))+1, pert_lengths_mean, pert_lengths_std, fmt='o', alpha=0.7)
-    plt.title('Perturbation length of first ' + str(pert_lengths.shape[-1]) + ' adversarial directions')
+        mask = ~np.isnan(p)
+        filtered_data = [d[m] for d, m in zip(p.T, mask.T)]
+        plt.boxplot(filtered_data)
+    plt.title('Perturbation length of first ' + str(n) + ' adversarial directions')
     plt.xlabel('n')
-    plt.xticks(np.arange(len(pert_lengths_mean))+1)
     plt.ylabel('adversarial vector length ($l2-norm$)')
     plt.ylim(0)
     if not (labels is None):
@@ -181,33 +190,41 @@ def plot_cw_surface(orig, adv1, adv2, model):
     dir1 = adv1 - orig
     dir2 = adv2 - orig
 
-    x = np.linspace(-2,2,100)
-    y = np.linspace(-2,2,100)
+    n_grid = 100
+    x = np.linspace(-2, 2, n_grid)
+    y = np.linspace(-2, 2, n_grid)
     X, Y = np.meshgrid(x, y)
-    advs = orig + (dir1*np.ravel(X)[:,np.newaxis] + dir2*np.ravel(Y)[:, np.newaxis])
+    advs = orig + (dir1*np.reshape(X,(-1,1)) + dir2*np.reshape(Y,(-1,1)))
     advs = np.array(np.reshape(advs, (-1,1,28,28)).astype('float64'),dtype='float32')
-
     input = torch.split(torch.tensor(advs),20)
+
     preds = np.empty((0,10))
     for batch in input:
         preds = np.concatenate((preds, model(batch).detach().cpu().numpy()),axis=0)
     preds = np.exp(preds) / np.sum(np.exp(preds), axis=-1)[:, np.newaxis]
     orig_pred = model(torch.tensor(np.reshape(orig, (1, 1, 28, 28)))).detach().cpu().numpy()
+
     label = np.argmax(orig_pred)
-
-    conf = preds[:,label].reshape((100,100))
-    classes = np.argmax(preds,axis=-1).reshape((100,100))
-
-
+    conf = preds[:,label].reshape((n_grid,n_grid))
+    classes = np.argmax(preds,axis=-1).reshape((n_grid,n_grid))
 
     fig = plt.figure()
     ax = fig.gca(projection='3d')
     plot_colors = np.empty(X.shape, dtype=object)
-    colors = ['tab:orange', 'tab:blue', 'tab:green', 'tab:purple', 'tab:red']
+    colors = ['tab:orange', 'tab:blue', 'tab:green', 'tab:purple', 'tab:red', 'tab:brown', 'tab:grey', 'tab:pink', 'tab:cyan', 'tab:olive']
+    labels = []
     for i, c in enumerate(np.unique(classes)):
-        plot_colors[classes==c] = colors[i]
+        labels.append(mpatches.Patch(color=colors[c], label='Class ' + str(c)))
+        plot_colors[classes == c] = colors[c]
+
     # Plot the surface.
     ax.plot_surface(X, Y, conf, linewidth=0, antialiased=False, facecolors=plot_colors)
+    ax.set_xlabel('dir 1')
+    ax.set_ylabel('dir 2')
+    ax.set_zlabel('confidence in original class')
+
+    # Add legend with proxy artists
+    plt.legend(handles=labels)
 
 
     plt.show()
