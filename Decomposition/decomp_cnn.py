@@ -21,8 +21,8 @@ model.eval()
 fmodel = foolbox.models.PyTorchModel(model,   # return logits in shape (bs, n_classes)
                                      bounds=(0., 1.), #num_classes=10,
                                      device=dev())
-n_images = 10
-batchsize = 10
+n_images = 15
+batchsize = 3
 images, labels = load_data(n_images, bounds=(0., 1.))
 batched_images = torch.split(images, batchsize, dim=0)
 batched_labels = torch.split(labels, batchsize, dim=0)
@@ -31,12 +31,12 @@ batched_labels = torch.split(labels, batchsize, dim=0)
 attack_params = {
         'binary_search_steps':9,
         'initial_const':1e-2,
-        'steps':5000,
+        'steps':500,
         'confidence':1,
         'abort_early':True
     }
 params = {
-    'n_adv_dims': 1,
+    'n_adv_dims': 3,
     'max_runs': 50,
     'early_stop': 3,
     'input_attack': CarliniWagner,

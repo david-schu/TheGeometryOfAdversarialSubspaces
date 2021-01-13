@@ -57,7 +57,7 @@ def run_batch(fmodel,
 
         classes = classification(adv[0], fmodel)
         for i, a in enumerate(adv[0]):
-            if not success[0][i]:
+            if not success[0,i]:
                 continue
             a_ = a.flatten()
             pert_length = torch.norm(a_ - x_orig[i])
@@ -73,7 +73,10 @@ def run_batch(fmodel,
             adv_found[i, dim] = True
             adv_found[i,dim+1:] = False
 
-        advs[~adv_found] = adv_dirs[~adv_found] = adv_class[~adv_found] = pert_lengths[~adv_found] = 0
+        advs[~adv_found] = 0
+        adv_dirs[~adv_found] = 0
+        adv_class[~adv_found] = 0
+        pert_lengths[~adv_found] = 0
 
         dirs = dirs_to_attack_format(adv_dirs)
         min_dim = torch.min(torch.sum(adv_found, dim=1))
