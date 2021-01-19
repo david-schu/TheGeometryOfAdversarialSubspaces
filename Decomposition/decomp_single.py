@@ -12,8 +12,8 @@ from attacks import CarliniWagner
 from run_batch import run_batch
 from models import model
 
-np.random.seed(0)
-torch.manual_seed(0)
+np.random.seed(120)
+torch.manual_seed(120)
 
 model = model.madry()
 model.load_state_dict(torch.load('./../models/natural.pt', map_location=torch.device(dev())))
@@ -21,10 +21,11 @@ model.eval()
 fmodel = foolbox.models.PyTorchModel(model,   # return logits in shape (bs, n_classes)
                                      bounds=(0., 1.), #num_classes=10,
                                      device=dev())
-n_images = 1
+n_images = 5
 n_runs = 10
 images, labels = load_data(n_images, bounds=(0., 1.))
-
+images = images[3].unsqueeze(0)
+labels = labels[3].unsqueeze(0)
 # user initialization
 attack_params = {
         'binary_search_steps':9,
@@ -66,4 +67,4 @@ for i in range(n_runs):
         'images': images.cpu().detach().numpy(),
         'labels': labels.cpu().detach().numpy()
     }
-    np.save('/home/bethge/dschultheiss/AdversarialDecomposition/data/cnn_single.npy', data)
+np.save('/home/bethge/dschultheiss/AdversarialDecomposition/data/cnn_single.npy', data)
