@@ -15,12 +15,12 @@ eval_batch_size = 200
 learning_rate = 1e-4
 
 train_loader = torch.utils.data.DataLoader(
-    datasets.MNIST('./../data', train=True, download=True,
+    datasets.MNIST('./data', train=True, download=True,
                    transform=transforms.ToTensor()),
     batch_size=train_batch_size, shuffle=True)
 
 test_loader = torch.utils.data.DataLoader(
-    datasets.MNIST('./../data', train=False,
+    datasets.MNIST('./data', train=False,
                    transform=transforms.ToTensor()),
     batch_size=eval_batch_size)
 

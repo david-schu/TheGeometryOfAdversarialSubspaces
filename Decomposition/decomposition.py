@@ -4,11 +4,12 @@ import plots as pl
 from models import model
 import torch
 from utils import dev
+from abs_models import models as mz
 from matplotlib.ticker import FormatStrFormatter
 
 
 
-data = np.load('../data/jo.npy', allow_pickle=True).item()
+data = np.load('../data/cnn.npy', allow_pickle=True).item()
 advs = data['advs']
 pert_lengths = data['pert_lengths']
 classes = data['adv_class']
@@ -16,16 +17,22 @@ dirs = data['dirs']
 images = data['images']
 labels = data['labels']
 
-pl.plot_mean_advs(advs, images, classes, labels, pert_lengths)
+pl.plot_var_hist(classes,labels,'Natural CNN - 5 Adv. Directions')
 
+model_natural = model.madry()
+model_madry = model.madry()
+model_abs = mz.get_ABS(n_iter=50)
+model_natural.load_state_dict(torch.load('./../models/natural.pt', map_location=torch.device(dev())))
+model_madry.load_state_dict(torch.load('./../models/adv_trained.pt', map_location=torch.device(dev())))
 
-model = model.madry()
-model.load_state_dict(torch.load('./../models/natural.pt', map_location=torch.device(dev())))
-model.eval()
-
-
-
-pl.plot_cw_surface(images[0],advs[0,0], advs[0,1], model)
+mean_pert_length = np.mean(pert_lengths, axis=0)
+dist_to_mean = np.sum(np.abs(pert_lengths - mean_pert_length), axis=-1)
+min_idx = np.argmin(dist_to_mean)
+print(classes[min_idx])
+for i in range(1,5):
+    pl.plot_cw_surface(images[min_idx], advs[min_idx,0], advs[min_idx,i], model_natural)
+    pl.plot_cw_surface(images[min_idx], advs[min_idx, 0], advs[min_idx, i], model_madry)
+    pl.plot_cw_surface(images[min_idx], advs[min_idx, 0], advs[min_idx, i], model_abs)
 
 
 

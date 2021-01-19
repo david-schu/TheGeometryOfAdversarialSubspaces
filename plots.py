@@ -14,11 +14,19 @@ def plot_advs(advs, orig=None, classes=None, orig_class=None, n=10,vmin=0,vmax=1
     else:
         j = 1
     with_classes = True
+
     if classes is None:
         with_classes = False
+
     n = np.minimum(n, len(advs))
+    dirs = advs - np.reshape(orig, (1,-1))
+
+    max_val = np.maximum(abs(np.min(dirs)), abs(np.max(dirs)))
+    min_val = - max_val
+
+    dirs = np.reshape(dirs, [-1,28,28])
     advs = np.reshape(advs, [-1,28,28])
-    fig, ax = plt.subplots(1, n + j, squeeze=False)
+    fig, ax = plt.subplots(2, n + j, squeeze=False)
 
     if not (orig is None):
         orig = np.reshape(orig, [28, 28])
@@ -27,13 +35,24 @@ def plot_advs(advs, orig=None, classes=None, orig_class=None, n=10,vmin=0,vmax=1
         ax[0, 0].set_xticks([])
         ax[0, 0].set_yticks([])
 
-    for i, a in enumerate(advs[:n]):
+        ax[1, 0].axis('off')
+
+    for i, (a, d) in enumerate(zip(advs[:n], dirs[:n])):
         ax[0, i + j].set_title('Adversarial ' + str(i + 1))
         if with_classes:
             ax[0, i + j].set_xlabel(str(orig_class) + ' \u279E ' + str(int(classes[i])))
-        ax[0, i + j].imshow(a.reshape([28, 28]), cmap='gray', vmin=vmin, vmax=vmax)
+        im_adv = ax[0, i + j].imshow(a.reshape([28, 28]), cmap='gray', vmin=vmin, vmax=vmax)
         ax[0, i + j].set_xticks([])
         ax[0, i + j].set_yticks([])
+        ax[1, i + j].set_title('Perturbation ' + str(i + 1))
+
+        im_pert = ax[1, i + j].imshow(d.reshape([28, 28]), vmin=min_val, vmax=max_val)
+        ax[1, i + j].set_xticks([])
+        ax[1, i + j].set_yticks([])
+
+    #ax[1, n+j-1].set_xlabel('magnification factor ' + str(np.round(1/max_val, 2)), horizontalalignment='right', x=1.0)
+    fig.colorbar(im_adv, ax=ax[0, :].ravel().tolist(), shrink=0.7)
+    fig.colorbar(im_pert, ax=ax[1, :].ravel().tolist(), shrink=0.7)
     plt.show()
     return
 
@@ -44,21 +63,6 @@ def plot_mean_advs(advs, images, classes, labels, pert_lengths, n=10, vmin=0, vm
     dist_to_mean = np.sum(np.abs(pert_lengths - mean_pert_length), axis=-1)
     min_idx = np.argmin(dist_to_mean)
     plot_advs(advs[min_idx], images[min_idx], classes[min_idx], labels[min_idx], n=n, vmin=vmin, vmax=vmax)
-    return
-
-
-def plot_dirs(dirs, n=10, vmin=0, vmax=1):
-    n = np.minimum(n, len(dirs))
-    dirs = np.reshape(dirs, [-1,28,28])
-    fig, ax = plt.subplots(1, n, squeeze=False)
-
-    for i, d in enumerate(dirs[:n]):
-        ax[0, i].set_title('Perturbation ' + str(i + 1))
-        ax[0, i].imshow(d.reshape([28, 28]), cmap='gray', vmin=vmin, vmax=vmax)
-        ax[0, i].set_xticks([])
-        ax[0, i].set_yticks([])
-    plt.suptitle('Perturbations with magnification factor %.2f' % (1/vmax))
-    plt.show()
     return
 
 
@@ -138,7 +142,6 @@ def plot_label_heatmap(classes, labels, show_all=True):
         adv_table[i, u.astype(int)] = counts/sum(counts)
 
     if show_all:
-
         n = classes.shape[-1]+1
         cols = int(np.ceil(n/2))
         rows = int(np.ceil(n/cols))
@@ -191,8 +194,9 @@ def plot_cw_surface(orig, adv1, adv2, model):
     dir2 = adv2 - orig
 
     n_grid = 100
-    x = np.linspace(-2, 2, n_grid)
-    y = np.linspace(-2, 2, n_grid)
+    len_grid = 2
+    x = np.linspace(-len_grid, len_grid, n_grid)
+    y = np.linspace(-len_grid, len_grid, n_grid)
     X, Y = np.meshgrid(x, y)
     advs = orig + (dir1*np.reshape(X,(-1,1)) + dir2*np.reshape(Y,(-1,1)))
     advs = np.array(np.reshape(advs, (-1,1,28,28)).astype('float64'),dtype='float32')
@@ -222,6 +226,7 @@ def plot_cw_surface(orig, adv1, adv2, model):
     ax.set_xlabel('dir 1')
     ax.set_ylabel('dir 2')
     ax.set_zlabel('confidence in original class')
+    ax.set_zlim((0,1))
 
     # Add legend with proxy artists
     plt.legend(handles=labels)
@@ -230,3 +235,26 @@ def plot_cw_surface(orig, adv1, adv2, model):
     plt.show()
     return
 
+
+def plot_var_hist(classes, labels, title=None):
+    bar_width = 0.4
+    colors = ['tab:orange', 'tab:blue', 'tab:green', 'tab:purple', 'tab:red', 'tab:brown', 'tab:grey', 'tab:pink',
+              'tab:cyan', 'tab:olive']
+    data = np.zeros((10,10))
+    for l in range(10):
+        var = np.mean(np.array([len(np.unique(x)) for x in classes[labels == l]]))
+        u, c = np.unique(classes[labels == l], return_counts=True)
+        data[u.astype(int),l] = c / np.sum(c) * var
+
+    y_off = np.zeros(10)
+    for idx in range(10):
+        plt.bar(range(10), data[idx], bar_width, bottom=y_off,color=colors[idx])
+        y_off += data[idx]
+    plt.xlabel('original class label')
+    plt.ylabel('mean number of target classes')
+    plt.legend(['0','1', '2', '3', '4', '5', '6', '7', '8', '9'], title='target class', bbox_to_anchor=(1.05, 1), loc='upper left')
+    plt.xticks(range(10))
+    plt.title(title)
+    plt.tight_layout()
+    plt.show()
+    return

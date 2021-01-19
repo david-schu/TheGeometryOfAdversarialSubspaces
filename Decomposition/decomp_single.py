@@ -22,7 +22,7 @@ fmodel = foolbox.models.PyTorchModel(model,   # return logits in shape (bs, n_cl
                                      bounds=(0., 1.), #num_classes=10,
                                      device=dev())
 n_images = 1
-n_runs = 5
+n_runs = 10
 images, labels = load_data(n_images, bounds=(0., 1.))
 
 # user initialization
