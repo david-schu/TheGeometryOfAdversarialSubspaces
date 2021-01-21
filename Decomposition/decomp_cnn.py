@@ -41,7 +41,8 @@ params = {
     'early_stop': 3,
     'input_attack': CarliniWagner,
     'plot_loss': False,
-    'random_start': True
+    'random_start': True,
+    'epsilons': [0.3]
 }
 
 advs = torch.tensor([], device=dev()).reshape((0, params['n_adv_dims'], batched_images[0].shape[-1]**2))
@@ -72,4 +73,4 @@ data = {
     'images': images.cpu().detach().numpy(),
     'labels': labels.cpu().detach().numpy()
 }
-np.save('/home/bethge/dschultheiss/AdversarialDecomposition/data/cnn.npy', data)
+np.save('/home/bethge/dschultheiss/AdversarialDecomposition/data/cnn_epsilon.npy', data)
