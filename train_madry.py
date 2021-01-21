@@ -13,6 +13,7 @@ max_num_training_steps = 100000
 train_batch_size = 50
 eval_batch_size = 200
 learning_rate = 1e-4
+epsilon=[0.7]
 
 train_loader = torch.utils.data.DataLoader(
     datasets.MNIST('./data', train=True, download=True,
@@ -31,15 +32,15 @@ model_normal.trainTorch(train_loader, nb_epochs, learning_rate)
 
 # Evaluation
 eval.evalClean(model_normal, test_loader)
-eval.evalAdvAttack(model_normal, test_loader)
+eval.evalAdvAttack(model_normal, test_loader, epsilon=epsilon)
 
 print("Training on Adversarial Samples")
-model_adv.advTrain(train_loader, nb_epochs, learning_rate)
+model_adv.advTrain(train_loader, nb_epochs, learning_rate, epsilon=epsilon)
 
 # Evaluating Again
 eval.evalClean(model_adv, test_loader)
-eval.evalAdvAttack(model_adv, test_loader)
+eval.evalAdvAttack(model_adv, test_loader, epsilon=epsilon)
 
-torch.save(model_normal.state_dict(), 'models/normal.pt')
-torch.save(model_adv.state_dict(), 'models/adv_trained.pt')
+# torch.save(model_normal.state_dict(), 'models/normal.pt')
+torch.save(model_adv.state_dict(), 'models/adv_trained_large_epsilon.pt')
 print('Done')

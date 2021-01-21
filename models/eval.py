@@ -26,12 +26,16 @@ def evalClean(model1=None, test_loader=None):
 
 
 # Evaluate results on adversarially perturbed
-def evalAdvAttack(model=None, test_loader=None):
+def evalAdvAttack(model=None, test_loader=None, epsilon = [0.3]):
     print("Evaluating single model results on adv data")
     total = 0
     correct = 0
     model.eval()
+    # count=0
     for xs, ys in test_loader:
+        # if count>0:
+        #     break
+        # count+=1
         if torch.cuda.is_available():
             xs, ys = xs.cuda(), ys.cuda()
         # pytorch fast gradient method
@@ -39,10 +43,11 @@ def evalAdvAttack(model=None, test_loader=None):
         fmodel = foolbox.models.PyTorchModel(model,  # return logits in shape (bs, n_classes)
                                              bounds=(0., 1.),  # num_classes=10,
                                              device=u.dev())
-        attack = fa.LinfProjectedGradientDescentAttack(abs_stepsize=0.01,
-                                                       steps=100,
-                                                       random_start=True, )
-        xs, _, success = attack(fmodel, xs, ys, epsilons=[0.3])
+        attack = fa.L2CarliniWagnerAttack(steps=100)
+        # attack = fa.LinfProjectedGradientDescentAttack(abs_stepsize=0.01,
+        #                                                steps=1000,
+        #                                                random_start=True, )
+        xs, _, success = attack(fmodel, xs, ys, epsilons=epsilon)
         xs, ys = Variable(xs[0]), Variable(ys)
         preds1 = model(xs)
         preds_np1 = preds1.cpu().detach().numpy()

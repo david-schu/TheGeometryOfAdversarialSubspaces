@@ -69,7 +69,8 @@ class madry(torch.nn.Module):
     def advTrain(self,
                  train_loader,
                  nb_epochs=NB_EPOCHS,
-                 learning_rate=LEARNING_RATE
+                 learning_rate=LEARNING_RATE,
+                 epsilon=[0.3]
                  ):
         import foolbox
         from foolbox import attacks as fa
@@ -107,7 +108,7 @@ class madry(torch.nn.Module):
                 attack = fa.LinfProjectedGradientDescentAttack(abs_stepsize=0.01,
                                                                steps=100,
                                                                random_start=True, )
-                xs, _, success = attack(fmodel, xs, ys, epsilons=[0.3])
+                xs, _, success = attack(fmodel, xs, ys, epsilons=epsilon)
 
                 xs, ys = Variable(xs[0]), Variable(ys)
                 if torch.cuda.is_available():

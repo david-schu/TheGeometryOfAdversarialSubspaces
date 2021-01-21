@@ -6,6 +6,8 @@ from utils import orth_check
 from matplotlib.ticker import FormatStrFormatter
 import matplotlib.patches as mpatches
 import torch
+from mpl_toolkits.mplot3d import art3d
+from matplotlib.colors import ListedColormap
 
 
 def plot_advs(advs, orig=None, classes=None, orig_class=None, n=10,vmin=0,vmax=1):
@@ -76,26 +78,35 @@ def show_orth(adv_dirs):
     plt.xticks([])
     plt.yticks([])
     plt.box()
-    plt.title('Orthorgonality of adversarial directions', y=0.1)
+    plt.title('Orthorgonality of adversarial directions', y=0.9)
     # plt.show()
     return
 
 
 def plot_pert_lengths(pert_lengths, n=5, labels=None):
     n = np.minimum(n, pert_lengths[0].shape[-1])
+    colors = ['tab:blue', 'tab:orange', 'tab:green']
+    l = []
+    for i, p in enumerate(pert_lengths):
+        boxprops = dict(color=colors[i], linewidth=1.5, alpha=0.7)
+        whiskerprops = dict(color=colors[i], alpha=0.7)
+        capprops = dict(color=colors[i], alpha=0.7)
+        medianprops = dict(linestyle=None, linewidth=0)
+        meanpointprops = dict(marker='o', markeredgecolor='black',
+                              markerfacecolor=colors[i])
+        l.append(mpatches.Patch(color=colors[i], label=labels[i]))
 
-    for p in pert_lengths:
         p = p[:, :n]
         p[p == 0] = np.nan
         mask = ~np.isnan(p)
         filtered_data = [d[m] for d, m in zip(p.T, mask.T)]
-        plt.boxplot(filtered_data)
+        plt.boxplot(filtered_data, whis=[10,90], showfliers=False, showmeans=True, boxprops=boxprops,
+                    whiskerprops=whiskerprops, capprops=capprops, meanprops=meanpointprops, medianprops=medianprops)
     plt.title('Perturbation length of first ' + str(n) + ' adversarial directions')
     plt.xlabel('n')
     plt.ylabel('adversarial vector length ($l2-norm$)')
-    plt.ylim(0)
     if not (labels is None):
-        plt.legend(labels)
+        plt.legend(handles=l)
     plt.show()
     return
 
@@ -207,6 +218,7 @@ def plot_cw_surface(orig, adv1, adv2, model):
         preds = np.concatenate((preds, model(batch).detach().cpu().numpy()),axis=0)
     preds = np.exp(preds) / np.sum(np.exp(preds), axis=-1)[:, np.newaxis]
     orig_pred = model(torch.tensor(np.reshape(orig, (1, 1, 28, 28)))).detach().cpu().numpy()
+    orig_pred = np.exp(orig_pred) / np.sum(np.exp(orig_pred), axis=-1)[:, np.newaxis]
 
     label = np.argmax(orig_pred)
     conf = preds[:,label].reshape((n_grid,n_grid))
@@ -215,14 +227,19 @@ def plot_cw_surface(orig, adv1, adv2, model):
     fig = plt.figure()
     ax = fig.gca(projection='3d')
     plot_colors = np.empty(X.shape, dtype=object)
-    colors = ['tab:orange', 'tab:blue', 'tab:green', 'tab:purple', 'tab:red', 'tab:brown', 'tab:grey', 'tab:pink', 'tab:cyan', 'tab:olive']
+    colors = ['tab:blue', 'tab:orange', 'tab:green', 'tab:brown', 'tab:grey', 'tab:pink', 'tab:cyan', 'tab:olive']
     labels = []
     for i, c in enumerate(np.unique(classes)):
-        labels.append(mpatches.Patch(color=colors[c], label='Class ' + str(c)))
-        plot_colors[classes == c] = colors[c]
+        labels.append(mpatches.Patch(color=colors[i], label='Class ' + str(c)))
+        plot_colors[classes == c] = colors[i]
 
     # Plot the surface.
     ax.plot_surface(X, Y, conf, linewidth=0, antialiased=False, facecolors=plot_colors)
+    p = mpatches.Circle((0, 0), .05, ec='tab:red', fc='tab:red')
+    ax.add_patch(p)
+    art3d.pathpatch_2d_to_3d(p, z=orig_pred[0, label], zdir='z')
+
+
     ax.set_xlabel('dir 1')
     ax.set_ylabel('dir 2')
     ax.set_zlabel('confidence in original class')
@@ -230,15 +247,62 @@ def plot_cw_surface(orig, adv1, adv2, model):
 
     # Add legend with proxy artists
     plt.legend(handles=labels)
+    plt.show()
+    return
 
+
+def plot_dec_space(orig, adv1, adv2, model):
+    orig = np.reshape(orig, (784))
+    dir1 = adv1 - orig
+    dir2 = adv2 - orig
+
+    n_grid = 100
+    len_grid = 2
+    x = np.linspace(-len_grid, len_grid, n_grid)
+    y = np.linspace(-len_grid, len_grid, n_grid)
+    X, Y = np.meshgrid(x, y)
+    advs = orig + (dir1 * np.reshape(X, (-1, 1)) + dir2 * np.reshape(Y, (-1, 1)))
+    advs = np.array(np.reshape(advs, (-1, 1, 28, 28)).astype('float64'), dtype='float32')
+    input = torch.split(torch.tensor(advs), 20)
+
+    preds = np.empty((0, 10))
+    for batch in input:
+        preds = np.concatenate((preds, model(batch).detach().cpu().numpy()), axis=0)
+
+    classes = np.argmax(preds, axis=-1).reshape((n_grid, n_grid))
+
+    fig = plt.figure()
+    ax = plt.gca()
+    colors = ['tab:blue', 'tab:orange', 'tab:green', 'tab:brown', 'tab:grey', 'tab:pink',
+              'tab:cyan', 'tab:olive']
+    labels = []
+    for i, c in enumerate(np.unique(classes)):
+        labels.append(mpatches.Patch(color=colors[i], label='Class ' + str(c)))
+
+    # Plot the surface.
+    new_cmap = ListedColormap(colors[:len(np.unique(classes))])
+
+    plt.imshow(classes, cmap=new_cmap, origin='lower', vmin=0, vmax=9)
+    plt.plot(n_grid/2, n_grid/2, c='tab:red', marker='o')
+    plt.plot(3/4*n_grid, n_grid/2, c='purple', marker='o')
+    plt.plot(n_grid/2, 3/4*n_grid, c='purple', marker='o')
+
+    ax.set_xlabel('dir 1')
+    ax.set_ylabel('dir 2')
+    plt.xticks(np.linspace(0,n_grid-1,9), [np.round(x,2).astype(str) for x in np.linspace(-2,2,9)])
+    plt.yticks(np.linspace(0,n_grid-1,9), [np.round(x,2).astype(str) for x in np.linspace(-2,2,9)])
+
+    # Add legend with proxy artists
+    plt.legend(handles=labels)
 
     plt.show()
     return
 
 
+
 def plot_var_hist(classes, labels, title=None):
     bar_width = 0.4
-    colors = ['tab:orange', 'tab:blue', 'tab:green', 'tab:purple', 'tab:red', 'tab:brown', 'tab:grey', 'tab:pink',
+    colors = ['tab:blue', 'tab:orange', 'tab:green', 'tab:purple', 'tab:red', 'tab:brown', 'tab:grey', 'tab:pink',
               'tab:cyan', 'tab:olive']
     data = np.zeros((10,10))
     for l in range(10):
