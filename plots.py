@@ -139,7 +139,7 @@ def plot_pert_lengths(advs, images, n=10, labels=None, ord=2):
     if ord == np.inf:
         plt.ylabel('adversarial vector length ($\mathcal{l}_\infty-norm$)')
     else:
-        plt.ylabel('adversarial vector length ($\mathcal{l}_{}-norm$)'.format(ord))
+        plt.ylabel('adversarial vector length ($\mathcal{l}_%d-norm$)' % (ord))
     if not (labels is None):
         plt.legend(handles=l)
     plt.show()

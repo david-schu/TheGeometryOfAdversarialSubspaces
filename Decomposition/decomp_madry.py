@@ -27,23 +27,21 @@ batchsize = 10
 load_pre_data =True
 
 if load_pre_data:
-    data_load = np.load('/home/bethge/dschultheiss/AdversarialDecomposition/data/madry.npy', allow_pickle=True).item()
-    pre_advs = torch.split(torch.tensor(data_load['advs'],device=dev()), batchsize, dim=0)
-    pre_dirs = torch.split(torch.tensor(data_load['dirs'],device=dev()), batchsize, dim=0)
-    pre_class = torch.split(torch.tensor(data_load['adv_class'],device=dev()), batchsize, dim=0)
-    pre_pert_lengths = torch.split(torch.tensor(data_load['pert_lengths'],device=dev()), batchsize, dim=0)
-    pre_adv_found = torch.split(torch.tensor(~np.isnan(data_load['pert_lengths']),device=dev()), batchsize, dim=0)
+    data_load = np.load('/home/bethge/dschultheiss/AdversarialDecomposition/data/cnn.npy', allow_pickle=True).item()
+    pre_advs = torch.split(torch.tensor(data_load['advs'], device=dev()), batchsize, dim=0)
+    pre_dirs = torch.split(torch.tensor(data_load['dirs'], device=dev()), batchsize, dim=0)
+    pre_class = torch.split(torch.tensor(data_load['adv_class'], device=dev()), batchsize, dim=0)
+    pre_pert_lengths = torch.split(torch.tensor(data_load['pert_lengths'], device=dev()), batchsize, dim=0)
+    pre_adv_found = torch.split(torch.tensor(~np.isnan(data_load['pert_lengths']), device=dev()), batchsize, dim=0)
+    images = torch.tensor(data_load['images'], device=dev())
+    labels = torch.tensor(data_load['labels'], device=dev())
+
 else:
     images, labels = load_data(n_images, bounds=(0., 1.))
     pre_data = None
 
-images = torch.tensor(data_load['images'])
-labels = torch.tensor(data_load['labels'])
-
 batched_images = torch.split(images, batchsize, dim=0)
 batched_labels = torch.split(labels, batchsize, dim=0)
-
-
 
 # user initialization
 attack_params = {
