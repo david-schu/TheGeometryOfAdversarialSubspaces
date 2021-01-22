@@ -16,7 +16,7 @@ np.random.seed(0)
 torch.manual_seed(0)
 
 model = model.madry()
-model.load_state_dict(torch.load('./../models/adv_trained.pt', map_location=torch.device(dev())))
+model.load_state_dict(torch.load('./../models/adv_trained_l2.pt', map_location=torch.device(dev())))
 model.eval()
 fmodel = foolbox.models.PyTorchModel(model,   # return logits in shape (bs, n_classes)
                                      bounds=(0., 1.), #num_classes=10,
@@ -24,7 +24,7 @@ fmodel = foolbox.models.PyTorchModel(model,   # return logits in shape (bs, n_cl
 n_images = 500
 batchsize = 10
 
-load_pre_data =True
+load_pre_data = False
 
 if load_pre_data:
     data_load = np.load('/home/bethge/dschultheiss/AdversarialDecomposition/data/cnn.npy', allow_pickle=True).item()
@@ -95,4 +95,4 @@ data = {
     'images': images.cpu().detach().numpy(),
     'labels': labels.cpu().detach().numpy()
 }
-np.save('/home/bethge/dschultheiss/AdversarialDecomposition/data/madry.npy', data)
+np.save('/home/bethge/dschultheiss/AdversarialDecomposition/data/madry_l2.npy', data)

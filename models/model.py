@@ -107,7 +107,7 @@ class madry(torch.nn.Module):
                                                      device=u.dev())
                 attack = fa.L2ProjectedGradientDescentAttack(abs_stepsize=0.01,
                                                                steps=100,
-                                                               random_start=True, )
+                                                               random_start=True)
                 xs, _, success = attack(fmodel, xs, ys, epsilons=epsilon)
 
                 xs, ys = Variable(xs[0]), Variable(ys)
