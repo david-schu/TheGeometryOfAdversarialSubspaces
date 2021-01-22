@@ -13,7 +13,7 @@ max_num_training_steps = 100000
 train_batch_size = 50
 eval_batch_size = 200
 learning_rate = 1e-4
-epsilon=[0.5]
+epsilon=[0.3]
 
 train_loader = torch.utils.data.DataLoader(
     datasets.MNIST('./data', train=True, download=True,

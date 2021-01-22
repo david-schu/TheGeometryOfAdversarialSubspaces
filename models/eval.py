@@ -26,7 +26,7 @@ def evalClean(model1=None, test_loader=None):
 
 
 # Evaluate results on adversarially perturbed
-def evalAdvAttack(model=None, test_loader=None, epsilon = [0.3]):
+def evalAdvAttack(model=None, test_loader=None, epsilon=[0.3]):
     print("Evaluating single model results on adv data")
     total = 0
     correct = 0

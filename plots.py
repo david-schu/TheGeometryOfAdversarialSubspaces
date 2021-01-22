@@ -83,11 +83,41 @@ def show_orth(adv_dirs):
     return
 
 
-def plot_pert_lengths(pert_lengths, n=5, labels=None):
-    n = np.minimum(n, pert_lengths[0].shape[-1])
+def plot_pert_len_difs(advs_natural, advs_robust, images, n=10, ord=2):
+    n = np.minimum(n, advs_natural[0].shape[-2])
+    pert_len_natural = np.linalg.norm(advs_natural - images.reshape((-1, 1, 784)), ord=ord, axis=-1)
+    pert_len_robust = np.linalg.norm(advs_robust - images.reshape((-1, 1, 784)), ord=ord, axis=-1)
+    pert_len_natural[np.all(advs_natural == 0, axis=-1)] = np.nan
+    pert_len_robust[np.all(advs_robust == 0, axis=-1)] = np.nan
+
+    pert_len_difs = pert_len_robust - pert_len_natural
+    pert_len_difs = pert_len_difs[:, :n]
+    mask = ~np.isnan(pert_len_difs)
+    filtered_data = [d[m] for d, m in zip(pert_len_difs.T, mask.T)]
+
+    boxprops = dict(color='tab:blue', linewidth=1.5, alpha=0.7)
+    whiskerprops = dict(color='tab:blue', alpha=0.7)
+    capprops = dict(color='tab:blue', alpha=0.7)
+    medianprops = dict(linestyle=None, linewidth=0)
+    meanpointprops = dict(marker='o', markeredgecolor='black',
+                          markerfacecolor='tab:orange')
+    plt.boxplot(filtered_data, whis=[10, 90], showfliers=False, showmeans=True, boxprops=boxprops,
+                whiskerprops=whiskerprops, capprops=capprops, meanprops=meanpointprops, medianprops=medianprops)
+    plt.title('Difference of perturbation lengths between robust and natural model')
+    plt.xlabel('n')
+    if ord == np.inf:
+        plt.ylabel('adversarial vector length ($\mathcal{l}_\infty-norm$)')
+    else:
+        plt.ylabel('adversarial vector length ($\mathcal{l}_%d-norm$)' % (ord))
+    plt.show()
+    return
+
+
+def plot_pert_lengths(advs, images, n=10, labels=None, ord=2):
+    n = np.minimum(n, advs[0].shape[-2])
     colors = ['tab:blue', 'tab:orange', 'tab:green']
     l = []
-    for i, p in enumerate(pert_lengths):
+    for i, (ad, im) in enumerate(zip(advs, images)):
         boxprops = dict(color=colors[i], linewidth=1.5, alpha=0.7)
         whiskerprops = dict(color=colors[i], alpha=0.7)
         capprops = dict(color=colors[i], alpha=0.7)
@@ -96,15 +126,20 @@ def plot_pert_lengths(pert_lengths, n=5, labels=None):
                               markerfacecolor=colors[i])
         l.append(mpatches.Patch(color=colors[i], label=labels[i]))
 
-        p = p[:, :n]
-        p[p == 0] = np.nan
-        mask = ~np.isnan(p)
-        filtered_data = [d[m] for d, m in zip(p.T, mask.T)]
+
+        pert_lengths = np.linalg.norm(ad-im.reshape((-1, 1, 784)), ord=ord, axis=-1)
+        pert_lengths[np.all(ad==0,axis=-1)] = np.nan
+        pert_lengths = pert_lengths[:, :n]
+        mask = ~np.isnan(pert_lengths)
+        filtered_data = [d[m] for d, m in zip(pert_lengths.T, mask.T)]
         plt.boxplot(filtered_data, whis=[10,90], showfliers=False, showmeans=True, boxprops=boxprops,
                     whiskerprops=whiskerprops, capprops=capprops, meanprops=meanpointprops, medianprops=medianprops)
     plt.title('Perturbation length of first ' + str(n) + ' adversarial directions')
     plt.xlabel('n')
-    plt.ylabel('adversarial vector length ($l2-norm$)')
+    if ord == np.inf:
+        plt.ylabel('adversarial vector length ($\mathcal{l}_\infty-norm$)')
+    else:
+        plt.ylabel('adversarial vector length ($\mathcal{l}_{}-norm$)'.format(ord))
     if not (labels is None):
         plt.legend(handles=l)
     plt.show()
@@ -297,7 +332,6 @@ def plot_dec_space(orig, adv1, adv2, model):
 
     plt.show()
     return
-
 
 
 def plot_var_hist(classes, labels, title=None):

@@ -1,13 +1,14 @@
 import torch
-from attacks import OrthogonalAttack,CarliniWagner
+from attacks import OrthogonalAttack, CarliniWagner
 from utils import classification, dirs_to_attack_format, dev
 
 def run_batch(fmodel,
               images,
               labels,
               attack_params,
+              pre_data=None,
               orth_const=50,
-              random_start=False,
+              random_start=True,
               input_attack=CarliniWagner,
               n_adv_dims=3,
               max_runs=100,
@@ -24,6 +25,7 @@ def run_batch(fmodel,
 
     count = 0
     min_dim = 0
+
     pert_lengths = torch.zeros((n_images, n_adv_dims), device=dev())
     adv_class = torch.zeros((n_images, n_adv_dims), device=dev(), dtype=int)
     advs = torch.zeros((n_images, n_adv_dims, n_pixel), device=dev())
@@ -31,6 +33,17 @@ def run_batch(fmodel,
     adv_found = torch.full((n_images, n_adv_dims), False, dtype=bool, device=dev())
     dirs = torch.tensor([], device=dev())
 
+    if not pre_data is None:
+        adv_found[:, :pre_data['adv_found'].shape[-1]] = pre_data['adv_found']
+        pert_lengths[:, :pre_data['adv_found'].shape[-1]] = pre_data['pert_lengths']
+        adv_class[:, :pre_data['adv_found'].shape[-1]] = pre_data['adv_class']
+        advs[:, :pre_data['adv_found'].shape[-1]] = pre_data['advs']
+        adv_dirs[:, :pre_data['adv_found'].shape[-1]] = pre_data['adv_dirs']
+        advs[~adv_found] = 0
+        adv_dirs[~adv_found] = 0
+        adv_class[~adv_found] = 0
+        pert_lengths[~adv_found] = 0
+        dirs = dirs_to_attack_format(adv_dirs)
 
     for run in range(max_runs):
         if verbose:
@@ -83,4 +96,4 @@ def run_batch(fmodel,
         if min_dim == n_adv_dims:
             break
     print('Runs needed for %d directions: %d' % (n_adv_dims, run + 1 ))
-    return advs, adv_dirs, adv_class, pert_lengths
+    return advs, adv_dirs, adv_class, pert_lengths, adv_found
