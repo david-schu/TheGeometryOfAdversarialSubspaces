@@ -42,5 +42,5 @@ eval.evalClean(model_adv, test_loader)
 eval.evalAdvAttack(model_adv, test_loader, epsilon=epsilon)
 
 # torch.save(model_normal.state_dict(), 'models/normal.pt')
-torch.save(model_adv.state_dict(), 'models/adv_trained_large_epsilon.pt')
+torch.save(model_adv.state_dict(), 'models/adv_trained_l2.pt')
 print('Done')
