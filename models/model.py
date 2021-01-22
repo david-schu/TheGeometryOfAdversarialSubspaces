@@ -105,7 +105,7 @@ class madry(torch.nn.Module):
                 fmodel = foolbox.models.PyTorchModel(self,  # return logits in shape (bs, n_classes)
                                                      bounds=(0., 1.),  # num_classes=10,
                                                      device=u.dev())
-                attack = fa.LinfProjectedGradientDescentAttack(abs_stepsize=0.01,
+                attack = fa.L2ProjectedGradientDescentAttack(abs_stepsize=0.01,
                                                                steps=100,
                                                                random_start=True, )
                 xs, _, success = attack(fmodel, xs, ys, epsilons=epsilon)

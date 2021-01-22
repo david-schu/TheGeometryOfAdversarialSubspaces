@@ -43,7 +43,7 @@ def evalAdvAttack(model=None, test_loader=None, epsilon=[0.3]):
         fmodel = foolbox.models.PyTorchModel(model,  # return logits in shape (bs, n_classes)
                                              bounds=(0., 1.),  # num_classes=10,
                                              device=u.dev())
-        attack = fa.LinfProjectedGradientDescentAttack(abs_stepsize=0.01,
+        attack = fa.L2ProjectedGradientDescentAttack(abs_stepsize=0.01,
                                                        steps=100,
                                                        random_start=True)
         xs, _, success = attack(fmodel, xs, ys, epsilons=epsilon)
