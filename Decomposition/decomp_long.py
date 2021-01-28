@@ -50,7 +50,7 @@ fmodel = foolbox.models.PyTorchModel(model,   # return logits in shape (bs, n_cl
 
 # load batched data
 images, labels = load_data(100, bounds=(0., 1.))
-_, unique_idx = np.unique(labels, return_index=True)
+_, unique_idx = np.unique(labels.cpu().detach().numpy(), return_index=True)
 images = images[unique_idx]
 labels = labels[unique_idx]
 
