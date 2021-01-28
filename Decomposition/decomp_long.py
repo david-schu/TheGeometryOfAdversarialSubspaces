@@ -5,7 +5,6 @@ sys.path.insert(0, '../data')
 import numpy as np
 import torch
 import foolbox
-from abs_models import models as mz
 
 # own modules
 from utils import load_data, dev
@@ -43,7 +42,6 @@ torch.manual_seed(369)
 model = model.madry()
 model.load_state_dict(torch.load('./../models/natural.pt', map_location=torch.device(dev())))       # natural cnn - same architecture as madry robust model
 # model.load_state_dict(torch.load('./../models/madry.pt', map_location=torch.device(dev())))      # madry cnn
-# model = mz.get_VAE(n_iter=50)   # ABS model
 
 model.eval()
 fmodel = foolbox.models.PyTorchModel(model,   # return logits in shape (bs, n_classes)
