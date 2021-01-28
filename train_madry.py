@@ -13,7 +13,7 @@ max_num_training_steps = 100000
 train_batch_size = 50
 eval_batch_size = 200
 learning_rate = 1e-4
-epsilon=[0.3]
+epsilon=[1]
 
 train_loader = torch.utils.data.DataLoader(
     datasets.MNIST('./data', train=True, download=True,
@@ -42,5 +42,5 @@ eval.evalClean(model_adv, test_loader)
 eval.evalAdvAttack(model_adv, test_loader, epsilon=epsilon)
 
 # torch.save(model_normal.state_dict(), 'models/normal.pt')
-torch.save(model_adv.state_dict(), 'models/adv_trained_l2.pt')
+# torch.save(model_adv.state_dict(), 'models/adv_trained_l2.pt')
 print('Done')
