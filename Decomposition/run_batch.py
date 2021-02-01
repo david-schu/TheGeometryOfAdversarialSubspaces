@@ -95,7 +95,7 @@ def run_batch(fmodel,
         adv_class[~adv_found] = 0
         pert_lengths[~adv_found] = 0
         if save_dims:
-            dims = torch.cat([dims, torch.sum(adv_found, dim=1)], 0)
+            dims = torch.cat([dims, torch.sum(adv_found, dim=1).unsqueeze(0)], 0)
 
         dirs = dirs_to_attack_format(adv_dirs)
         min_dim = torch.min(torch.sum(adv_found, dim=1))
