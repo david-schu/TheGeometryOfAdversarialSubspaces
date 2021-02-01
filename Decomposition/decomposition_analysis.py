@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import plots as pl
+import dec_space
 from models import model
 import torch
 from utils import dev
@@ -8,6 +9,7 @@ from torchvision import datasets, transforms
 from models import eval
 from abs_models import models as mz
 from matplotlib.ticker import FormatStrFormatter
+import time
 
 
 ### load necessary data
@@ -30,9 +32,15 @@ mean_pert_length = np.mean(pert_lengths, axis=0)
 dist_to_mean = np.sum(np.abs(pert_lengths - mean_pert_length), axis=-1)
 min_idx = np.argmin(dist_to_mean)
 
+pl.plot_dec_space(images[min_idx], advs[min_idx,0], advs[min_idx,1], model_natural)
+plt.show()
+md = dec_space.get_mean_dist_dec(images[min_idx], advs[min_idx,0], advs[min_idx,1], model_natural)
+# _, unique_idx = np.unique(labels, return_index=True)
+# ##### plot cw surfaces for madry and natural cnn dirs and models
+# for i in unique_idx:
+#     pl.save_dec_movie(images[i], advs[i,0], advs[i,1], model_natural, n=200, k=i)
 
-##### plot cw surfaces for madry and natural cnn dirs and models
-# pl.plot_cw_surface(images[min_idx], advs[min_idx,0], advs[min_idx,1], model_natural)
+pl.plot_cw_surface(images[min_idx], advs[min_idx,0], advs[min_idx,1], model_natural)
 pl.plot_dec_space(images[min_idx], advs[min_idx,0], advs[min_idx,1], model_natural)
 # pl.plot_cw_surface(images[min_idx], advs[min_idx, 0], advs[min_idx, 1], model_madry)
 pl.plot_dec_space(images[min_idx], advs[min_idx,0], advs[min_idx,1], model_madry)

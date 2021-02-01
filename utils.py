@@ -44,3 +44,11 @@ def dev():
     else:
         return 'cpu'
 
+
+def map_to(x, tmin, tmax, rmin=0, rmax=1):
+    if tmin == tmax:
+        x_t = x*0+tmin
+    else:
+        x_t = (x-rmin)*(tmax-tmin)/(rmax-rmin)+tmin
+    return x_t
+

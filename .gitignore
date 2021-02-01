@@ -4,3 +4,4 @@
 *.npy
 .idea/*
 
+data/png_to_gif.txt

@@ -1,8 +1,9 @@
 import matplotlib
 matplotlib.use('TkAgg')
+
 from matplotlib import pyplot as plt
 import numpy as np
-from utils import orth_check
+from utils import orth_check, map_to
 from matplotlib.ticker import FormatStrFormatter
 import matplotlib.patches as mpatches
 import torch
@@ -56,7 +57,6 @@ def plot_advs(advs, orig=None, classes=None, orig_class=None, n=10,vmin=0,vmax=1
     fig.colorbar(im_adv, ax=ax[0, :].ravel().tolist(), shrink=0.7)
     fig.colorbar(im_pert, ax=ax[1, :].ravel().tolist(), shrink=0.7)
     plt.show()
-    return
 
 
 def plot_mean_advs(advs, images, classes, labels, pert_lengths, n=10, vmin=0, vmax=1):
@@ -65,7 +65,6 @@ def plot_mean_advs(advs, images, classes, labels, pert_lengths, n=10, vmin=0, vm
     dist_to_mean = np.sum(np.abs(pert_lengths - mean_pert_length), axis=-1)
     min_idx = np.argmin(dist_to_mean)
     plot_advs(advs[min_idx], images[min_idx], classes[min_idx], labels[min_idx], n=n, vmin=vmin, vmax=vmax)
-    return
 
 
 def show_consistency(adv_dirs):
@@ -80,7 +79,6 @@ def show_consistency(adv_dirs):
     plt.ylabel('inner poduct across runs')
     plt.title('Consistency of Adversarial Directions over %d runs' % (adv_dirs.shape[0]))
     plt.show()
-    return
 
 
 def show_orth(adv_dirs):
@@ -94,8 +92,6 @@ def show_orth(adv_dirs):
     plt.yticks([])
     plt.box()
     plt.title('Orthorgonality of adversarial directions', y=0.9)
-    # plt.show()
-    return
 
 
 def plot_pert_len_difs(advs_natural, advs_robust, images, n=10, ord=2):
@@ -121,11 +117,10 @@ def plot_pert_len_difs(advs_natural, advs_robust, images, n=10, ord=2):
     plt.title('Difference of perturbation lengths between robust and natural model')
     plt.xlabel('n')
     if ord == np.inf:
-        plt.ylabel('adversarial vector length ($\mathcal{l}_\infty-norm$)')
+        plt.ylabel('adversarial vector length ($\ell_\infty-norm$)')
     else:
-        plt.ylabel('adversarial vector length ($\mathcal{l}_%d-norm$)' % (ord))
+        plt.ylabel('adversarial vector length ($\ell_%d-norm$)' % (ord))
     plt.show()
-    return
 
 
 def plot_pert_lengths(advs, images, n=10, labels=None, ord=2):
@@ -152,13 +147,12 @@ def plot_pert_lengths(advs, images, n=10, labels=None, ord=2):
     plt.title('Perturbation length of first ' + str(n) + ' adversarial directions')
     plt.xlabel('n')
     if ord == np.inf:
-        plt.ylabel('adversarial vector length ($\mathcal{l}_\infty-norm$)')
+        plt.ylabel('adversarial vector length ($\ell_\infty-norm$)')
     else:
-        plt.ylabel('adversarial vector length ($\mathcal{l}_%d-norm$)' % (ord))
+        plt.ylabel('adversarial vector length ($\ell_%d-norm$)' % (ord))
     if not (labels is None):
         plt.legend(handles=l)
     plt.show()
-    return
 
 
 def plot_pert_lengths_single(adv_class, pert_lengths):
@@ -173,7 +167,6 @@ def plot_pert_lengths_single(adv_class, pert_lengths):
     plt.ylabel('adversarial vector length ($l2-norm$)')
     plt.legend()
     plt.show()
-    return
 
 
 def plot_losses(losses, orth_const):
@@ -246,21 +239,23 @@ def plot_label_heatmap(classes, labels, show_all=True):
         ax[0, 0].set_xticks(range(10))
         ax.xaxis.set_label_position('top')
     plt.show()
-    return
 
 
 def plot_cw_surface(orig, adv1, adv2, model):
     orig = np.reshape(orig, (784))
-    dir1 = adv1 - orig
-    dir2 = adv2 - orig
+    len1 = np.linalg.norm(adv1-orig)
+    len2 = np.linalg.norm(adv2-orig)
+    dir1 = (adv1 - orig) / len1
+    dir2 = (adv2 - orig) / len2
 
     n_grid = 100
-    len_grid = 2
-    x = np.linspace(-len_grid, len_grid, n_grid)
-    y = np.linspace(-len_grid, len_grid, n_grid)
+    len_grid = 2.5
+    offset = 0.1
+    x = np.linspace(-offset, len_grid, n_grid)
+    y = np.linspace(-offset, len_grid, n_grid)
     X, Y = np.meshgrid(x, y)
     advs = orig + (dir1*np.reshape(X,(-1,1)) + dir2*np.reshape(Y,(-1,1)))
-    advs = np.array(np.reshape(advs, (-1,1,28,28)).astype('float64'),dtype='float32')
+    advs = np.array(np.reshape(advs, (-1,1,28,28)).astype('float64'), dtype='float32')
     input = torch.split(torch.tensor(advs),20)
 
     preds = np.empty((0,10))
@@ -285,31 +280,33 @@ def plot_cw_surface(orig, adv1, adv2, model):
 
     # Plot the surface.
     ax.plot_surface(X, Y, conf, linewidth=0, antialiased=False, facecolors=plot_colors)
-    p = mpatches.Circle((0, 0), .1, ec='k', fc='k')
+    p = mpatches.Circle((offset, offset), .1, ec='k', fc='k')
     ax.add_patch(p)
     art3d.pathpatch_2d_to_3d(p, z=orig_pred[0, label], zdir='z')
 
 
-    ax.set_xlabel('dir 1')
-    ax.set_ylabel('dir 2')
+    ax.set_xlabel('dir 1 ($\ell_2-length$)')
+    ax.set_ylabel('dir 2 ($\ell_2-length$)')
     ax.set_zlabel('confidence in original class')
     ax.set_zlim((0,1))
 
     # Add legend with proxy artists
     plt.legend(handles=labels, title='class with largest confidence')
     plt.show()
-    return
 
 
-def plot_dec_space(orig, adv1, adv2, model):
+def plot_dec_space(orig, adv1, adv2, model, show_legend=True, show_advs=True):
     orig = np.reshape(orig, (784))
-    dir1 = adv1 - orig
-    dir2 = adv2 - orig
+    len1 = np.linalg.norm(adv1-orig)
+    len2 = np.linalg.norm(adv2-orig)
+    dir1 = (adv1 - orig) / len1
+    dir2 = (adv2 - orig) / len2
 
     n_grid = 100
-    len_grid = 2
-    x = np.linspace(-0.05*len_grid, len_grid, n_grid)
-    y = np.linspace(-0.05*len_grid, len_grid, n_grid)
+    len_grid = 2.5
+    offset = 0.1
+    x = np.linspace(-offset, len_grid, n_grid)
+    y = np.linspace(-offset, len_grid, n_grid)
     X, Y = np.meshgrid(x, y)
     advs = orig + (dir1 * np.reshape(X, (-1, 1)) + dir2 * np.reshape(Y, (-1, 1)))
     advs = np.array(np.reshape(advs, (-1, 1, 28, 28)).astype('float64'), dtype='float32')
@@ -321,32 +318,75 @@ def plot_dec_space(orig, adv1, adv2, model):
 
     classes = np.argmax(preds, axis=-1).reshape((n_grid, n_grid))
 
-    fig = plt.figure()
     ax = plt.gca()
     colors = ['tab:orange', 'tab:green', 'tab:brown', 'tab:grey', 'tab:pink', 'tab:blue','tab:cyan', 'tab:olive', 'tab:red', 'tab:purple']
     labels = []
-    colorList=[]
+    colorList = []
     for i, c in enumerate(np.unique(classes)):
         labels.append(mpatches.Patch(color=colors[c], label='Class ' + str(c)))
         colorList.append(colors[c])
     # Plot the surface.
-    new_cmap = ListedColormap(colorList)
+    new_cmap = ListedColormap(colors)
 
     plt.imshow(classes, cmap=new_cmap, origin='lower', vmin=0, vmax=9)
-    plt.plot(n_grid/2, n_grid/2, markeredgecolor='black', markerfacecolor='black', marker='o')
-    plt.plot(3/4*n_grid, n_grid/2, markeredgecolor='black', markerfacecolor='tab:red', marker='o')
-    plt.plot(n_grid/2, 3/4*n_grid, markeredgecolor='black', markerfacecolor='tab:red', marker='o')
+    plt.axvline(0.1*n_grid/(0.1+len_grid), c='k', ls='--', alpha=0.5)
+    plt.axhline(0.1*n_grid/(0.1+len_grid), c='k', ls='--', alpha=0.5)
 
-    ax.set_xlabel('dir 1')
-    ax.set_ylabel('dir 2')
-    plt.xticks(np.linspace(0,n_grid-1,9), [np.round(x,2).astype(str) for x in np.linspace(-2,2,9)])
-    plt.yticks(np.linspace(0,n_grid-1,9), [np.round(x,2).astype(str) for x in np.linspace(-2,2,9)])
+    plt.plot(offset*n_grid/(offset+len_grid), offset*n_grid/(offset+len_grid),
+             markeredgecolor='black', markerfacecolor='black', marker='o')
 
-    # Add legend with proxy artists
-    plt.legend(handles=labels, title='predicted class')
+    if show_advs:
+        plt.plot((offset+len1)*n_grid/(offset+len_grid), offset*n_grid/(offset+len_grid),
+                 markeredgecolor='black', markerfacecolor='tab:red', marker='o')
+        plt.plot(offset*n_grid/(offset+len_grid), (offset+len2)*n_grid/(offset+len_grid),
+                 markeredgecolor='black', markerfacecolor='tab:red', marker='o')
 
+    ax.set_xlabel('dir 1 ($\ell_2-length$)')
+    ax.set_ylabel('dir 2 ($\ell_2-length$)')
+    plt.xticks(np.linspace(0.1*n_grid/(0.1+len_grid), n_grid-0.5, int(len_grid*2+1)),
+               [np.round(x,2).astype(str) for x in np.linspace(0, len_grid, int(len_grid*2+1))])
+    plt.yticks(np.linspace(0.1*n_grid/(0.1+len_grid), n_grid-0.5, int(len_grid*2+1)),
+               [np.round(x,2).astype(str) for x in np.linspace(0, len_grid, int(len_grid*2+1))])
+
+    if show_legend:
+        # Add legend with proxy artists
+        plt.legend(handles=labels, title='predicted class')
+
+
+def plot_contrasted_dec_space(orig, adv1, adv2, model, n=4):
+    epsilon = np.linspace(0, 0.5, n+2)
+    dir1 = adv1 - np.reshape(orig, (784))
+    dir2 = adv2 - np.reshape(orig, (784))
+
+    n_cols = int(np.ceil(n+2)/2)
+    n_rows = int(np.ceil((n+2)/n_cols))
+    fig, ax = plt.subplots(2, n+2)
+
+    for i in range(n+2):
+        scaled_orig = map_to(orig, epsilon[i], 1-epsilon[i])
+
+        plt.subplot(2, n+2, i+1)
+        plot_dec_space(scaled_orig, dir1+np.reshape(scaled_orig, (784)), dir2+np.reshape(scaled_orig, (784)), model, show_legend=False)
+        plt.title('contrast = %.1f' % (1-2*epsilon[i]))
+        # if i < (n+2-n_cols):
+        #     plt.gca().xaxis.set_visible(False)
+        if not (i % n_cols) == 0:
+            plt.gca().yaxis.set_visible(False)
+
+        plt.subplot(2, n+2, i+1+n+2)
+        plt.imshow(scaled_orig[0], cmap='gray', vmin=0, vmax=1)
+        plt.xticks([])
+        plt.yticks([])
+
+    # colors = ['tab:orange', 'tab:green', 'tab:brown', 'tab:grey', 'tab:pink', 'tab:blue', 'tab:cyan', 'tab:olive',
+    #           'tab:red', 'tab:purple']
+    # labels = []
+    # for c in range(10):
+    #     labels.append(mpatches.Patch(color=colors[c], label='Class ' + str(c)))
+    # fig.legend(handles=labels, title='predicted class', loc='upper right', bbox_to_anchor=(0.95, 0.7))
+    # plt.subplots_adjust(right=0.9)
     plt.show()
-    return
+
 
 
 def plot_var_hist(classes, labels, title=None):
@@ -357,7 +397,7 @@ def plot_var_hist(classes, labels, title=None):
     for l in range(10):
         var = np.mean(np.array([len(np.unique(x)) for x in classes[labels == l]]))
         u, c = np.unique(classes[labels == l], return_counts=True)
-        data[u.astype(int),l] = c / np.sum(c) * var
+        data[u.astype(int), l] = c / np.sum(c) * var
 
     y_off = np.zeros(10)
     for idx in range(10):
@@ -370,4 +410,3 @@ def plot_var_hist(classes, labels, title=None):
     plt.title(title)
     plt.tight_layout()
     plt.show()
-    return

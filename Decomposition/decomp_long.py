@@ -26,12 +26,13 @@ attack_params = {
 # set hyperparameters
 params = {
     'n_adv_dims': 784,
-    'max_runs': 1000,
+    'max_runs': 2000,
     'early_stop': 3,
     'input_attack': CarliniWagner,
     'plot_loss': False,
     'random_start': True,
-    'verbose': True
+    'verbose': True,
+    'save_dims': True
 }
 
 # set seeds
@@ -55,20 +56,22 @@ images = images[unique_idx]
 labels = labels[unique_idx]
 
 # run decomposition over batches
-advs, dirs, adv_class, pert_lengths = run_batch(fmodel, images, labels, attack_params, **params)
+advs, dirs, adv_class, pert_lengths, adv_found, dims = run_batch(fmodel, images, labels, attack_params, **params)
 pert_lengths = pert_lengths.cpu().detach().numpy()
 advs = advs.cpu().detach().numpy()
 dirs = dirs.cpu().detach().numpy()
 adv_class = adv_class.cpu().detach().numpy()
 
-min_dim = np.min(np.sum(~(pert_lengths==0), axis=-1))
+# min_dim = np.min(np.sum(~(pert_lengths==0), axis=-1))
 
 # save data
 data = {
-    'advs': advs[:min_dim],
-    'dirs': dirs[:min_dim],
-    'adv_class': adv_class[:min_dim],
-    'pert_lengths': pert_lengths[:min_dim],
+    'advs': advs,
+    'dirs': dirs,
+    'adv_class': adv_class,
+    'pert_lengths': pert_lengths,
+    'adv_found': adv_found.cpu().detach().numpy(),
+    'dims': dims,
     'images': images.cpu().detach().numpy(),
     'labels': labels.cpu().detach().numpy()
 }

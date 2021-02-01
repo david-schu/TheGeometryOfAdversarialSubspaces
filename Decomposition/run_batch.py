@@ -15,7 +15,8 @@ def run_batch(fmodel,
               early_stop=3,
               epsilons=[None],
               plot_loss=False,
-              verbose=False
+              verbose=False,
+              save_dims=False
     ):
 
     # initialize variables
@@ -32,6 +33,9 @@ def run_batch(fmodel,
     adv_dirs = torch.zeros((n_images, n_adv_dims, n_pixel), device=dev())
     adv_found = torch.full((n_images, n_adv_dims), False, dtype=bool, device=dev())
     dirs = torch.tensor([], device=dev())
+
+    if save_dims:
+        dims = torch.tensor([], device=dev()).reshape((0, n_images))
 
     if not pre_data is None:
         adv_found[:, :pre_data['adv_found'].shape[-1]] = pre_data['adv_found']
@@ -90,10 +94,15 @@ def run_batch(fmodel,
         adv_dirs[~adv_found] = 0
         adv_class[~adv_found] = 0
         pert_lengths[~adv_found] = 0
+        if save_dims:
+            dims = torch.cat([dims, torch.sum(adv_found, dim=1)], 0)
 
         dirs = dirs_to_attack_format(adv_dirs)
         min_dim = torch.min(torch.sum(adv_found, dim=1))
         if min_dim == n_adv_dims:
             break
-    print('Runs needed for %d directions: %d' % (n_adv_dims, run + 1 ))
+    print('Runs needed for %d directions: %d' % (min_dim, run + 1 ))
+
+    if save_dims:
+        return advs, adv_dirs, adv_class, pert_lengths, adv_found, dims
     return advs, adv_dirs, adv_class, pert_lengths, adv_found
