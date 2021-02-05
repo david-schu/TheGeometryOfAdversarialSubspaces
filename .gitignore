@@ -5,3 +5,5 @@
 .idea/*
 
 data/png_to_gif.txt
+*.mp4
+*.gif

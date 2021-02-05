@@ -37,13 +37,14 @@ def plot_advs(advs, orig=None, classes=None, orig_class=None, n=10,vmin=0,vmax=1
         ax[0, 0].imshow(orig, cmap='gray', vmin=vmin, vmax=vmax)
         ax[0, 0].set_xticks([])
         ax[0, 0].set_yticks([])
+        ax[0, 0].set_xlabel(str(orig_class), fontdict={'fontsize': 15})
 
         ax[1, 0].axis('off')
 
     for i, (a, d) in enumerate(zip(advs[:n], dirs[:n])):
         ax[0, i + j].set_title('Adversarial ' + str(i + 1))
         if with_classes:
-            ax[0, i + j].set_xlabel(str(orig_class) + ' \u279E ' + str(int(classes[i])))
+            ax[0, i + j].set_xlabel('\u279E ' + str(int(classes[i])), fontdict={'fontsize': 15})
         im_adv = ax[0, i + j].imshow(a.reshape([28, 28]), cmap='gray', vmin=vmin, vmax=vmax)
         ax[0, i + j].set_xticks([])
         ax[0, i + j].set_yticks([])
@@ -67,33 +68,6 @@ def plot_mean_advs(advs, images, classes, labels, pert_lengths, n=10, vmin=0, vm
     plot_advs(advs[min_idx], images[min_idx], classes[min_idx], labels[min_idx], n=n, vmin=vmin, vmax=vmax)
 
 
-def show_consistency(adv_dirs):
-    inner_prods = []
-    for i in range(adv_dirs.shape[1]):
-        all_zero = np.all(adv_dirs[:, i] == 0, axis=-1)
-        orth = orth_check(adv_dirs[~all_zero, i])
-        inner_prods.append(abs(orth[np.triu_indices_from(orth, 1)]))
-    plt.figure()
-    plt.boxplot(inner_prods, showfliers=False)
-    plt.xlabel('adversarial direction')
-    plt.ylabel('inner poduct across runs')
-    plt.title('Consistency of Adversarial Directions over %d runs' % (adv_dirs.shape[0]))
-    plt.show()
-
-
-def show_orth(adv_dirs):
-
-    orth = orth_check(adv_dirs)
-    table = plt.table(np.around(orth, decimals=2), loc='center')
-    table.scale(1, 1.5)
-    table.auto_set_font_size(False)
-    table.set_fontsize(14)
-    plt.xticks([])
-    plt.yticks([])
-    plt.box()
-    plt.title('Orthorgonality of adversarial directions', y=0.9)
-
-
 def plot_pert_len_difs(advs_natural, advs_robust, images, n=10, ord=2):
     n = np.minimum(n, advs_natural[0].shape[-2])
     pert_len_natural = np.linalg.norm(advs_natural - images.reshape((-1, 1, 784)), ord=ord, axis=-1)
@@ -115,7 +89,7 @@ def plot_pert_len_difs(advs_natural, advs_robust, images, n=10, ord=2):
     plt.boxplot(filtered_data, whis=[10, 90], showfliers=False, showmeans=True, boxprops=boxprops,
                 whiskerprops=whiskerprops, capprops=capprops, meanprops=meanpointprops, medianprops=medianprops)
     plt.title('Difference of perturbation lengths between robust and natural model')
-    plt.xlabel('n')
+    plt.xlabel('d')
     if ord == np.inf:
         plt.ylabel('adversarial vector length ($\ell_\infty-norm$)')
     else:
@@ -145,7 +119,7 @@ def plot_pert_lengths(advs, images, n=10, labels=None, ord=2):
                     whiskerprops=whiskerprops, capprops=capprops, meanprops=meanpointprops, medianprops=medianprops)
         plt.plot(range(1, len(filtered_data)+1), np.nanmean(pert_lengths,axis=0), '--', color=colors[i])
     plt.title('Perturbation length of first ' + str(n) + ' adversarial directions')
-    plt.xlabel('n')
+    plt.xlabel('d')
     if ord == np.inf:
         plt.ylabel('adversarial vector length ($\ell_\infty-norm$)')
     else:
@@ -303,7 +277,7 @@ def plot_dec_space(orig, adv1, adv2, model, show_legend=True, show_advs=True):
     dir2 = (adv2 - orig) / len2
 
     n_grid = 100
-    len_grid = 2.5
+    len_grid = np.maximum(2.5, np.maximum(len1,len2)+1)
     offset = 0.1
     x = np.linspace(-offset, len_grid, n_grid)
     y = np.linspace(-offset, len_grid, n_grid)
@@ -319,18 +293,18 @@ def plot_dec_space(orig, adv1, adv2, model, show_legend=True, show_advs=True):
     classes = np.argmax(preds, axis=-1).reshape((n_grid, n_grid))
 
     ax = plt.gca()
-    colors = ['tab:orange', 'tab:green', 'tab:brown', 'tab:grey', 'tab:pink', 'tab:blue','tab:cyan', 'tab:olive', 'tab:red', 'tab:purple']
+    colors = ['tab:orange', 'tab:green', 'tab:brown', 'tab:grey', 'tab:blue', 'tab:pink','tab:cyan', 'tab:olive', 'tab:red', 'tab:purple']
     labels = []
     colorList = []
     for i, c in enumerate(np.unique(classes)):
-        labels.append(mpatches.Patch(color=colors[c], label='Class ' + str(c)))
+        labels.append(mpatches.Patch(color=colors[c], label=str(c)))
         colorList.append(colors[c])
     # Plot the surface.
     new_cmap = ListedColormap(colors)
 
     plt.imshow(classes, cmap=new_cmap, origin='lower', vmin=0, vmax=9)
-    plt.axvline(0.1*n_grid/(0.1+len_grid), c='k', ls='--', alpha=0.5)
-    plt.axhline(0.1*n_grid/(0.1+len_grid), c='k', ls='--', alpha=0.5)
+    plt.axvline(offset*n_grid/(offset+len_grid), c='k', ls='--', alpha=0.5)
+    plt.axhline(offset*n_grid/(offset+len_grid), c='k', ls='--', alpha=0.5)
 
     plt.plot(offset*n_grid/(offset+len_grid), offset*n_grid/(offset+len_grid),
              markeredgecolor='black', markerfacecolor='black', marker='o')
@@ -341,12 +315,13 @@ def plot_dec_space(orig, adv1, adv2, model, show_legend=True, show_advs=True):
         plt.plot(offset*n_grid/(offset+len_grid), (offset+len2)*n_grid/(offset+len_grid),
                  markeredgecolor='black', markerfacecolor='tab:red', marker='o')
 
-    ax.set_xlabel('dir 1 ($\ell_2-length$)')
-    ax.set_ylabel('dir 2 ($\ell_2-length$)')
-    plt.xticks(np.linspace(0.1*n_grid/(0.1+len_grid), n_grid-0.5, int(len_grid*2+1)),
-               [np.round(x,2).astype(str) for x in np.linspace(0, len_grid, int(len_grid*2+1))])
-    plt.yticks(np.linspace(0.1*n_grid/(0.1+len_grid), n_grid-0.5, int(len_grid*2+1)),
-               [np.round(x,2).astype(str) for x in np.linspace(0, len_grid, int(len_grid*2+1))])
+    ax.set_xlabel('dir 1 ($\ell_2$-length)', fontdict={'fontsize': 15})
+    ax.set_ylabel('dir 2 ($\ell_2$-length)', fontdict={'fontsize': 15})
+
+    plt.xticks(np.linspace(offset*n_grid/(offset+len_grid), (offset+np.floor(len_grid))*n_grid/(offset+len_grid), 5),
+               [np.round(x, 2).astype(str) for x in np.linspace(0, np.floor(len_grid), 5)])
+    plt.yticks(np.linspace(offset*n_grid/(offset+len_grid), (offset+np.floor(len_grid))*n_grid/(offset+len_grid), 5),
+               [np.round(x, 2).astype(str) for x in np.linspace(0, np.floor(len_grid), 5)])
 
     if show_legend:
         # Add legend with proxy artists
@@ -388,8 +363,7 @@ def plot_contrasted_dec_space(orig, adv1, adv2, model, n=4):
     plt.show()
 
 
-
-def plot_var_hist(classes, labels, title=None):
+def plot_var_hist(classes, labels, title=None, with_colors=True):
     bar_width = 0.4
     colors = ['tab:blue', 'tab:orange', 'tab:green', 'tab:purple', 'tab:red', 'tab:brown', 'tab:grey', 'tab:pink',
               'tab:cyan', 'tab:olive']
@@ -401,12 +375,42 @@ def plot_var_hist(classes, labels, title=None):
 
     y_off = np.zeros(10)
     for idx in range(10):
-        plt.bar(range(10), data[idx], bar_width, bottom=y_off,color=colors[idx])
+        if with_colors:
+            plt.bar(range(10), data[idx], bar_width, bottom=y_off,  color=colors[idx])
+        else:
+            plt.bar(range(10), data[idx], bar_width, bottom=y_off, color='k')
         y_off += data[idx]
     plt.xlabel('original class label')
-    plt.ylabel('mean number of target classes')
-    plt.legend(['0','1', '2', '3', '4', '5', '6', '7', '8', '9'], title='target class', bbox_to_anchor=(1.05, 1), loc='upper left')
+    plt.ylabel('mean number of adversarial classes')
+    plt.legend(['0','1', '2', '3', '4', '5', '6', '7', '8', '9'], title='adversarial label', bbox_to_anchor=(1.05, 1), loc='upper left')
     plt.xticks(range(10))
     plt.title(title)
     plt.tight_layout()
     plt.show()
+
+
+def show_consistency(adv_dirs):
+    inner_prods = []
+    for i in range(adv_dirs.shape[1]):
+        all_zero = np.all(adv_dirs[:, i] == 0, axis=-1)
+        orth = orth_check(adv_dirs[~all_zero, i])
+        inner_prods.append(abs(orth[np.triu_indices_from(orth, 1)]))
+    plt.figure()
+    plt.boxplot(inner_prods, showfliers=False, whis='range')
+    plt.xlabel('d')
+    plt.ylabel('inner poduct across runs')
+    # plt.title('Consistency of Adversarial Directions over %d runs' % (adv_dirs.shape[0]))
+    plt.show()
+
+
+def show_orth(adv_dirs):
+
+    orth = orth_check(adv_dirs)
+    table = plt.table(np.around(orth, decimals=2), loc='center')
+    table.scale(1, 1.5)
+    table.auto_set_font_size(False)
+    table.set_fontsize(14)
+    plt.xticks([])
+    plt.yticks([])
+    plt.box()
+    plt.title('Orthorgonality of adversarial directions', y=0.9)
