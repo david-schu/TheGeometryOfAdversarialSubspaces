@@ -24,10 +24,10 @@ fmodel = foolbox.models.PyTorchModel(model,   # return logits in shape (bs, n_cl
 n_images = 500
 batchsize = 10
 
-load_pre_data = False
+load_pre_data = True
 
 if load_pre_data:
-    data_load = np.load('/home/bethge/dschultheiss/AdversarialDecomposition/data/madry5.npy', allow_pickle=True).item()
+    data_load = np.load('/home/bethge/dschultheiss/AdversarialDecomposition/data/madry_l2.npy', allow_pickle=True).item()
     pre_advs = torch.split(torch.tensor(data_load['advs'], device=dev()), batchsize, dim=0)
     pre_dirs = torch.split(torch.tensor(data_load['dirs'], device=dev()), batchsize, dim=0)
     pre_class = torch.split(torch.tensor(data_load['adv_class'], device=dev()), batchsize, dim=0)
