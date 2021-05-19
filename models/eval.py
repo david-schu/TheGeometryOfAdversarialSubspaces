@@ -23,7 +23,7 @@ def evalClean(model1=None, test_loader=None):
             total += len(xs)
     acc = float(correct) / total
     print('Clean accuracy: %.2f%%' % (acc * 100))
-
+    return acc
 
 # Evaluate results on adversarially perturbed
 def evalAdvAttack(model=None, test_loader=None, epsilon=[0.3]):
@@ -47,7 +47,7 @@ def evalAdvAttack(model=None, test_loader=None, epsilon=[0.3]):
                                                        steps=100,
                                                        random_start=True)
         xs, _, success = attack(fmodel, xs, ys, epsilons=epsilon)
-        xs, ys = Variable(xs[0]), Variable(ys)
+        xs, ys = Variable(xs), Variable(ys)
         preds1 = model(xs)
         preds_np1 = preds1.cpu().detach().numpy()
         finalPred = np.argmax(preds_np1, axis=1)
@@ -55,3 +55,4 @@ def evalAdvAttack(model=None, test_loader=None, epsilon=[0.3]):
         total += test_loader.batch_size
     acc = float(correct) / total
     print('Adv accuracy: %.2f%%' % (acc * 100))
+    return acc

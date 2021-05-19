@@ -88,7 +88,7 @@ def run_batch(fmodel,
             adv_class[i, dim] = classes[i]
             pert_lengths[i, dim] = pert_length
             adv_found[i, dim] = True
-            adv_found[i,dim+1:] = False
+            adv_found[i, dim+1:] = False
 
         advs[~adv_found] = 0
         adv_dirs[~adv_found] = 0

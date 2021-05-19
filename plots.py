@@ -99,6 +99,8 @@ def plot_pert_len_difs(advs_natural, advs_robust, images, n=10, ord=2):
 
 def plot_pert_lengths(advs, images, n=10, labels=None, ord=2):
     n = np.minimum(n, advs[0].shape[-2])
+    advs = [a[:,n] for a in advs]
+    images = [a[:, n] for a in images]
     colors = ['tab:blue', 'tab:orange', 'tab:green']
     l = []
     for i, (ad, im) in enumerate(zip(advs, images)):
@@ -108,7 +110,9 @@ def plot_pert_lengths(advs, images, n=10, labels=None, ord=2):
         medianprops = dict(linestyle=None, linewidth=0)
         meanpointprops = dict(marker='o', markeredgecolor='black',
                               markerfacecolor=colors[i])
-        l.append(mpatches.Patch(color=colors[i], label=labels[i]))
+
+        if not labels is None:
+            l.append(mpatches.Patch(color=colors[i], label=labels[i]))
 
         pert_lengths = np.linalg.norm(ad-im.reshape((-1, 1, 784)), ord=ord, axis=-1)
         pert_lengths[np.all(ad==0,axis=-1)] = np.nan
@@ -369,8 +373,10 @@ def plot_var_hist(classes, labels, title=None, with_colors=True):
               'tab:cyan', 'tab:olive']
     data = np.zeros((10,10))
     for l in range(10):
-        var = np.mean(np.array([len(np.unique(x)) for x in classes[labels == l]]))
+        var = np.mean(np.array([len(np.unique(x[~np.isnan(x)])) for x in classes[labels == l]]))
         u, c = np.unique(classes[labels == l], return_counts=True)
+        c = c[~np.isnan(u)]
+        u = u[~np.isnan(u)]
         data[u.astype(int), l] = c / np.sum(c) * var
 
     y_off = np.zeros(10)
@@ -384,7 +390,9 @@ def plot_var_hist(classes, labels, title=None, with_colors=True):
     plt.ylabel('mean number of adversarial classes')
     plt.legend(['0','1', '2', '3', '4', '5', '6', '7', '8', '9'], title='adversarial label', bbox_to_anchor=(1.05, 1), loc='upper left')
     plt.xticks(range(10))
-    plt.title(title)
+    if not title is None:
+        plt.title(title)
+    plt.ylim(0,2.5)
     plt.tight_layout()
     plt.show()
 

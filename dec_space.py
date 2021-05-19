@@ -23,7 +23,7 @@ def two_origs_movie(orig1, orig2, adv1, adv2, model, save_folder, n=100):
     if not os.path.isdir(path):
         os.mkdir(path)
 
-    for i in range(n + 2):
+    for i in range(n):
         if i == 0:
             show_advs = True
         else:
@@ -34,7 +34,6 @@ def two_origs_movie(orig1, orig2, adv1, adv2, model, save_folder, n=100):
         pl.plot_dec_space(scaled_orig, dir1 + np.reshape(scaled_orig, (784)), dir2 + np.reshape(scaled_orig, (784)),
                           model,
                           show_legend=False, show_advs=show_advs)
-        plt.title('contrast = %.2f' % (1 - 2 * epsilon[i]), fontdict={'fontsize': 17})
 
         plt.subplot(2, 1, 2)
         plt.imshow(scaled_orig, cmap='gray', vmin=0, vmax=1)

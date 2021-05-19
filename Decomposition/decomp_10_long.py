@@ -71,7 +71,7 @@ data = {
     'adv_class': adv_class,
     'pert_lengths': pert_lengths,
     'adv_found': adv_found.cpu().detach().numpy(),
-    'dims': dims,
+    'dims': dims.cpu().detach().numpy(),
     'images': images.cpu().detach().numpy(),
     'labels': labels.cpu().detach().numpy()
 }
