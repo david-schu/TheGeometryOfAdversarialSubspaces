@@ -112,11 +112,12 @@ def generate(trainset, testset, net, delta=0.2, max_iter_uni=np.inf, xi=10, p=np
             correct = 0
             # Finding labels for perturbed images
             for batch_index, (inputs, labels) in enumerate(testset):
-                inputs = (inputs+v.astype('float32')).to(dev())
+                inputs, labels = inputs.to(dev()), labels.to(dev())
+                inputs = (inputs+v.astype('float32'))
                 outputs = net(inputs.clip(0, 1))
                 _, predicted = outputs.max(1)
                 per_labels_test = torch.cat((per_labels_test, predicted.cpu()))
-                correct += (predicted == labels.to('cpu')).sum()
+                correct += (predicted == labels).sum()
             torch.cuda.empty_cache()
 
             # Calculating the fooling rate by dividing the number of fooled images by the total number of images
