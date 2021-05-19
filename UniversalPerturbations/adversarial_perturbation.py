@@ -1,8 +1,10 @@
 import numpy as np
 import UniversalPerturbations.deepfool as deepfool
 import torch
-from torchvision import transforms
+from torchvision import transforms, datasets
+from utils import dev
 
+from models import model
 
 def project_perturbation(xi, p, perturbation):
     if p == 2:
@@ -25,59 +27,58 @@ def generate(trainset, testset, net, delta=0.2, max_iter_uni=np.inf, xi=10, p=np
     :param max_iter_df: Maximum iterations of the deep fool algorithm
     :return: perturbation found (not always the same on every run of the algorithm)
     '''
-
+    net.to(dev())
     net.eval()
-    device = 'cpu'
+    print('Device: ' + str(dev()))
 
     # Importing images and creating an array with them
     img_trn = []
-    for image in trainset:
-        for image2 in image[0]:
-            img_trn.append(image2.numpy())
+    for batch in trainset:
+        for image in batch[0]:
+            img_trn.append(image.numpy())
     img_trn = np.array(img_trn)
 
 
     # Finding labels for original images
     orig_labels_test = torch.tensor(np.zeros(0, dtype=np.int64))
-    correct=0
-    for batch_index, (inputs, labels) in enumerate(testset):
-        inputs = inputs.to(device)
+    correct = 0
+    n_test_samples = 0
+    for inputs, labels in testset:
+        inputs, labels = inputs.to(dev()), labels.to(dev())
         outputs = net(inputs)
         _, predicted = outputs.max(1)
         orig_labels_test = torch.cat((orig_labels_test, predicted.cpu()))
-        correct += (predicted == labels).sum().item()
-    torch.cuda.empty_cache()
-    n_test_samples = len(testset) * testset.batch_size
+        correct += (predicted == labels).sum()
+        n_test_samples += len(inputs)
+
     accuracy = correct/n_test_samples
     print('Clean model accuracy: %.2f%%' % (accuracy*100))
 
     # Setting the number of images to 300  (A much lower number than the total number of instances on the training set)
     # To verify the generalization power of the approach
-    num_img_trn = 300
+    num_img_trn = 100
     img_indices = np.arange(len(img_trn))
     np.random.shuffle(img_indices)
     img_indices = img_indices[: num_img_trn]
 
-    inputs = torch.tensor(img_trn[img_indices].astype('float32'))
+    inputs = torch.tensor(img_trn[img_indices].astype('float32'), device=dev())
+
     _, orig_labels_train = net(inputs).max(1)
+    orig_labels_train = orig_labels_train.cpu()
 
     # Initializing the perturbation to 0s
-    v=np.zeros((28, 28))
+    v = np.zeros((28, 28))
 
     #Initializing fooling rate and iteration count
     fooling_rate = 0.0
     iter = 0
 
-    # Transformers to be applied to images in order to feed them to the network
-    transformer = transforms.ToTensor()
-
     fooling_rates=[0]
-    accuracies = []
-    accuracies.append(accuracy)
+    accuracies = [accuracy]
     total_iterations = [0]
     # Begin of the main loop on Universal Adversarial Perturbations algorithm
     while fooling_rate < 1-delta and iter < max_iter_uni:
-        print("Iteration  ", iter)
+        print("Iteration  ", iter+1)
 
         for j, idx in enumerate(img_indices):
             # Generating the original image from data
@@ -87,10 +88,11 @@ def generate(trainset, testset, net, delta=0.2, max_iter_uni=np.inf, xi=10, p=np
             # Generating a perturbed image from the current perturbation v and the original image
             per_img = np.clip(cur_img+v,0,1)
             per_img1 = torch.tensor(per_img.astype('float32')).reshape(-1, 1, 28, 28)
+            per_img1.to(dev())
 
             # Feeding the perturbed image to the network and storing the label returned
             _, per_label = net(per_img1).max(1)
-            torch.cuda.empty_cache()
+            per_label = per_label.cpu()
 
             # If the label of both images is the same, the perturbation v needs to be updated
             if orig_label == per_label:
@@ -111,12 +113,11 @@ def generate(trainset, testset, net, delta=0.2, max_iter_uni=np.inf, xi=10, p=np
             correct = 0
             # Finding labels for perturbed images
             for batch_index, (inputs, labels) in enumerate(testset):
-                inputs = inputs.to(device)
-                inputs += transformer(v).float()
+                inputs = (inputs+v.astype('float32')).to(dev())
                 outputs = net(inputs.clip(0, 1))
                 _, predicted = outputs.max(1)
                 per_labels_test = torch.cat((per_labels_test, predicted.cpu()))
-                correct += (predicted == labels).sum().item()
+                correct += (predicted == labels).sum()
             torch.cuda.empty_cache()
 
             # Calculating the fooling rate by dividing the number of fooled images by the total number of images
@@ -126,7 +127,5 @@ def generate(trainset, testset, net, delta=0.2, max_iter_uni=np.inf, xi=10, p=np
             print("FOOLING RATE: ", fooling_rate)
             fooling_rates.append(fooling_rate)
             accuracies.append(correct / n_test_samples)
-            total_iterations.append(iter)
 
-    return v, fooling_rates, accuracies, total_iterations
-
+    return v, fooling_rates, accuracies, iter
