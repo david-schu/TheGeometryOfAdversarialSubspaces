@@ -116,7 +116,7 @@ def generate(trainset, testset, net, delta=0.2, max_iter_uni=np.inf, xi=10, p=np
                 outputs = net(inputs.clip(0, 1))
                 _, predicted = outputs.max(1)
                 per_labels_test = torch.cat((per_labels_test, predicted.cpu()))
-                correct += (predicted == labels).sum()
+                correct += (predicted == labels.to('cpu')).sum()
             torch.cuda.empty_cache()
 
             # Calculating the fooling rate by dividing the number of fooled images by the total number of images
