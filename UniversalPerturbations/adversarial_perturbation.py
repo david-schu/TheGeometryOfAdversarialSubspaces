@@ -87,8 +87,7 @@ def generate(trainset, testset, net, delta=0.2, max_iter_uni=np.inf, xi=10, p=np
 
             # Generating a perturbed image from the current perturbation v and the original image
             per_img = np.clip(cur_img+v,0,1)
-            per_img1 = torch.tensor(per_img.astype('float32')).reshape(-1, 1, 28, 28)
-            per_img1.to(dev())
+            per_img1 = torch.tensor(per_img.astype('float32'), device=dev()).reshape(-1, 1, 28, 28)
 
             # Feeding the perturbed image to the network and storing the label returned
             _, per_label = net(per_img1).max(1)
