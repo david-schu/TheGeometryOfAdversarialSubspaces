@@ -104,7 +104,7 @@ for i in range(len(batched_images)):
     adv_class = torch.cat([adv_class, new_classes], 0)
     pert_lengths = torch.cat([pert_lengths, new_pert_lengths], 0)
     adv_found = torch.cat([adv_found, new_adv_found], 0)
-    pert_lengths = torch.cat([pert_lengths_sort, new_pert_lengths_sort], 0)
+    pert_lengths_sort = torch.cat([pert_lengths_sort, new_pert_lengths_sort], 0)
 
 data = {
     'advs': advs.cpu().detach().numpy(),
