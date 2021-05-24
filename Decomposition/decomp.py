@@ -5,7 +5,7 @@ sys.path.insert(0, '../data')
 import numpy as np
 import torch
 import foolbox
-from abs_models import models as mz
+# from abs_models import models as mz
 
 # own modules
 from utils import load_data, dev
