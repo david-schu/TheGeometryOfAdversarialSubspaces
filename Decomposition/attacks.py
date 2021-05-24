@@ -11,17 +11,16 @@ from foolbox.attacks.base import MinimizationAttack, T, get_criterion, raise_if_
 
 
 class OrthogonalAttack(MinimizationAttack):
-    def __init__(self, input_attack, params, adv_dirs=[], orth_const=50, plot_loss=False, random_start=False):
+    def __init__(self, input_attack, params, adv_dirs=[], plot_loss=False, random_start=False):
         super(OrthogonalAttack,self).__init__()
         self.input_attack = input_attack(**params)
         self.distance = LpDistance(2)
         self.dirs = adv_dirs
-        self.orth_const = orth_const
         self.plot_loss = plot_loss
         self.random_start = random_start
 
     def run(self, model, inputs, criterion, **kwargs):
-        return self.input_attack.run(model, inputs, criterion, dirs=self.dirs, orth_const=self.orth_const, plot_loss=self.plot_loss, random_start=self.random_start, **kwargs)
+        return self.input_attack.run(model, inputs, criterion, dirs=self.dirs, plot_loss=self.plot_loss, random_start=self.random_start, **kwargs)
 
     def distance(self):
         ...
@@ -37,7 +36,6 @@ class CarliniWagner(fa.L2CarliniWagnerAttack):
         early_stop: Optional[float] = None,
         random_start: Optional[float] = None,
         dirs: Optional[Any] = [],
-        orth_const: Optional[float] = 50,
         plot_loss: bool = False,
         ** kwargs: Any,
     ) -> T:
@@ -92,13 +90,7 @@ class CarliniWagner(fa.L2CarliniWagnerAttack):
 
             if len(dirs) == 0:
                 logits = model(adv)
-                #is_orth = ep.zeros(delta, 1)
             else:
-                # new_dir = (adv - reconstructed_x).reshape([dirs.shape[0], 1, dirs.shape[-1]])
-                # is_orth = (new_dir * dirs).sum(axis=-1)
-                # is_orth = is_orth.square().sum(axis=-1)
-                # is_orth = is_orth * orth_const
-
                 s = adv - reconstructed_x
                 gram_schmidt = ep.zeros_like(s)
                 for i, a in enumerate(adv):
@@ -106,7 +98,6 @@ class CarliniWagner(fa.L2CarliniWagnerAttack):
                         axis=0).reshape(s[i].raw.shape).raw
                 adv_orth = adv - gram_schmidt
                 logits = model(adv_orth)
-                # orth_const = np.maximum(min_orth,min_orth * gram_schmidt.abs().sum().item())
                 adv = ep.zeros_like(x_attack)
                 adv += adv_orth.raw
             ###############################

@@ -7,7 +7,6 @@ def run_batch(fmodel,
               labels,
               attack_params,
               pre_data=None,
-              orth_const=50,
               random_start=True,
               input_attack=CarliniWagner,
               n_adv_dims=3,
@@ -33,6 +32,7 @@ def run_batch(fmodel,
     adv_dirs = torch.zeros((n_images, n_adv_dims, n_pixel), device=dev())
     adv_found = torch.full((n_images, n_adv_dims), False, dtype=bool, device=dev())
     dirs = torch.tensor([], device=dev())
+    pert_lengths_sort = torch.zeros((n_images, max_runs), device=dev())
 
     if save_dims:
         dims = torch.tensor([], device=dev()).reshape((0, n_images))
@@ -56,7 +56,6 @@ def run_batch(fmodel,
         attack = OrthogonalAttack(input_attack=input_attack,
                                   params=attack_params,
                                   adv_dirs=dirs,
-                                  orth_const=orth_const,
                                   plot_loss=plot_loss,
                                   random_start=random_start)
         _, adv, success = attack(fmodel, images, labels, epsilons=epsilons)
@@ -74,7 +73,7 @@ def run_batch(fmodel,
 
         classes = classification(adv[0], fmodel)
         for i, a in enumerate(adv[0]):
-            if not success[0,i]:
+            if not success[0, i]:
                 continue
             a_ = a.flatten()
             pert_length = torch.norm(a_ - x_orig[i])
@@ -87,6 +86,7 @@ def run_batch(fmodel,
             adv_dirs[i, dim] = (a_ - x_orig[i]) / pert_length
             adv_class[i, dim] = classes[i]
             pert_lengths[i, dim] = pert_length
+            pert_lengths_sort[i, run] = pert_length
             adv_found[i, dim] = True
             adv_found[i, dim+1:] = False
 
@@ -104,5 +104,5 @@ def run_batch(fmodel,
     print('Runs needed for %d directions: %d' % (min_dim, run + 1 ))
 
     if save_dims:
-        return advs, adv_dirs, adv_class, pert_lengths, adv_found, dims
-    return advs, adv_dirs, adv_class, pert_lengths, adv_found
+        return advs, adv_dirs, adv_class, pert_lengths, adv_found, pert_lengths_sort, dims
+    return advs, adv_dirs, adv_class, pert_lengths, adv_found, pert_lengths_sort

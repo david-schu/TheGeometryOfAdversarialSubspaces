@@ -16,9 +16,9 @@ from models import model
 ## user initialization
 
 # set number of images for attack and batchsize (shouldn't be larger than 20)
-n_images = 500
+n_images = 20
 batchsize = 10
-load_pre_data =True
+load_pre_data = False
 data_path = '/home/bethge/dschultheiss/AdversarialDecomposition/data/cnn.npy'
 pre_data = None
 
@@ -37,8 +37,7 @@ params = {
     'max_runs': 50,
     'early_stop': 3,
     'input_attack': CarliniWagner,
-    'random_start': True,
-    'pre_data': pre_data
+    'random_start': True
 }
 
 # set seeds
@@ -47,8 +46,8 @@ torch.manual_seed(0)
 
 # load a model
 model = model.madry()
-model.load_state_dict(torch.load('./../models/natural.pt', map_location=torch.device(dev())))      # madry robust model
-# model.load_state_dict(torch.load('./../models/adv_trained_l2.pt', map_location=torch.device(dev())))      # natural cnn - same architecture as madry robust model but nmot adversarially trained
+# model.load_state_dict(torch.load('./../models/adv_trained_l2.pt', map_location=torch.device(dev())))      # madry robust model
+model.load_state_dict(torch.load('./../models/natural.pt', map_location=torch.device(dev())))      # natural cnn - same architecture as madry robust model but nmot adversarially trained
 # model = mz.get_VAE(n_iter=50)   # ABS model
 
 # laod data
@@ -81,6 +80,8 @@ advs = torch.tensor([], device=dev()).reshape((0, params['n_adv_dims'], batched_
 dirs = torch.tensor([], device=dev()).reshape((0, params['n_adv_dims'], batched_images[0].shape[-1]**2))
 pert_lengths = torch.tensor([], device=dev()).reshape((0, params['n_adv_dims']))
 adv_class = torch.tensor([], device=dev()).reshape((0, params['n_adv_dims']))
+pert_lengths_sort = torch.tensor([], device=dev()).reshape((0, params['max_runs']))
+
 
 # run decomposition over batches
 for i in range(len(batched_images)):
@@ -93,7 +94,7 @@ for i in range(len(batched_images)):
             'pert_lengths': pre_pert_lengths[i],
             'adv_found': pre_adv_found[i]
         }
-    new_advs, new_dirs, new_classes, new_pert_lengths, new_adv_found = run_batch(fmodel, batched_images[i],
+    new_advs, new_dirs, new_classes, new_pert_lengths, new_adv_found, new_pert_lengths_sort = run_batch(fmodel, batched_images[i],
                                                                                  batched_labels[i], attack_params,
                                                                                  **params, pre_data=pre_data)
 
@@ -102,6 +103,7 @@ for i in range(len(batched_images)):
     adv_class = torch.cat([adv_class, new_classes], 0)
     pert_lengths = torch.cat([pert_lengths, new_pert_lengths], 0)
     adv_found = torch.cat([adv_found, new_adv_found], 0)
+    pert_lengths = torch.cat([pert_lengths_sort, new_pert_lengths_sort], 0)
 
 data = {
     'advs': advs.cpu().detach().numpy(),
@@ -110,6 +112,7 @@ data = {
     'pert_lengths': pert_lengths.cpu().detach().numpy(),
     'adv_found': adv_found.cpu().detach().numpy(),
     'images': images.cpu().detach().numpy(),
-    'labels': labels.cpu().detach().numpy()
+    'labels': labels.cpu().detach().numpy(),
+    'pert_lengths_sort': pert_lengths_sort.cpu().detach().numpy()
 }
-np.save('/home/bethge/dschultheiss/AdversarialDecomposition/data/cnn.npy', data)
+np.save('/home/bethge/dschultheiss/AdversarialDecomposition/data/cnn_sort_greedy.npy', data)
