@@ -80,6 +80,7 @@ advs = torch.tensor([], device=dev()).reshape((0, params['n_adv_dims'], batched_
 dirs = torch.tensor([], device=dev()).reshape((0, params['n_adv_dims'], batched_images[0].shape[-1]**2))
 pert_lengths = torch.tensor([], device=dev()).reshape((0, params['n_adv_dims']))
 adv_class = torch.tensor([], device=dev()).reshape((0, params['n_adv_dims']))
+adv_found = torch.tensor([], device=dev()).reshape((0, params['n_adv_dims']))
 pert_lengths_sort = torch.tensor([], device=dev()).reshape((0, params['max_runs']))
 
 
