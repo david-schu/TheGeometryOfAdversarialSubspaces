@@ -13,7 +13,7 @@ def orth_check(adv_dirs):
 
 def classification(img, model):
     if not torch.is_tensor(img):
-        img = torch.tensor(img)
+        img = torch.tensor(img, device=dev())
     pred = model(img).cpu().detach().numpy()
     img_class = np.argmax(pred, axis=-1)
     return img_class
@@ -27,12 +27,15 @@ def dirs_to_attack_format(dirs):
     return attack_dirs
 
 
-def load_data(n, bounds=(0., 1.)):
+def load_data(n, bounds=(0., 1.), random=True):
     mnist = datasets.MNIST(root='../data', download=True)
-    images = mnist.data[:n]
+    indices = np.arange(len(mnist.data))
+    if random:
+        np.random.shuffle(indices)
+    images = mnist.data[indices[:n]]
     images = images / 255 * (bounds[1] - bounds[0]) + bounds[0]
     images = images.unsqueeze(1)
-    labels = mnist.targets[:n]
+    labels = mnist.targets[indices[:n]]
 
     images = torch.as_tensor(images, device=dev())
     labels = torch.as_tensor(labels, device=dev())

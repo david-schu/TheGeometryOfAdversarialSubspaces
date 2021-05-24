@@ -123,8 +123,9 @@ def generate(trainset, testset, net, delta=0.2, max_iter_uni=np.inf, xi=10, p=np
             # Calculating the fooling rate by dividing the number of fooled images by the total number of images
             fooling_rate = float(torch.sum(orig_labels_test != per_labels_test))/n_test_samples
 
-            print()
             print("FOOLING RATE: ", fooling_rate)
+            print()
+
             fooling_rates.append(fooling_rate)
             accuracies.append(correct / n_test_samples)
 
