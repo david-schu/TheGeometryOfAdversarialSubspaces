@@ -78,7 +78,7 @@ def run_batch(fmodel,
             a_ = a.flatten()
             pert_length = torch.norm(a_ - x_orig[i])
             dim = torch.sum(pert_lengths[i][torch.nonzero(pert_lengths[i])] < pert_length)
-
+            pert_lengths_sort[i, run] = pert_length
             if dim >= n_adv_dims:
                 continue
 
@@ -86,7 +86,6 @@ def run_batch(fmodel,
             adv_dirs[i, dim] = (a_ - x_orig[i]) / pert_length
             adv_class[i, dim] = classes[i]
             pert_lengths[i, dim] = pert_length
-            pert_lengths_sort[i, run] = pert_length
             adv_found[i, dim] = True
             adv_found[i, dim+1:] = False
 
