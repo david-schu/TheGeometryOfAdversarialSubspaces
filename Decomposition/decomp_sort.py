@@ -10,7 +10,7 @@ import foolbox
 # own modules
 from utils import load_data, dev
 from attacks import CarliniWagner
-from run_batch import run_batch
+from run_batch_sort import run_batch
 from models import model
 
 ## user initialization
@@ -33,7 +33,7 @@ attack_params = {
 
 # set hyperparameters
 params = {
-    'n_adv_dims': 5,
+    'n_adv_dims': 30,
     'max_runs': 30,
     'early_stop': 3,
     'input_attack': CarliniWagner,
@@ -112,4 +112,4 @@ data = {
     'images': images.cpu().detach().numpy(),
     'labels': labels.cpu().detach().numpy(),
 }
-np.save('/home/bethge/dschultheiss/AdversarialDecomposition/data/cnn_backtrack.npy', data)
+np.save('/home/bethge/dschultheiss/AdversarialDecomposition/data/cnn_sort.npy', data)

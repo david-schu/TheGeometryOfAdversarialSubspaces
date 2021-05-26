@@ -14,8 +14,7 @@ def run_batch(fmodel,
               early_stop=3,
               epsilons=[None],
               plot_loss=False,
-              verbose=False,
-              save_dims=False
+              verbose=False
     ):
 
     # initialize variables
@@ -24,17 +23,13 @@ def run_batch(fmodel,
     x_orig = images.reshape([n_images, n_pixel])
 
     count = 0
-    min_dim = 0
-
+    n_adv_dims = max_runs
     pert_lengths = torch.zeros((n_images, n_adv_dims), device=dev())
     adv_class = torch.zeros((n_images, n_adv_dims), device=dev(), dtype=int)
     advs = torch.zeros((n_images, n_adv_dims, n_pixel), device=dev())
     adv_dirs = torch.zeros((n_images, n_adv_dims, n_pixel), device=dev())
     adv_found = torch.full((n_images, n_adv_dims), False, dtype=bool, device=dev())
     dirs = torch.tensor([], device=dev())
-
-    if save_dims:
-        dims = torch.tensor([], device=dev()).reshape((0, n_images))
 
     if not pre_data is None:
         adv_found[:, :pre_data['adv_found'].shape[-1]] = pre_data['adv_found']
@@ -50,7 +45,7 @@ def run_batch(fmodel,
 
     for run in range(max_runs):
         if verbose:
-            print('Run %d - Adversarial Dimension %d...' % (run + 1, min_dim + 1))
+            print('Run %d' % (run + 1))
 
         attack = OrthogonalAttack(input_attack=input_attack,
                                   params=attack_params,
@@ -76,30 +71,13 @@ def run_batch(fmodel,
                 continue
             a_ = a.flatten()
             pert_length = torch.norm(a_ - x_orig[i])
-            dim = torch.sum(pert_lengths[i][torch.nonzero(pert_lengths[i])] < pert_length)
-            if dim >= n_adv_dims:
-                continue
 
-            advs[i, dim] = a_
-            adv_dirs[i, dim] = (a_ - x_orig[i]) / pert_length
-            adv_class[i, dim] = classes[i]
-            pert_lengths[i, dim] = pert_length
-            adv_found[i, dim] = True
-            adv_found[i, dim+1:] = False
-
-        advs[~adv_found] = 0
-        adv_dirs[~adv_found] = 0
-        adv_class[~adv_found] = 0
-        pert_lengths[~adv_found] = 0
-        if save_dims:
-            dims = torch.cat([dims, torch.sum(adv_found, dim=1).unsqueeze(0)], 0)
+            advs[i, run] = a_
+            adv_dirs[i, run] = (a_ - x_orig[i]) / pert_length
+            adv_class[i, run] = classes[i]
+            pert_lengths[i, run] = pert_length
+            adv_found[i, run] = True
 
         dirs = dirs_to_attack_format(adv_dirs)
-        min_dim = torch.min(torch.sum(adv_found, dim=1))
-        if min_dim == n_adv_dims:
-            break
-    print('Runs needed for %d directions: %d' % (min_dim, run + 1 ))
 
-    if save_dims:
-        return advs, adv_dirs, adv_class, pert_lengths, adv_found, dims
     return advs, adv_dirs, adv_class, pert_lengths, adv_found
