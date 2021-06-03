@@ -1,6 +1,7 @@
 from typing import Union, Tuple, Any, Optional
 from functools import partial
 import numpy as np
+import torch
 import eagerpy as ep
 import foolbox as fb
 from foolbox import attacks as fa
@@ -11,16 +12,15 @@ from foolbox.attacks.base import MinimizationAttack, T, get_criterion, raise_if_
 
 
 class OrthogonalAttack(MinimizationAttack):
-    def __init__(self, input_attack, params, adv_dirs=[], plot_loss=False, random_start=False):
+    def __init__(self, input_attack, params, adv_dirs=[], random_start=False):
         super(OrthogonalAttack,self).__init__()
         self.input_attack = input_attack(**params)
         self.distance = LpDistance(2)
         self.dirs = adv_dirs
-        self.plot_loss = plot_loss
         self.random_start = random_start
 
     def run(self, model, inputs, criterion, **kwargs):
-        return self.input_attack.run(model, inputs, criterion, dirs=self.dirs, plot_loss=self.plot_loss, random_start=self.random_start, **kwargs)
+        return self.input_attack.run(model, inputs, criterion, dirs=self.dirs, random_start=self.random_start, **kwargs)
 
     def distance(self):
         ...
@@ -36,7 +36,6 @@ class CarliniWagner(fa.L2CarliniWagnerAttack):
         early_stop: Optional[float] = None,
         random_start: Optional[float] = None,
         dirs: Optional[Any] = [],
-        plot_loss: bool = False,
         ** kwargs: Any,
     ) -> T:
         raise_if_kwargs(kwargs)
@@ -75,7 +74,8 @@ class CarliniWagner(fa.L2CarliniWagnerAttack):
 
         x_attack = to_attack_space(x)
         reconstructed_x = to_model_space(x_attack)
-
+        # if len(dirs>0):
+        #     dirs = ep.astensor(dirs)
         rows = range(N)
 
         def loss_fun(
@@ -84,23 +84,41 @@ class CarliniWagner(fa.L2CarliniWagnerAttack):
             assert delta.shape == x_attack.shape
             assert consts.shape == (N,)
 
-            adv = to_model_space(x_attack + delta)
-
             ######## by David ############
+            adv = to_model_space(x_attack + delta)
+            if len(dirs) > 0:
+                # orth_loss = False
 
-            if len(dirs) == 0:
-                logits = model(adv)
-            else:
+            # else:
+                # orth_loss = False
                 s = adv - reconstructed_x
-                gram_schmidt = ep.zeros_like(s)
-                for i, a in enumerate(adv):
-                    gram_schmidt.raw[i] = (dirs.float32()[i].matmul(s[i].reshape([dirs.shape[-1], 1])) * dirs[i]).sum(
-                        axis=0).reshape(s[i].raw.shape).raw
-                adv_orth = adv - gram_schmidt
-                logits = model(adv_orth)
-                adv = ep.zeros_like(x_attack)
-                adv += adv_orth.raw
-            ###############################
+                # gram_schmidt = torch.zeros(delta.shape)
+                # for i in range(len(delta)):
+                #     dirs_i = dirs[i].flatten(-2, -1)
+                #     s_dir = s.float32()[i].flatten(-2, -1).flatten(-2, -1).expand_dims(-1)
+                #     gram_schmidt[i] = (dirs_i.matmul(s_dir)*dirs_i).sum(0).reshape(delta.shape).raw
+                # adv = (adv-gram_schmidt)
+                # if adv.max()>1 or adv.min()<0:
+                #     orth_loss = True
+
+                for i in range(len(delta)):
+                    x_i = reconstructed_x[i].flatten()
+                    d_i = dirs[i].flatten(1, -1)
+                    s_i = s.float32()[i].flatten()
+
+                    gram_schmidt = (d_i.matmul(s_i.expand_dims(-1))*d_i).sum(0)
+                    s_scaled = torch.linspace(0, 1, 100).outer((s_i - gram_schmidt).raw)
+                    a_scaled = x_i - s_scaled
+
+                    larger = (a_scaled<=1).any(1)
+                    smaller = (a_scaled>=0).any(1)
+                    out_of_range = larger.logical_and(smaller).raw
+                    idx = out_of_range.nonzero(as_tuple=False)[-1]
+
+                    adv.raw[i] = (a_scaled[idx]).reshape(adv[i].shape).raw
+
+            logits = model(adv)
+            # ###############################
 
             if targeted:
                 c_minimize = fa.carlini_wagner.best_other_classes(logits, classes)
@@ -117,18 +135,16 @@ class CarliniWagner(fa.L2CarliniWagnerAttack):
             is_adv_loss = is_adv_loss * consts
             squared_norms = (adv - reconstructed_x).flatten().square().sum(axis=-1)
 
-            ######## by David ############
-            loss = is_adv_loss.sum() + squared_norms.sum() #+ is_orth.sum()
-            # losses[binary_search_step, :, step] = np.array(
-            #     [loss.item(), is_adv_loss.sum().item(), squared_norms.sum().item(), is_orth.sum().item()])
-            ###############################
+            # if orth_loss:
+            #     is_orth = dirs * (adv-reconstructed_x).flatten(-2, -1)
+            #     is_orth = is_orth.sum(axis=-1).square().sum(axis=-1)
+            #     loss = is_adv_loss.sum() + squared_norms.sum() + 1e6 * is_orth.sum()
+            # else:
+            loss = is_adv_loss.sum() + squared_norms.sum()
 
             return loss, (adv, logits)
 
         loss_aux_and_grad = ep.value_and_grad_fn(x, loss_fun, has_aux=True)
-
-        losses = np.zeros([self.binary_search_steps, 4, self.steps])
-        best_binary_search_step = 0
 
         consts = self.initial_const * np.ones((N,))
         lower_bounds = np.zeros((N,))
@@ -180,8 +196,6 @@ class CarliniWagner(fa.L2CarliniWagnerAttack):
                 best_advs = ep.where(new_best_, perturbed, best_advs)
                 best_advs_norms = ep.where(new_best, norms, best_advs_norms)
 
-                # if new_best:
-                # best_binary_search_step = binary_search_step
 
             upper_bounds = np.where(found_advs, consts, upper_bounds)
             lower_bounds = np.where(found_advs, lower_bounds, consts)
@@ -191,7 +205,5 @@ class CarliniWagner(fa.L2CarliniWagnerAttack):
             consts = np.where(
                 np.isinf(upper_bounds), consts_exponential_search, consts_binary_search
             )
-        # if plot_loss and len(dirs):
-        #     np.save('./../data/losses' + str(orth_const) + '.npy', losses[best_binary_search_step])
 
         return restore_type(best_advs)

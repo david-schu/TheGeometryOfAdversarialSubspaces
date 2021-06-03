@@ -3,12 +3,8 @@ import torch
 import torchvision.datasets as datasets
 
 def orth_check(adv_dirs):
-    orth = np.eye(len(adv_dirs))
-    for i in range(len(adv_dirs)):
-        for j in range(i + 1, len(adv_dirs)):
-            orth[i, j] = np.dot(adv_dirs[i].T, adv_dirs[j])
-            orth[j, i] = orth[i, j]
-    return orth
+    orth = np.dot(adv_dirs,adv_dirs.T)
+    return orth, np.allclose(orth, np.identity(orth.shape[0]))
 
 
 def classification(img, model):
@@ -21,25 +17,33 @@ def classification(img, model):
 
 def dirs_to_attack_format(dirs):
     max_dim = max(len(elem) for elem in dirs)
-    attack_dirs = torch.zeros([len(dirs), max_dim, dirs[0].shape[-1]], device=dev())
+    attack_dirs = torch.zeros([len(dirs), max_dim, dirs[0].shape[-1]], device=dev(), requires_grad=False)
     for i, d in enumerate(dirs):
         attack_dirs[i, :len(d)] = d
     return attack_dirs
 
 
-def load_data(n, bounds=(0., 1.), random=True):
-    mnist = datasets.MNIST(root='../data', download=True)
-    indices = np.arange(len(mnist.data))
+def load_data(n, bounds=(0., 1.), random=True, d_set='MNIST'):
+    if d_set=='MNIST':
+        dset = datasets.MNIST(root='../data', download=True)
+    elif d_set == 'CIFAR':
+        dset = datasets.CIFAR10(root='../data', download=True)
+    indices = np.arange(len(dset.data))
     if random:
         np.random.shuffle(indices)
-    images = mnist.data[indices[:n]]
+    images = dset.data[indices[:n]]
     images = images / 255 * (bounds[1] - bounds[0]) + bounds[0]
-    images = images.unsqueeze(1)
-    labels = mnist.targets[indices[:n]]
 
+    if d_set=='MNIST':
+        images = images.unsqueeze(1)
+        labels = dset.targets[indices[:n]]
+    elif d_set == 'CIFAR':
+        images = images.transpose(0, 3, 1, 2)
+        labels = np.array(dset.targets)[indices[:n]]
     images = torch.as_tensor(images, device=dev())
     labels = torch.as_tensor(labels, device=dev())
     return images, labels
+
 
 def dev():
     if torch.cuda.is_available():

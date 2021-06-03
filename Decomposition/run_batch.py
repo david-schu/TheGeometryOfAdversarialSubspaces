@@ -13,7 +13,6 @@ def run_batch(fmodel,
               max_runs=100,
               early_stop=3,
               epsilons=[None],
-              plot_loss=False,
               verbose=False,
               save_dims=False
     ):
@@ -55,7 +54,6 @@ def run_batch(fmodel,
         attack = OrthogonalAttack(input_attack=input_attack,
                                   params=attack_params,
                                   adv_dirs=dirs,
-                                  plot_loss=plot_loss,
                                   random_start=random_start)
         _, adv, success = attack(fmodel, images, labels, epsilons=epsilons)
 
@@ -98,6 +96,7 @@ def run_batch(fmodel,
         min_dim = torch.min(torch.sum(adv_found, dim=1))
         if min_dim == n_adv_dims:
             break
+
     print('Runs needed for %d directions: %d' % (min_dim, run + 1 ))
 
     if save_dims:
