@@ -16,7 +16,7 @@ from models import model
 ## user initialization
 
 # set number of images for attack and batchsize (shouldn't be larger than 20)
-n_images = 1
+n_images = 20
 batchsize = 10
 load_pre_data = False
 data_path = '/home/bethge/dschultheiss/AdversarialDecomposition/data/cnn.npy'
