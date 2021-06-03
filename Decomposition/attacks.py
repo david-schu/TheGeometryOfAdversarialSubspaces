@@ -55,7 +55,7 @@ class CarliniWagner(fa.L2CarliniWagnerAttack):
             classes = criterion_.target_classes
             change_classes_logits = -self.confidence
         else:
-            raise ValueError("unsupported criterion")
+            raise ValueError("unsupported 500criterion")
 
         def is_adversarial(perturbed: ep.Tensor, logits: ep.Tensor) -> ep.Tensor:
             if change_classes_logits != 0:
@@ -107,7 +107,8 @@ class CarliniWagner(fa.L2CarliniWagnerAttack):
                     s_i = s.float32()[i].flatten()
 
                     gram_schmidt = (d_i.matmul(s_i.expand_dims(-1))*d_i).sum(0)
-                    s_scaled = torch.linspace(0, 1, 100).outer((s_i - gram_schmidt).raw)
+                    scales = ep.from_numpy(reconstructed_x, np.linspace(0,1,100).astype(np.float32))
+                    s_scaled = scales.expand_dims(-1).matmul((s_i - gram_schmidt).expand_dims(0))
                     a_scaled = x_i - s_scaled
 
                     larger = (a_scaled<=1).any(1)
