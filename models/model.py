@@ -22,7 +22,8 @@ class madry(torch.nn.Module):
         self.fc2 = nn.Linear(1024, 10)
         self.relu = nn.ReLU()
 
-    def forward(self, x):
+    def forward(self, x, dirs=[]):
+        x = x.clip(0,1)
         x = self.relu(self.conv1(x))
         x = self.maxPool1(x)
         x = self.relu(self.conv2(x))
@@ -153,6 +154,7 @@ class cifar_model(torch.nn.Module):
         self.dropout = nn.Dropout(p=0.3)
 
     def forward(self, x):
+
         x = self.relu(self.conv12(self.conv11(x)))
         x = self.maxPool1(x)
         x = self.relu(self.conv22(self.conv21(x)))

@@ -5,6 +5,7 @@ import foolbox
 from foolbox import attacks as fa
 import utils as u
 
+
 # Evaluate results on clean data
 def evalClean(model1=None, test_loader=None):
     print("Evaluating single model results on clean data")
