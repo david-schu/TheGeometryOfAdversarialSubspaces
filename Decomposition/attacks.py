@@ -14,15 +14,16 @@ from foolbox.attacks.base import MinimizationAttack, T, get_criterion, raise_if_
 # matplotlib.use('TkAgg')
 
 class OrthogonalAttack(MinimizationAttack):
-    def __init__(self, input_attack, params, adv_dirs=[], random_start=False):
+    def __init__(self, input_attack, params, adv_dirs=[], orth_const=100, random_start=False):
         super(OrthogonalAttack,self).__init__()
         self.input_attack = input_attack(**params)
         self.distance = LpDistance(2)
         self.dirs = adv_dirs
         self.random_start = random_start
+        self.orth_const = orth_const
 
     def run(self, model, inputs, criterion, **kwargs):
-        return self.input_attack.run(model, inputs, criterion, dirs=self.dirs, random_start=self.random_start, **kwargs)
+        return self.input_attack.run(model, inputs, criterion,orth_const=self.orth_const, dirs=self.dirs, random_start=self.random_start, **kwargs)
 
     def distance(self):
         ...
@@ -38,6 +39,7 @@ class CarliniWagner(fa.L2CarliniWagnerAttack):
         early_stop: Optional[float] = None,
         random_start: Optional[float] = None,
         dirs: Optional[Any] = [],
+        orth_const: Optional[float] = 100,
         ** kwargs: Any,
     ) -> T:
         raise_if_kwargs(kwargs)
@@ -122,7 +124,7 @@ class CarliniWagner(fa.L2CarliniWagnerAttack):
 
             if orth_loss:
                 is_orth = dirs.flatten(-2,-1) * (adv-x).flatten(-2, -1).expand_dims(1)
-                is_orth = is_orth.sum(axis=-1).square().sum(axis=-1) * consts*10e4
+                is_orth = is_orth.sum(axis=-1).square().sum(axis=-1) * consts*10
                 loss = is_adv_loss.sum() + squared_norms.sum() + is_orth.sum()
                 losses[binary_search_step, step] = is_orth.sum().raw
             else:

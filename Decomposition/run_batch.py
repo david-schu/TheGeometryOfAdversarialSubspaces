@@ -13,7 +13,8 @@ def run_batch(fmodel,
               n_adv_dims=3,
               early_stop=3,
               epsilons=[None],
-              verbose=False
+              verbose=False,
+              orth_const=100
     ):
 
     # initialize variables
@@ -37,7 +38,8 @@ def run_batch(fmodel,
         attack = OrthogonalAttack(input_attack=input_attack,
                                   params=attack_params,
                                   adv_dirs=dirs,
-                                  random_start=random_start)
+                                  random_start=random_start,
+                                  orth_const=orth_const)
         _, adv, success = attack(fmodel, images, labels, epsilons=epsilons)
 
         # check if adversarials were found and stop early if not

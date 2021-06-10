@@ -36,7 +36,8 @@ params = {
     'n_adv_dims': 20,
     'early_stop': 3,
     'input_attack': CarliniWagner,
-    'random_start': True
+    'random_start': True,
+    'orth_const': 100
 }
 
 # set seeds
