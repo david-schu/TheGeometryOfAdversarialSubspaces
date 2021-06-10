@@ -124,7 +124,7 @@ class CarliniWagner(fa.L2CarliniWagnerAttack):
 
             if orth_loss:
                 is_orth = dirs.flatten(-2,-1) * (adv-x).flatten(-2, -1).expand_dims(1)
-                is_orth = is_orth.sum(axis=-1).square().sum(axis=-1) * consts*10
+                is_orth = is_orth.sum(axis=-1).square().sum(axis=-1) * consts*orth_const
                 loss = is_adv_loss.sum() + squared_norms.sum() + is_orth.sum()
                 losses[binary_search_step, step] = is_orth.sum().raw
             else:
