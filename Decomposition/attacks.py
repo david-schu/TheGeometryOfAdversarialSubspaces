@@ -1,7 +1,6 @@
 from typing import Union, Tuple, Any, Optional
 from functools import partial
 import numpy as np
-import torch
 import eagerpy as ep
 import foolbox as fb
 from foolbox import attacks as fa
@@ -10,6 +9,9 @@ from foolbox.distances import LpDistance
 from foolbox.criteria import Misclassification, TargetedMisclassification
 from foolbox.attacks.base import MinimizationAttack, T, get_criterion, raise_if_kwargs
 
+# import matplotlib
+# import matplotlib.pyplot as plt
+# matplotlib.use('TkAgg')
 
 class OrthogonalAttack(MinimizationAttack):
     def __init__(self, input_attack, params, adv_dirs=[], random_start=False):
@@ -74,9 +76,8 @@ class CarliniWagner(fa.L2CarliniWagnerAttack):
 
         x_attack = to_attack_space(x)
         reconstructed_x = to_model_space(x_attack)
-        # if len(dirs>0):
-        #     dirs = ep.astensor(dirs)
         rows = range(N)
+        losses = np.zeros((self.binary_search_steps, self.steps))
 
         def loss_fun(
                 delta: ep.Tensor, consts: ep.Tensor
@@ -86,37 +87,20 @@ class CarliniWagner(fa.L2CarliniWagnerAttack):
 
             ######## by David ############
             adv = to_model_space(x_attack + delta)
+            orth_loss = False
             if len(dirs) > 0:
-                # orth_loss = False
-
-            # else:
-                # orth_loss = False
-                s = adv - reconstructed_x
-                # gram_schmidt = torch.zeros(delta.shape)
-                # for i in range(len(delta)):
-                #     dirs_i = dirs[i].flatten(-2, -1)
-                #     s_dir = s.float32()[i].flatten(-2, -1).flatten(-2, -1).expand_dims(-1)
-                #     gram_schmidt[i] = (dirs_i.matmul(s_dir)*dirs_i).sum(0).reshape(delta.shape).raw
-                # adv = (adv-gram_schmidt)
-                # if adv.max()>1 or adv.min()<0:
+                orth_loss=True
+                # _x = reconstructed_x.flatten(-3, -1)
+                # _d = dirs.flatten(-2, -1)
+                # _s = (adv - reconstructed_x).float32().flatten(-3, -1).expand_dims(1)
+                #
+                # gram_schmidt = ((_d * _s).sum(-1).expand_dims(-1)*_d).sum(1)
+                # adv_orth = adv - (gram_schmidt).reshape(adv.shape)
+                #
+                # if adv_orth.max() > 1 or adv_orth.min() < 0:
                 #     orth_loss = True
-
-                for i in range(len(delta)):
-                    x_i = reconstructed_x[i].flatten()
-                    d_i = dirs[i].flatten(1, -1)
-                    s_i = s.float32()[i].flatten()
-
-                    gram_schmidt = (d_i.matmul(s_i.expand_dims(-1))*d_i).sum(0)
-                    scales = ep.from_numpy(reconstructed_x, np.linspace(0,1,100).astype(np.float32))
-                    s_scaled = scales.expand_dims(-1).matmul((s_i - gram_schmidt).expand_dims(0))
-                    a_scaled = x_i - s_scaled
-
-                    larger = (a_scaled<=1).any(1)
-                    smaller = (a_scaled>=0).any(1)
-                    out_of_range = larger.logical_and(smaller).raw
-                    idx = out_of_range.nonzero(as_tuple=False)[-1]
-
-                    adv.raw[i] = (a_scaled[idx]).reshape(adv[i].shape).raw
+                # else:
+                #     adv = adv - (gram_schmidt).reshape(adv.shape)
 
             logits = model(adv)
             # ###############################
@@ -134,14 +118,15 @@ class CarliniWagner(fa.L2CarliniWagnerAttack):
             is_adv_loss = is_adv_loss + self.confidence
             is_adv_loss = ep.maximum(0, is_adv_loss)
             is_adv_loss = is_adv_loss * consts
-            squared_norms = (adv - reconstructed_x).flatten().square().sum(axis=-1)
+            squared_norms = (adv - reconstructed_x).flatten(1,-1).square().sum(axis=-1)
 
-            # if orth_loss:
-            #     is_orth = dirs * (adv-reconstructed_x).flatten(-2, -1)
-            #     is_orth = is_orth.sum(axis=-1).square().sum(axis=-1)
-            #     loss = is_adv_loss.sum() + squared_norms.sum() + 1e6 * is_orth.sum()
-            # else:
-            loss = is_adv_loss.sum() + squared_norms.sum()
+            if orth_loss:
+                is_orth = dirs.flatten(-2,-1) * (adv-x).flatten(-2, -1).expand_dims(1)
+                is_orth = is_orth.sum(axis=-1).square().sum(axis=-1) * consts*10e4
+                loss = is_adv_loss.sum() + squared_norms.sum() + is_orth.sum()
+                losses[binary_search_step, step] = is_orth.sum().raw
+            else:
+                loss = is_adv_loss.sum() + squared_norms.sum()
 
             return loss, (adv, logits)
 
@@ -153,7 +138,7 @@ class CarliniWagner(fa.L2CarliniWagnerAttack):
 
         best_advs = ep.zeros_like(x)
         best_advs_norms = ep.full(x, (N,), ep.inf)
-
+        best_binary_step = 0
         # the binary search searches for the smallest consts that produce adversarials
         for binary_search_step in range(self.binary_search_steps):
             if (
@@ -166,7 +151,7 @@ class CarliniWagner(fa.L2CarliniWagnerAttack):
             # create a new optimizer find the delta that minimizes the loss
             delta = ep.zeros_like(x_attack)
             if random_start:
-                delta = delta.uniform(shape=delta.shape, low=0, high=0.1)
+                delta = delta.uniform(shape=delta.shape, low=-0.1, high=0.1)
 
             optimizer = fa.carlini_wagner.AdamOptimizer(delta)
 
@@ -178,7 +163,8 @@ class CarliniWagner(fa.L2CarliniWagnerAttack):
             for step in range(self.steps):
 
                 loss, (perturbed, logits), gradient = loss_aux_and_grad(delta, consts_)
-                delta += optimizer(gradient, self.stepsize)
+                learning_rate = 0.005 / 5*np.ceil((3*step+1)/self.steps)
+                delta += optimizer(gradient, learning_rate)
 
                 if self.abort_early and step % (np.ceil(self.steps / 10)) == 0:
                     # after each tenth of the overall steps, check progress
@@ -197,6 +183,8 @@ class CarliniWagner(fa.L2CarliniWagnerAttack):
                 best_advs = ep.where(new_best_, perturbed, best_advs)
                 best_advs_norms = ep.where(new_best, norms, best_advs_norms)
 
+                if new_best:
+                    best_binary_step = binary_search_step
 
             upper_bounds = np.where(found_advs, consts, upper_bounds)
             lower_bounds = np.where(found_advs, lower_bounds, consts)
@@ -207,4 +195,10 @@ class CarliniWagner(fa.L2CarliniWagnerAttack):
                 np.isinf(upper_bounds), consts_exponential_search, consts_binary_search
             )
 
+        # if len(dirs)>0:
+        #     plt.figure()
+        #     plt.plot(range(self.steps), losses[best_binary_step])
+        #     plt.ylim(0, 10)
+        #     plt.savefig('../data/losses/loss' + str(dirs.shape[1],) + '.png' )
+        print('Best binary search step %d, const %.2f' % (best_binary_step, consts[0]))
         return restore_type(best_advs)

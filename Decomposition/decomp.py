@@ -27,8 +27,8 @@ attack_params = {
         'binary_search_steps': 9,
         'initial_const': 1e-2,
         'steps': 3000,
-        'confidence': 1,
-        'abort_early': False
+        # 'confidence': 1,
+        'abort_early': True
     }
 
 # set hyperparameters
@@ -48,9 +48,6 @@ model = model.madry()
 # model.load_state_dict(torch.load('./../models/adv_trained_l2.pt', map_location=torch.device(dev())))      # madry robust model
 model.load_state_dict(torch.load('./../models/natural.pt', map_location=torch.device(dev())))      # natural cnn - same architecture as madry robust model but nmot adversarially trained
 # model = mz.get_VAE(n_iter=50)   # ABS model
-
-images, labels = load_data(n_images, bounds=(0., 1.), random=False, d_set=d_set)
-
 
 model.eval()
 fmodel = foolbox.models.PyTorchModel(model,   # return logits in shape (bs, n_classes)
