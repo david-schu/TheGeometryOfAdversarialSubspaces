@@ -66,6 +66,6 @@ def run_batch(fmodel,
             pert_lengths[i, run] = pert_length
             adv_found[i, run] = True
         dirs = adv_dirs[:, :run+1]
-        print(orth_check(dirs[0]))
+        # print(orth_check(dirs[0]))
 
     return advs, adv_dirs, adv_class, pert_lengths, adv_found
