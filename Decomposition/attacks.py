@@ -185,8 +185,8 @@ class CarliniWagner(fa.L2CarliniWagnerAttack):
                 best_advs = ep.where(new_best_, perturbed, best_advs)
                 best_advs_norms = ep.where(new_best, norms, best_advs_norms)
 
-                if new_best:
-                    best_binary_step = binary_search_step
+                # if new_best:
+                #     best_binary_step = binary_search_step
 
             upper_bounds = np.where(found_advs, consts, upper_bounds)
             lower_bounds = np.where(found_advs, lower_bounds, consts)
@@ -202,5 +202,5 @@ class CarliniWagner(fa.L2CarliniWagnerAttack):
         #     plt.plot(range(self.steps), losses[best_binary_step])
         #     plt.ylim(0, 10)
         #     plt.savefig('../data/losses/loss' + str(dirs.shape[1],) + '.png' )
-        print('Best binary search step %d, const %.2f' % (best_binary_step, consts[0]))
+        # print('Best binary search step %d, const %.2f' % (best_binary_step, consts[0]))
         return restore_type(best_advs)
