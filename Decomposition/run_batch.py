@@ -43,7 +43,7 @@ def run_batch(fmodel,
         _, adv, success = attack(fmodel, images, labels, epsilons=epsilons)
 
         # check if adversarials were found and stop early if not
-        if success.sum() == 0:
+        if success.sum() == 0 or (adv[0]==0).all():
             print('--No attack within bounds found--')
             count += 1
             if early_stop == count:
@@ -55,7 +55,7 @@ def run_batch(fmodel,
 
         classes = classification(adv[0], fmodel)
         for i, a in enumerate(adv[0]):
-            if not success[0, i]:
+            if not success[0, i] or (a==0).all():
                 continue
             a_ = a.flatten(-2,-1)
             pert_length = torch.norm(a_ - x_orig[i])

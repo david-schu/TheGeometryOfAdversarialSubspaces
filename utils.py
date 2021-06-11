@@ -5,7 +5,7 @@ import torchvision.datasets as datasets
 def orth_check(adv_dirs):
     adv_dirs = np.array(adv_dirs.cpu()).reshape((adv_dirs.shape[0],-1))
     orth = np.dot(adv_dirs,adv_dirs.T)
-    return orth, np.allclose(orth, np.identity(orth.shape[0]))
+    return orth, np.allclose(orth, np.identity(orth.shape[0]),atol=1e-2)
 
 
 def classification(img, model):
