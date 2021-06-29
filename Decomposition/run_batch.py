@@ -1,10 +1,11 @@
 import torch
 from attacks import OrthogonalAttack, CarliniWagner
-from utils import classification, dev
+from utils import classification, dev, orthogonalize_in_bounds
 from tqdm import tqdm
+import foolbox
 from utils import orth_check
 
-def run_batch(fmodel,
+def run_batch(model,
               images,
               labels,
               attack_params,
@@ -29,21 +30,22 @@ def run_batch(fmodel,
     advs = torch.zeros((n_images, n_adv_dims, n_channels, n_pixel), device=dev())
     adv_dirs = torch.zeros((n_images, n_adv_dims, n_channels, n_pixel), device=dev())
     adv_found = torch.full((n_images, n_adv_dims), False, dtype=bool, device=dev())
-    dirs = torch.tensor([], device=dev())
-
+    dirs=[]
     for run in tqdm(range(n_adv_dims), leave=False):
         if verbose:
             print('Run %d' % (run + 1))
-
+        fmodel = foolbox.models.PyTorchModel(model,  # return logits in shape (bs, n_classes)
+                                             bounds=(0., 1.),  # num_classes=10,
+                                             device=dev())
         attack = OrthogonalAttack(input_attack=input_attack,
                                   params=attack_params,
                                   adv_dirs=dirs,
                                   random_start=random_start,
                                   orth_const=orth_const)
         _, adv, success = attack(fmodel, images, labels, epsilons=epsilons)
-
+        adv = adv[0]
         # check if adversarials were found and stop early if not
-        if success.sum() == 0 or (adv[0]==0).all():
+        if success.sum() == 0 or (adv==0).all():
             print('--No attack within bounds found--')
             count += 1
             if early_stop == count:
@@ -53,19 +55,27 @@ def run_batch(fmodel,
 
         count = 0
 
-        classes = classification(adv[0], fmodel)
-        for i, a in enumerate(adv[0]):
+        if run > 0:
+            adv = orthogonalize_in_bounds(adv, images, dirs)
+
+        model.dirs = []
+        classes = classification(adv, model)
+        for i, a in enumerate(adv):
             if not success[0, i] or (a==0).all():
                 continue
             a_ = a.flatten(-2,-1)
             pert_length = torch.norm(a_ - x_orig[i])
 
             advs[i, run] = a_
-            adv_dirs[i, run] = (a_ - x_orig[i]) / pert_length
+            adv_dir = (a_ - x_orig[i]) / pert_length
+            adv_dirs[i, run] = adv_dir
             adv_class[i, run] = classes[i]
             pert_lengths[i, run] = pert_length
             adv_found[i, run] = True
-        dirs = adv_dirs[:, :run+1]
+
+        dirs = adv_dirs[0, :run+1].flatten(-2, -1)
         # print(orth_check(dirs[0]))
+        model.dirs = dirs
+        model.x0 = images
 
     return advs, adv_dirs, adv_class, pert_lengths, adv_found

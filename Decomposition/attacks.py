@@ -45,7 +45,7 @@ class CarliniWagner(fa.L2CarliniWagnerAttack):
         raise_if_kwargs(kwargs)
         x, restore_type = ep.astensor_(inputs)
         criterion_ = get_criterion(criterion)
-        dirs = ep.astensor(dirs)  ##################
+        # dirs = ep.astensor(dirs)  ##################
         del inputs, criterion, kwargs
 
         N = len(x)
@@ -87,25 +87,14 @@ class CarliniWagner(fa.L2CarliniWagnerAttack):
             assert delta.shape == x_attack.shape
             assert consts.shape == (N,)
 
-            ######## by David ############
             adv = to_model_space(x_attack + delta)
-            orth_loss = False
-            if len(dirs) > 0:
-                orth_loss=True
-                # _x = reconstructed_x.flatten(-3, -1)
-                # _d = dirs.flatten(-2, -1)
-                # _s = (adv - reconstructed_x).float32().flatten(-3, -1).expand_dims(1)
-                #
-                # gram_schmidt = ((_d * _s).sum(-1).expand_dims(-1)*_d).sum(1)
-                # adv_orth = adv - (gram_schmidt).reshape(adv.shape)
-                #
-                # if adv_orth.max() > 1 or adv_orth.min() < 0:
-                #     orth_loss = True
-                # else:
-                #     adv = adv - (gram_schmidt).reshape(adv.shape)
 
-            logits = model(adv)
+            ######## by David ############
+            orth_loss = False
+            # if len(dirs) > 0:
+            #     orth_loss=True
             # ###############################
+            logits = model(adv)
 
             if targeted:
                 c_minimize = fa.carlini_wagner.best_other_classes(logits, classes)
@@ -153,7 +142,7 @@ class CarliniWagner(fa.L2CarliniWagnerAttack):
             # create a new optimizer find the delta that minimizes the loss
             delta = ep.zeros_like(x_attack)
             if random_start:
-                delta = delta.uniform(shape=delta.shape, low=-0.1, high=0.1)
+                delta = (delta.uniform(shape=delta.shape)-x)*1e-2
 
             optimizer = fa.carlini_wagner.AdamOptimizer(delta)
 

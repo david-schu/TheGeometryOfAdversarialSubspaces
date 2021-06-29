@@ -12,7 +12,7 @@ LEARNING_RATE = .001
 
 
 class madry(torch.nn.Module):
-    def __init__(self):
+    def __init__(self, dirs=[], x0=[]):
         super(madry, self).__init__()
         self.conv1 = nn.Conv2d(1, 32, 5, padding=2)
         self.maxPool1 = nn.MaxPool2d(kernel_size=2, stride=2)
@@ -21,9 +21,13 @@ class madry(torch.nn.Module):
         self.fc1 = nn.Linear(64 * 7 * 7, 1024)
         self.fc2 = nn.Linear(1024, 10)
         self.relu = nn.ReLU()
+        self.dirs = dirs
+        self.x0 = x0
 
-    def forward(self, x, dirs=[]):
-        x = x.clip(0,1)
+    def forward(self, x):
+        if len(self.dirs) > 0:
+            x = u.orthogonalize_in_bounds(x, self.x0, self.dirs)
+        x = x.clip(0, 1)
         x = self.relu(self.conv1(x))
         x = self.maxPool1(x)
         x = self.relu(self.conv2(x))
@@ -269,3 +273,11 @@ class cifar_model(torch.nn.Module):
                     print('[%s] Adv Training accuracy: %.2f%%' % (step, accAdv * 100))
                     totalAdv = 0
                     correctAdv = 0
+# out = model(x)
+# out = out[0]
+#
+# alphadot = out[1]  # Get gradient of variable alphadot (index in output array is 1)
+# gradient = torch.autograd.grad(outputs=alphadot, inputs=x, grad_outputs=torch.ones_like(alphadot),
+#                                retain_graph=True)
+# gradient = gradient[0].tolist()
+# gradient = gradient[0]

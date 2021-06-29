@@ -2,9 +2,11 @@ import torch
 from torchvision import datasets, transforms
 from models import model, eval
 from abs_models import models as mz
+from utils import dev
 
 # Initialize model and data loader
 model_normal = model.madry()
+model_normal.load_state_dict(torch.load('./models/natural.pt',map_location=dev()))
 # model_adv = model.madry()
 if torch.cuda.is_available():
     model_normal = model_normal.cuda()
@@ -35,7 +37,7 @@ nb_epochs = 2
 # model_normal.trainTorch(train_loader, nb_epochs, learning_rate)
 
 # Evaluation
-eval.evalClean(abs, test_loader)
+eval.evalClean(model_normal, test_loader)
 eval.evalAdvAttack(model_normal, test_loader, epsilon=epsilon)
 
 print("Training on Adversarial Samples")
@@ -45,6 +47,6 @@ print("Training on Adversarial Samples")
 # eval.evalClean(model_adv, test_loader)
 # eval.evalAdvAttack(model_adv, test_loader, epsilon=epsilon)
 
-torch.save(model_normal.state_dict(), 'models/natural_normalized.pt')
+# torch.save(model_normal.state_dict(), 'models/natural_normalized.pt')
 # torch.save(model_adv.state_dict(), 'models/adv_trained_l2.pt')
 print('Done')

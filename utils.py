@@ -60,3 +60,21 @@ def map_to(x, tmin, tmax, rmin=0, rmax=1):
         x_t = (x-rmin)*(tmax-tmin)/(rmax-rmin)+tmin
     return x_t
 
+
+def orthogonalize_in_bounds(adv, orig, dirs):
+    _s = (adv - orig).flatten(-3, -1).unsqueeze(1)
+
+    gram_schmidt = ((dirs * _s).sum(-1).unsqueeze(-1) * dirs).sum(1).view(adv.shape)
+    adv = adv - gram_schmidt
+
+    # if x_orth.max() > 1 or x_orth.min() < 0:
+    #     out_of_bounds = torch.zeros_like(adv)
+    #     out_of_bounds[x_orth < 0] = x_orth[x_orth < 0]
+    #     out_of_bounds[x_orth > 1] = x_orth[x_orth > 1] - 1
+    #     scale_fac = 1 - (out_of_bounds / (x_orth - orig))[(x_orth<0).logical_or((x_orth>1))].max()
+    #     adv = orig + (adv - orig - gram_schmidt) * scale_fac
+    # else:
+    #     adv = adv - gram_schmidt.view(adv.shape)
+
+    return adv
+

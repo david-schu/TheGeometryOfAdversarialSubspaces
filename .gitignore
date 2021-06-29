@@ -7,3 +7,7 @@
 data/png_to_gif.txt
 *.mp4
 *.gif
+.ipynb_checkpoints/Adversarial Decomposition-checkpoint.ipynb
+Curvature/.ipynb_checkpoints/curvature_analysis-checkpoint.ipynb
+Curvature/.ipynb_checkpoints/mouse_principal_curvatures-checkpoint.ipynb
+Curvature/mouse_principal_curvatures.ipynb
