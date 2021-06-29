@@ -25,9 +25,9 @@ class madry(torch.nn.Module):
         self.x0 = x0
 
     def forward(self, x):
-        if len(self.dirs) > 0:
-            x = u.orthogonalize_in_bounds(x, self.x0, self.dirs)
-        x = x.clip(0, 1)
+        # if len(self.dirs) > 0:
+        #     x = u.orthogonalize_in_bounds(x, self.x0, self.dirs)
+        # x = x.clip(0, 1)
         x = self.relu(self.conv1(x))
         x = self.maxPool1(x)
         x = self.relu(self.conv2(x))
