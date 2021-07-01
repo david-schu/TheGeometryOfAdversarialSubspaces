@@ -16,27 +16,26 @@ from models import model as md
 ## user initialization
 
 # set number of images for attack and batchsize (shouldn't be larger than 20)
-n_images = 10
+n_images = 1
 batchsize = 10
 pre_data = None
 d_set = 'MNIST'
 
 # set attack parameters
 attack_params = {
-        'binary_search_steps': 13,
+        'binary_search_steps': 9,
         'initial_const': 1e-2,
-        'steps': 5000,
+        'steps': 100,
         # 'confidence': 1,
         'abort_early': True
     }
 
 # set hyperparameters
 params = {
-    'n_adv_dims': 1,
+    'n_adv_dims': 20,
     'early_stop': 3,
     'input_attack': CarliniWagner,
-    'random_start': True,
-    'orth_const': 1000
+    'random_start': True
 }
 
 # set seeds
@@ -50,7 +49,6 @@ model.load_state_dict(torch.load('./../models/natural.pt', map_location=torch.de
 # model = mz.get_VAE(n_iter=50)   # ABS model
 
 model.eval()
-
 
 # load batched data
 images, labels = load_data(n_images, bounds=(0., 1.), d_set=d_set, random=False)
@@ -84,4 +82,4 @@ data = {
     'images': images.cpu().detach().numpy(),
     'labels': labels.cpu().detach().numpy(),
 }
-np.save('/home/bethge/dschultheiss/AdversarialDecomposition/data/cnn_sort.npy', data)
+# np.save('/home/bethge/dschultheiss/AdversarialDecomposition/data/cnn_sort.npy', data)
