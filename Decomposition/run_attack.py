@@ -5,9 +5,9 @@ from tqdm import tqdm
 import foolbox
 from utils import orth_check
 
-def run_batch(model,
-              images,
-              labels,
+def run_attack(model,
+              image,
+              label,
               attack_params,
               random_start=True,
               input_attack=CarliniWagner,
@@ -21,20 +21,16 @@ def run_batch(model,
                                          device=dev())
 
     # initialize variables
-    n_pixel = images.shape[-1] ** 2
-    n_images = images.shape[0]
-    n_channels = images.shape[1]
-    x_orig = images.reshape([n_images, n_channels, n_pixel])
+    n_pixel = image.shape[-1] ** 2
+    n_channels = image.shape[1]
+    x_orig = image.reshape([n_channels, n_pixel])
 
     count = 0
-    pert_lengths = torch.zeros((n_images, n_adv_dims), device=dev())
-    adv_class = torch.zeros((n_images, n_adv_dims), device=dev(), dtype=int)
-    advs = torch.zeros((n_images, n_adv_dims, n_channels, n_pixel), device=dev())
-    adv_dirs = torch.zeros((n_images, n_adv_dims, n_channels, n_pixel), device=dev())
-    adv_found = torch.full((n_images, n_adv_dims), False, dtype=bool, device=dev())
+    pert_lengths = torch.zeros(n_adv_dims, device=dev())
+    adv_class = torch.zeros(n_adv_dims, device=dev(), dtype=int)
+    advs = torch.zeros((n_adv_dims, n_channels, n_pixel), device=dev())
+    adv_dirs = torch.zeros((n_adv_dims, n_channels, n_pixel), device=dev())
     dirs=[]
-
-
 
     for run in tqdm(range(n_adv_dims), leave=False):
         if verbose:
@@ -45,7 +41,7 @@ def run_batch(model,
                                   adv_dirs=dirs,
                                   random_start=random_start)
 
-        _, adv, success = attack(fmodel, images, labels, epsilons=epsilons)
+        _, adv, success = attack(fmodel, image, label, epsilons=epsilons)
         adv = adv[0]
         # check if adversarials were found and stop early if not
         if success.sum() == 0 or (adv==0).all():
@@ -58,22 +54,18 @@ def run_batch(model,
 
         count = 0
 
-        classes = classification(adv, model)
-        for i, a in enumerate(adv):
-            if not success[0, i] or (a==0).all():
-                continue
-            a_ = a.flatten(-2, -1)
-            pert_length = torch.norm(a_ - x_orig[i])
+        class_ = classification(adv, model)[0]
+        a_ = adv.flatten()
+        pert_length = torch.norm(a_ - x_orig)
 
-            advs[i, run] = a_
-            adv_dir = (a_ - x_orig[i]) / pert_length
-            adv_dirs[i, run] = adv_dir
-            adv_class[i, run] = classes[i]
-            pert_lengths[i, run] = pert_length
-            adv_found[i, run] = True
+        advs[run] = a_
+        adv_dir = (a_ - x_orig) / pert_length
+        adv_dirs[run] = adv_dir
+        adv_class[run] = class_
+        pert_lengths[run] = pert_length
 
-        dirs = adv_dirs[0, :run+1].flatten(-2, -1).detach().cpu().numpy()
+        dirs = adv_dirs[:run+1].flatten(-2, -1).detach().cpu().numpy()
         # print(orth_check(dirs[0]))
 
 
-    return advs, adv_dirs, adv_class, pert_lengths, adv_found
+    return advs, adv_dirs, adv_class, pert_lengths

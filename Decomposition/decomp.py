@@ -10,14 +10,13 @@ from tqdm import tqdm
 # own modules
 from utils import load_data, dev
 from attacks import CarliniWagner
-from run_batch import run_batch
+from run_attack import run_attack
 from models import model as md
 
 ## user initialization
 
 # set number of images for attack and batchsize (shouldn't be larger than 20)
-n_images = 1
-batchsize = 10
+n_images = 10
 pre_data = None
 d_set = 'MNIST'
 
@@ -26,13 +25,12 @@ attack_params = {
         'binary_search_steps': 9,
         'initial_const': 1e-2,
         'steps': 100,
-        # 'confidence': 1,
         'abort_early': True
     }
 
 # set hyperparameters
 params = {
-    'n_adv_dims': 20,
+    'n_adv_dims': 50,
     'early_stop': 3,
     'input_attack': CarliniWagner,
     'random_start': True
@@ -52,34 +50,28 @@ model.eval()
 
 # load batched data
 images, labels = load_data(n_images, bounds=(0., 1.), d_set=d_set, random=False)
-batched_images = torch.split(images, batchsize, dim=0)
-batched_labels = torch.split(labels, batchsize, dim=0)
 
 # initialize data arrays
-advs = torch.tensor([], device=dev()).reshape((0, params['n_adv_dims'], batched_images[0].shape[1], batched_images[0].shape[-1]**2))
-dirs = torch.tensor([], device=dev()).reshape((0, params['n_adv_dims'], batched_images[0].shape[1], batched_images[0].shape[-1]**2))
-pert_lengths = torch.tensor([], device=dev()).reshape((0, params['n_adv_dims']))
-adv_class = torch.tensor([], device=dev()).reshape((0, params['n_adv_dims']))
-adv_found = torch.tensor([], device=dev()).reshape((0, params['n_adv_dims']))
+advs = np.zeros((n_images, params['n_adv_dims'], images[0].shape[1], images[0].shape[-1]**2))
+dirs = np.zeros((n_images, params['n_adv_dims'], images[0].shape[1], images[0].shape[-1]**2))
+pert_lengths = np.zeros((n_images, params['n_adv_dims']))
+adv_class = np.zeros((n_images, params['n_adv_dims']))
 
 # run decomposition over batches
-for i in tqdm(range(len(batched_images))):
-    new_advs, new_dirs, new_classes, new_pert_lengths, new_adv_found = run_batch(model, batched_images[i],
-                                                                                 batched_labels[i], attack_params,
-                                                                                 **params)
-    advs = torch.cat([advs, new_advs], 0)
-    dirs = torch.cat([dirs, new_dirs], 0)
-    adv_class = torch.cat([adv_class, new_classes], 0)
-    pert_lengths = torch.cat([pert_lengths, new_pert_lengths], 0)
-    adv_found = torch.cat([adv_found, new_adv_found], 0)
+for i in tqdm(range(len(images))):
+    new_advs, new_dirs, new_classes, new_pert_lengths = run_attack(model, images[i].unsqueeze(0), labels[i].unsqueeze(0),
+                                                                   attack_params, **params)
+    advs[i] = new_advs.cpu().detach().numpy()
+    dirs[i] = new_dirs.cpu().detach().numpy()
+    adv_class[i] = new_classes.cpu().detach().numpy()
+    pert_lengths[i] = new_pert_lengths.cpu().detach().numpy()
 
 data = {
-    'advs': advs.cpu().detach().numpy(),
-    'dirs': dirs.cpu().detach().numpy(),
-    'adv_class': adv_class.cpu().detach().numpy(),
-    'pert_lengths': pert_lengths.cpu().detach().numpy(),
-    'adv_found': adv_found.cpu().detach().numpy(),
-    'images': images.cpu().detach().numpy(),
-    'labels': labels.cpu().detach().numpy(),
+    'advs': advs,
+    'dirs': dirs,
+    'adv_class': adv_class,
+    'pert_lengths': pert_lengths,
+    'images': images,
+    'labels': labels,
 }
 # np.save('/home/bethge/dschultheiss/AdversarialDecomposition/data/cnn_sort.npy', data)
