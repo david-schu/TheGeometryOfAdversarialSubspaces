@@ -74,4 +74,4 @@ data = {
     'images': images,
     'labels': labels,
 }
-# np.save('/home/bethge/dschultheiss/AdversarialDecomposition/data/cnn_sort.npy', data)
+np.save('/home/bethge/dschultheiss/AdversarialDecomposition/data/cnn.npy', data)
