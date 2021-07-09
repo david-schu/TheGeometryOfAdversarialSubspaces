@@ -141,7 +141,7 @@ class CarliniWagner(fa.L2CarliniWagnerAttack):
             consts_ = ep.from_numpy(x, consts.astype(np.float32))
 
             res = minimize(loss_and_grad, (x+delta).flatten().numpy(), jac=True, args=(consts_), method='SLSQP',
-                           constraints=cons, bounds=bnds, options={'maxiter': 500, 'disp': False, "iprint": 0})
+                           constraints=cons, bounds=bnds, options={'maxiter': self.steps, 'disp': False, "iprint": 0})
             # print(res.message)
 
             perturbed = ep.from_numpy(x, res.x.astype(np.float32)).reshape(x.shape)

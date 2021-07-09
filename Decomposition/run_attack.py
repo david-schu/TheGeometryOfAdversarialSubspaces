@@ -32,7 +32,7 @@ def run_attack(model,
     adv_dirs = torch.zeros((n_adv_dims, n_channels, n_pixel), device=dev())
     dirs=[]
 
-    for run in tqdm(range(n_adv_dims), leave=False):
+    for run in range(n_adv_dims):
         if verbose:
             print('Run %d' % (run + 1))
 
