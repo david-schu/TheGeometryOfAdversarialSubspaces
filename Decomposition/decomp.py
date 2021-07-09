@@ -16,7 +16,7 @@ from models import model as md
 ## user initialization
 
 # set number of images for attack and batchsize (shouldn't be larger than 20)
-n_images = 5
+n_images = 10
 pre_data = None
 d_set = 'MNIST'
 
@@ -24,13 +24,13 @@ d_set = 'MNIST'
 attack_params = {
         'binary_search_steps': 9,
         'initial_const': 1e-2,
-        'steps': 100,
+        'steps': 500,
         'abort_early': True
     }
 
 # set hyperparameters
 params = {
-    'n_adv_dims': 1,
+    'n_adv_dims': 30,
     'early_stop': 3,
     'input_attack': CarliniWagner,
     'random_start': True
