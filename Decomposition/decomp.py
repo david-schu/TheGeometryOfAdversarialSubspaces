@@ -42,8 +42,8 @@ torch.manual_seed(0)
 
 # load a model
 model = md.madry()
-# model.load_state_dict(torch.load('./../models/adv_trained_l2.pt', map_location=torch.device(dev())))      # madry robust model
-model.load_state_dict(torch.load('./../models/natural.pt', map_location=torch.device(dev())))      # natural cnn - same architecture as madry robust model but nmot adversarially trained
+model.load_state_dict(torch.load('./../models/adv_trained_l2.pt', map_location=torch.device(dev())))      # madry robust model
+# model.load_state_dict(torch.load('./../models/natural.pt', map_location=torch.device(dev())))      # natural cnn - same architecture as madry robust model but nmot adversarially trained
 # model = mz.get_VAE(n_iter=50)   # ABS model
 
 model.eval()
@@ -52,8 +52,8 @@ model.eval()
 images, labels = load_data(n_images, bounds=(0., 1.), d_set=d_set, random=False)
 
 # initialize data arrays
-advs = np.zeros((n_images, params['n_adv_dims'], images[0].shape[1], images[0].shape[-1]**2))
-dirs = np.zeros((n_images, params['n_adv_dims'], images[0].shape[1], images[0].shape[-1]**2))
+advs = np.zeros((n_images, params['n_adv_dims'], images[0].shape[0], images[0].shape[-1]**2))
+dirs = np.zeros((n_images, params['n_adv_dims'], images[0].shape[0], images[0].shape[-1]**2))
 pert_lengths = np.zeros((n_images, params['n_adv_dims']))
 adv_class = np.zeros((n_images, params['n_adv_dims']))
 
@@ -74,4 +74,4 @@ data = {
     'images': images,
     'labels': labels,
 }
-np.save('/home/bethge/dschultheiss/AdversarialDecomposition/data/cnn.npy', data)
+np.save('/home/bethge/dschultheiss/AdversarialDecomposition/data/robust.npy', data)
