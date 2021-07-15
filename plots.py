@@ -98,14 +98,14 @@ def plot_pert_len_difs(advs_natural, advs_robust, images, n=10, ord=2):
     return fig, ax
 
 
-def plot_pert_lengths(advs, images, n=10, labels=None, ord=2):
-    n = np.minimum(n, advs[0].shape[-2])
-    advs = [a[:,n] for a in advs]
+def plot_pert_lengths(pert_lengths, n=10, labels=None, ord=2):
+    n = np.minimum(n, pert_lengths[0].shape[1])
+    pert_lengths = [p[:,n] for p in pert_lengths]
     colors = ['tab:blue', 'tab:orange', 'tab:green']
     l = []
 
     fig, ax = plt.subplots()
-    for i, (ad, im) in enumerate(zip(advs, images)):
+    for i, pl in enumerate(pert_lengths):
         boxprops = dict(color=colors[i], linewidth=1.5, alpha=0.7)
         whiskerprops = dict(color=colors[i], alpha=0.7)
         capprops = dict(color=colors[i], alpha=0.7)
@@ -116,9 +116,8 @@ def plot_pert_lengths(advs, images, n=10, labels=None, ord=2):
         if not labels is None:
             l.append(mpatches.Patch(color=colors[i], label=labels[i]))
 
-        pert_lengths = np.linalg.norm(ad-im.reshape((-1, 1, 784)), ord=ord, axis=-1)
-        pert_lengths[np.all(ad==0,axis=-1)] = np.nan
-        pert_lengths = pert_lengths[:, :n]
+
+        pert_lengths[pert_lengths==0] = np.nan
         mask = ~np.isnan(pert_lengths)
         filtered_data = [d[m] for d, m in zip(pert_lengths.T, mask.T)]
         ax.boxplot(filtered_data, whis=[10,90], showfliers=False, showmeans=True, boxprops=boxprops,
