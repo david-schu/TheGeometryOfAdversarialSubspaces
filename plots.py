@@ -116,13 +116,12 @@ def plot_pert_lengths(pert_lengths, n=10, labels=None, ord=2):
         if not labels is None:
             l.append(mpatches.Patch(color=colors[i], label=labels[i]))
 
-
         pl[pl==0] = np.nan
         mask = ~np.isnan(pl)
-        filtered_data = [d[m] for d, m in zip(pl.T, mask.T)]
+        filtered_data = [d[m] for d, m in zip(pl, mask)]
         ax.boxplot(filtered_data, whis=[10,90], showfliers=False, showmeans=True, boxprops=boxprops,
                     whiskerprops=whiskerprops, capprops=capprops, meanprops=meanpointprops, medianprops=medianprops)
-        ax.plot(range(1, len(filtered_data)+1), np.nanmean(pl,axis=0), '--', color=colors[i])
+        ax.plot(range(1, len(filtered_data)+1), np.nanmean(pl, axis=0), '--', color=colors[i])
     plt.title('Perturbation length of first ' + str(n) + ' adversarial directions')
     plt.xlabel('d')
     if ord == np.inf:
