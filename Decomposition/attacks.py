@@ -141,8 +141,8 @@ class CarliniWagner(fa.L2CarliniWagnerAttack):
             consts_ = ep.from_numpy(x, consts.astype(np.float32))
 
             res = minimize(loss_and_grad, (x+delta).flatten().numpy(), jac=True, args=(consts_), method='trust-constr',
-                           constraints=cons, bounds=bnds, options={'maxiter': self.steps})
-            # print(res.message)
+                           constraints=cons, bounds=bnds, options={'maxiter': self.steps, 'xtol': 1e-5})
+            print(res.message)
 
             perturbed = ep.from_numpy(x, res.x.astype(np.float32)).reshape(x.shape)
             logits = model(perturbed)
@@ -157,6 +157,9 @@ class CarliniWagner(fa.L2CarliniWagnerAttack):
             norms = (perturbed - x).flatten().norms.l2(axis=-1)
             closer = norms < best_advs_norms
             new_best = ep.logical_and(closer, found_advs_iter)
+            if new_best:
+
+                best_bin_search_step=binary_search_step
 
             new_best_ = fb.devutils.atleast_kd(new_best, best_advs.ndim)
             best_advs = ep.where(new_best_, perturbed, best_advs)
@@ -170,6 +173,6 @@ class CarliniWagner(fa.L2CarliniWagnerAttack):
             consts = np.where(
                 np.isinf(upper_bounds), consts_exponential_search, consts_binary_search
             )
-
+        print('Binary search step: ' + str(best_bin_search_step))
         return restore_type(best_advs)
 

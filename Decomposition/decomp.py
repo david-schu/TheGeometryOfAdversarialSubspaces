@@ -16,7 +16,7 @@ from models import model as md
 ## user initialization
 
 # set number of images for attack and batchsize (shouldn't be larger than 20)
-n_images = 10
+n_images = 1
 pre_data = None
 d_set = 'MNIST'
 
@@ -24,7 +24,7 @@ d_set = 'MNIST'
 attack_params = {
         'binary_search_steps': 9,
         'initial_const': 1e-2,
-        'steps': 500,
+        'steps': 1000,
         'abort_early': True
     }
 
@@ -33,7 +33,7 @@ params = {
     'n_adv_dims': 30,
     'early_stop': 3,
     'input_attack': CarliniWagner,
-    'random_start': True
+    'random_start': False
 }
 
 # set seeds
@@ -42,8 +42,8 @@ torch.manual_seed(0)
 
 # load a model
 model = md.madry()
-model.load_state_dict(torch.load('./../models/adv_trained_l2.pt', map_location=torch.device(dev())))      # madry robust model
-# model.load_state_dict(torch.load('./../models/natural.pt', map_location=torch.device(dev())))      # natural cnn - same architecture as madry robust model but nmot adversarially trained
+# model.load_state_dict(torch.load('./../models/adv_trained_l2.pt', map_location=torch.device(dev())))      # madry robust model
+model.load_state_dict(torch.load('./../models/natural.pt', map_location=torch.device(dev())))      # natural cnn - same architecture as madry robust model but nmot adversarially trained
 # model = mz.get_VAE(n_iter=50)   # ABS model
 
 model.eval()
@@ -74,4 +74,4 @@ data = {
     'images': images,
     'labels': labels,
 }
-np.save('/home/bethge/dschultheiss/AdversarialDecomposition/data/robust.npy', data)
+np.save('/home/bethge/dschultheiss/AdversarialDecomposition/data/cnn_single.npy', data)
