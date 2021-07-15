@@ -101,7 +101,6 @@ def plot_pert_len_difs(advs_natural, advs_robust, images, n=10, ord=2):
 def plot_pert_lengths(advs, images, n=10, labels=None, ord=2):
     n = np.minimum(n, advs[0].shape[-2])
     advs = [a[:,n] for a in advs]
-    images = [a[:, n] for a in images]
     colors = ['tab:blue', 'tab:orange', 'tab:green']
     l = []
 
