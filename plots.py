@@ -100,7 +100,7 @@ def plot_pert_len_difs(advs_natural, advs_robust, images, n=10, ord=2):
 
 def plot_pert_lengths(pert_lengths, n=10, labels=None, ord=2):
     n = np.minimum(n, pert_lengths[0].shape[1])
-    pert_lengths = [p[:,n] for p in pert_lengths]
+    pert_lengths = [p[:,:n] for p in pert_lengths]
     colors = ['tab:blue', 'tab:orange', 'tab:green']
     l = []
 
@@ -117,7 +117,6 @@ def plot_pert_lengths(pert_lengths, n=10, labels=None, ord=2):
             l.append(mpatches.Patch(color=colors[i], label=labels[i]))
 
         pl[pl==0] = np.nan
-        pl = pl[:, :n]
         mask = ~np.isnan(pl)
         filtered_data = [d[m] for d, m in zip(pl.T, mask.T)]
         ax.boxplot(filtered_data, whis=[10,90], showfliers=False, showmeans=True, boxprops=boxprops,
