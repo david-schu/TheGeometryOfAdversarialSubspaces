@@ -56,7 +56,8 @@ def plot_advs(advs, orig=None, classes=None, orig_class=None, n=10,vmin=0,vmax=1
     #ax[1, n+j-1].set_xlabel('magnification factor ' + str(np.round(1/max_val, 2)), horizontalalignment='right', x=1.0)
     fig.colorbar(im_adv, ax=ax[0, :].ravel().tolist(), shrink=0.7)
     fig.colorbar(im_pert, ax=ax[1, :].ravel().tolist(), shrink=0.7)
-    plt.show()
+
+    return fig, ax
 
 
 def plot_mean_advs(advs, images, classes, labels, pert_lengths, n=10, vmin=0, vmax=1):
@@ -64,7 +65,7 @@ def plot_mean_advs(advs, images, classes, labels, pert_lengths, n=10, vmin=0, vm
     mean_pert_length = np.mean(pert_lengths, axis=0)
     dist_to_mean = np.sum(np.abs(pert_lengths - mean_pert_length), axis=-1)
     min_idx = np.argmin(dist_to_mean)
-    plot_advs(advs[min_idx], images[min_idx], classes[min_idx], labels[min_idx], n=n, vmin=vmin, vmax=vmax)
+    return plot_advs(advs[min_idx], images[min_idx], classes[min_idx], labels[min_idx], n=n, vmin=vmin, vmax=vmax)
 
 
 def plot_pert_len_difs(advs_natural, advs_robust, images, n=10, ord=2):
@@ -93,7 +94,8 @@ def plot_pert_len_difs(advs_natural, advs_robust, images, n=10, ord=2):
         plt.ylabel('adversarial vector length ($\ell_\infty-norm$)')
     else:
         plt.ylabel('adversarial vector length ($\ell_%d-norm$)' % (ord))
-    plt.show()
+
+    return fig, ax
 
 
 def plot_pert_lengths(advs, images, n=10, labels=None, ord=2):
@@ -102,6 +104,8 @@ def plot_pert_lengths(advs, images, n=10, labels=None, ord=2):
     images = [a[:, n] for a in images]
     colors = ['tab:blue', 'tab:orange', 'tab:green']
     l = []
+
+    fig, ax = plt.subplots()
     for i, (ad, im) in enumerate(zip(advs, images)):
         boxprops = dict(color=colors[i], linewidth=1.5, alpha=0.7)
         whiskerprops = dict(color=colors[i], alpha=0.7)
@@ -118,9 +122,9 @@ def plot_pert_lengths(advs, images, n=10, labels=None, ord=2):
         pert_lengths = pert_lengths[:, :n]
         mask = ~np.isnan(pert_lengths)
         filtered_data = [d[m] for d, m in zip(pert_lengths.T, mask.T)]
-        plt.boxplot(filtered_data, whis=[10,90], showfliers=False, showmeans=True, boxprops=boxprops,
+        ax.boxplot(filtered_data, whis=[10,90], showfliers=False, showmeans=True, boxprops=boxprops,
                     whiskerprops=whiskerprops, capprops=capprops, meanprops=meanpointprops, medianprops=medianprops)
-        plt.plot(range(1, len(filtered_data)+1), np.nanmean(pert_lengths,axis=0), '--', color=colors[i])
+        ax.plot(range(1, len(filtered_data)+1), np.nanmean(pert_lengths,axis=0), '--', color=colors[i])
     plt.title('Perturbation length of first ' + str(n) + ' adversarial directions')
     plt.xlabel('d')
     if ord == np.inf:
@@ -129,7 +133,7 @@ def plot_pert_lengths(advs, images, n=10, labels=None, ord=2):
         plt.ylabel('adversarial vector length ($\ell_%d-norm$)' % (ord))
     if not (labels is None):
         plt.legend(handles=l)
-    plt.show()
+    return fig, ax
 
 
 def plot_pert_lengths_single(adv_class, pert_lengths):
