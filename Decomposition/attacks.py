@@ -72,12 +72,11 @@ class CarliniWagner(fa.L2CarliniWagnerAttack):
         rows = range(N)
 
         def loss_fun(
-                delta: ep.Tensor, consts: ep.Tensor
+                z: ep.Tensor, consts: ep.Tensor
         ) -> Tuple[ep.Tensor, Tuple[ep.Tensor, ep.Tensor]]:
-            assert delta.shape == x.shape
+            # assert delta.shape == x.shape
             assert consts.shape == (N,)
-
-            adv = delta
+            adv = (z.reshape((1,-1)).matmul(basis_)).reshape(x.shape) + x
 
             logits = model(adv)
 
@@ -102,22 +101,31 @@ class CarliniWagner(fa.L2CarliniWagnerAttack):
 
         loss_aux_and_grad = ep.value_and_grad_fn(x, loss_fun, has_aux=True)
 
-        def loss_and_grad(adv, consts):
-            adv_ = ep.from_numpy(x, adv.astype(np.float32)).reshape(x.shape)
-            loss, _, gradient = loss_aux_and_grad(adv_, consts)
+        def loss_and_grad(z, consts):
+            z_ = ep.from_numpy(x, z.astype(np.float32))
+            loss, _, gradient = loss_aux_and_grad(z_, consts)
             loss_np = loss.numpy()
             grad_np = gradient.flatten().numpy()
             return loss_np, grad_np
 
         x_np = x.flatten().numpy()
-        bnds = np.repeat([[0, 1]], 784, axis=0)
 
-        cons = ()
-        if len(dirs) > 0:
-            for d in dirs:
-                con = {'type': 'eq', 'fun': lambda adv, d, x_np: ((adv-x_np)*d).sum(), 'args': (d, x_np, )}
-                cons = cons + (con,)
+        basis = make_orth_basis(dirs)/1e2
+        basis_ = ep.from_numpy(x, basis.astype(np.float32))
 
+        con1 = {'type': 'ineq', 'fun': lambda z, basis, x_np: (z@basis)+x_np, 'args': (basis, x_np, )}
+        con2 = {'type': 'ineq', 'fun': lambda z, basis, x_np: 1-((z @ basis) + x_np), 'args': (basis, x_np,)}
+        cons = (con1, con2)
+
+        z = np.zeros(len(basis))
+
+        # bnds = np.repeat([[0, 1]], 784, axis=0)
+        # cons = ()
+        # if len(dirs)>0:
+        #     for d in dirs:
+        #         con = {'type': 'eq', 'fun': lambda adv, d, x_np: ((adv-x_np)*d).sum(), 'args': (d, x_np, )}
+        #         cons = cons + (con,)
+        best_bin_search_step = 0
         consts = self.initial_const * np.ones((N,))
         lower_bounds = np.zeros((N,))
         upper_bounds = np.inf * np.ones((N,))
@@ -140,11 +148,12 @@ class CarliniWagner(fa.L2CarliniWagnerAttack):
 
             consts_ = ep.from_numpy(x, consts.astype(np.float32))
 
-            res = minimize(loss_and_grad, (x+delta).flatten().numpy(), jac=True, args=(consts_), method='trust-constr',
-                           constraints=cons, bounds=bnds, options={'maxiter': self.steps, 'xtol': 1e-5})
+            res = minimize(loss_and_grad, z, jac=True, args=(consts_), method='SLSQP',
+                           constraints=cons, options={'maxiter': self.steps,  'disp': True, 'iprint':2})
             print(res.message)
 
-            perturbed = ep.from_numpy(x, res.x.astype(np.float32)).reshape(x.shape)
+            perturbed = ep.from_numpy(x, ((res.x@basis) + x_np).astype(np.float32)).reshape(x.shape)
+
             logits = model(perturbed)
 
 
@@ -157,9 +166,9 @@ class CarliniWagner(fa.L2CarliniWagnerAttack):
             norms = (perturbed - x).flatten().norms.l2(axis=-1)
             closer = norms < best_advs_norms
             new_best = ep.logical_and(closer, found_advs_iter)
-            if new_best:
 
-                best_bin_search_step=binary_search_step
+            if new_best:
+                best_bin_search_step=consts
 
             new_best_ = fb.devutils.atleast_kd(new_best, best_advs.ndim)
             best_advs = ep.where(new_best_, perturbed, best_advs)
@@ -176,3 +185,22 @@ class CarliniWagner(fa.L2CarliniWagnerAttack):
         print('Binary search step: ' + str(best_bin_search_step))
         return restore_type(best_advs)
 
+def make_orth_basis(dirs):
+    n_iterations = 1
+    n_pixel = 784#dirs.shape[-1]
+    basis = np.random.uniform(-1, 1, (n_pixel - len(dirs), n_pixel))
+    basis = basis / np.linalg.norm(basis, axis=-1, keepdims=True)
+    if len(dirs)>0:
+        basis_with_dirs = np.concatenate((dirs, basis), axis=0)
+    else:
+        basis_with_dirs = basis
+
+    for it in range(n_iterations):
+        for i, v in enumerate(basis):
+            v_orth = v - ((basis_with_dirs[:len(dirs) + i] * v.reshape((1, -1))).sum(-1, keepdims=True) *
+                          basis_with_dirs[:len(dirs) + i]).sum(0)
+            u_orth = v_orth / np.linalg.norm(v_orth)
+            basis_with_dirs[len(dirs)+i] = u_orth
+            basis[i] = u_orth
+
+    return basis
