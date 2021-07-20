@@ -141,38 +141,40 @@ class CarliniWagner(fa.L2CarliniWagnerAttack):
                 # in the last binary search step, repeat the search once
                 consts = np.minimum(upper_bounds, 1e10)
 
-            # create a new optimizer find the delta that minimizes the loss
-            delta = ep.zeros_like(x)
-            if random_start:
-                delta = (delta.uniform(shape=delta.shape)-x)*1e-2
-
             consts_ = ep.from_numpy(x, consts.astype(np.float32))
 
-            res = minimize(loss_and_grad, z, jac=True, args=(consts_), method='SLSQP',
-                           constraints=cons, options={'maxiter': self.steps,  'disp': True, 'iprint':2})
-            print(res.message)
+            res = minimize(loss_and_grad, z, jac=True, args=(consts_), method='trust-constr',
+                           constraints=cons, options={'maxiter': self.steps, 'xtol': 1e-05, 'gtol': 1e-05, 'disp': True, 'verbose':2})
+            # print(res.message)
 
             perturbed = ep.from_numpy(x, ((res.x@basis) + x_np).astype(np.float32)).reshape(x.shape)
+            valid_res = True
 
-            logits = model(perturbed)
-
+            if perturbed.max() > 1.001 or perturbed.min() < -0.001:
+                valid_res = False
+            elif ep.all(perturbed==0):
+                valid_res = False
+            else:
+                perturbed = perturbed.clip(0, 1)
 
             # tracks whether adv with the current consts was found
             found_advs = np.full((N,), fill_value=False)
+            if valid_res:
+                logits = model(perturbed)
 
-            found_advs_iter = is_adversarial(perturbed, logits)
-            found_advs = np.logical_or(found_advs, found_advs_iter.numpy())
+                found_advs_iter = is_adversarial(perturbed, logits)
+                found_advs = np.logical_or(found_advs, found_advs_iter.numpy())
 
-            norms = (perturbed - x).flatten().norms.l2(axis=-1)
-            closer = norms < best_advs_norms
-            new_best = ep.logical_and(closer, found_advs_iter)
+                norms = (perturbed - x).flatten().norms.l2(axis=-1)
+                closer = norms < best_advs_norms
+                new_best = ep.logical_and(closer, found_advs_iter)
 
-            if new_best:
-                best_bin_search_step=consts
+                if new_best:
+                    best_bin_search_step=consts
 
-            new_best_ = fb.devutils.atleast_kd(new_best, best_advs.ndim)
-            best_advs = ep.where(new_best_, perturbed, best_advs)
-            best_advs_norms = ep.where(new_best, norms, best_advs_norms)
+                new_best_ = fb.devutils.atleast_kd(new_best, best_advs.ndim)
+                best_advs = ep.where(new_best_, perturbed, best_advs)
+                best_advs_norms = ep.where(new_best, norms, best_advs_norms)
 
             upper_bounds = np.where(found_advs, consts, upper_bounds)
             lower_bounds = np.where(found_advs, lower_bounds, consts)
@@ -186,7 +188,7 @@ class CarliniWagner(fa.L2CarliniWagnerAttack):
         return restore_type(best_advs)
 
 def make_orth_basis(dirs):
-    n_iterations = 1
+    n_iterations = 3
     n_pixel = 784#dirs.shape[-1]
     basis = np.random.uniform(-1, 1, (n_pixel - len(dirs), n_pixel))
     basis = basis / np.linalg.norm(basis, axis=-1, keepdims=True)

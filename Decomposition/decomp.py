@@ -23,8 +23,8 @@ d_set = 'MNIST'
 # set attack parameters
 attack_params = {
         'binary_search_steps': 10,
-        'initial_const': 1e-1,
-        'steps': 100,
+        'initial_const': 1e-2,
+        'steps': 500,
         'abort_early': True
     }
 
@@ -74,4 +74,4 @@ data = {
     'images': images,
     'labels': labels,
 }
-np.save('/home/bethge/dschultheiss/AdversarialDecomposition/data/cnn_single.npy', data)
+np.save('/home/bethge/dschultheiss/AdversarialDecomposition/data/cnn_single_trust_reg.npy', data)
