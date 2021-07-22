@@ -5,7 +5,6 @@ sys.path.insert(0, '../data')
 import numpy as np
 import torch
 from tqdm import tqdm
-# from abs_models import models as mz
 
 # own modules
 from utils import load_data, dev
