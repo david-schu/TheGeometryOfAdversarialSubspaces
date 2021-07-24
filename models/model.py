@@ -25,7 +25,7 @@ class madry(torch.nn.Module):
         self.x0 = x0
 
     def forward(self, x):
-        x = x.clip(0, 1)
+        # x = x.clip(0, 1)
         x = self.relu(self.conv1(x))
         x = self.maxPool1(x)
         x = self.relu(self.conv2(x))
@@ -152,7 +152,7 @@ class madry_diff(torch.nn.Module):
 
 
     def forward(self, x):
-        x = x.clip(0, 1)
+        # x = x.clip(0, 1)
         x = self.elu(self.conv1(x))
         x = self.maxPool1(x)
         x = self.elu(self.conv2(x))

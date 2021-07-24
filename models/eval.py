@@ -32,11 +32,7 @@ def evalAdvAttack(model=None, test_loader=None, epsilon=[0.3]):
     total = 0
     correct = 0
     model.eval()
-    # count=0
     for xs, ys in test_loader:
-        # if count>0:
-        #     break
-        # count+=1
         if torch.cuda.is_available():
             xs, ys = xs.cuda(), ys.cuda()
         # pytorch fast gradient method

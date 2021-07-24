@@ -5,8 +5,22 @@ from models import model, eval
 train_batch_size = 50
 eval_batch_size = 200
 learning_rate = 1e-4
-epsilon = [3]
-nb_epochs = 5
+epsilon = [5]
+nb_epochs = 2
+
+train_loader = torch.utils.data.DataLoader(
+    datasets.MNIST('./data', train=True, download=True,
+                   transform=transforms.Compose([
+                       transforms.ToTensor(),
+                       transforms.Normalize(0.5, 0.5)])),
+    batch_size=train_batch_size, shuffle=True)
+
+test_loader = torch.utils.data.DataLoader(
+    datasets.MNIST('./data', train=False,
+                   transform=transforms.Compose([
+                       transforms.ToTensor(),
+                       transforms.Normalize(0.5, 0.5)])),
+    batch_size=eval_batch_size)
 
 seeds = [12, 69, 420, 1202, 3000]
 
@@ -15,27 +29,11 @@ for i, seed in enumerate(seeds):
     torch.manual_seed(seed)
 
     # Initialize model and data loader
-    model_nat = model.madry_diff()
-    model_robust = model.madry_diff()
+    model_nat = model.madry()
+    model_robust = model.madry()
     if torch.cuda.is_available():
         model_nat = model_nat.cuda()
         model_robust = model_robust.cuda()
-
-    train_loader = torch.utils.data.DataLoader(
-        datasets.MNIST('./data', train=True, download=True,
-                         transform=transforms.Compose([
-        transforms.ToTensor(),
-        transforms.Normalize(0.5, 0.5)])),
-        batch_size=train_batch_size, shuffle=True)
-
-    test_loader = torch.utils.data.DataLoader(
-        datasets.MNIST('./data', train=False,
-                         transform=transforms.Compose([
-        transforms.ToTensor(),
-        transforms.Normalize(0.5, 0.5)])),
-        batch_size=eval_batch_size)
-
-
 
     print("Training Model")
     model_nat.trainTorch(train_loader, nb_epochs, learning_rate)
