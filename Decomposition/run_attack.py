@@ -54,7 +54,7 @@ def run_attack(model,
 
         count = 0
 
-        class_ = classification(adv, model)[0]
+        class_ = classification(adv, label, model)
         a_ = adv.flatten()
         pert_length = torch.norm(a_ - x_orig)
 
@@ -65,7 +65,6 @@ def run_attack(model,
         pert_lengths[run] = pert_length
 
         dirs = adv_dirs[:run+1].flatten(-2, -1).detach().cpu().numpy()
-        # print(orth_check(dirs[0]))
 
 
     return advs, adv_dirs, adv_class, pert_lengths

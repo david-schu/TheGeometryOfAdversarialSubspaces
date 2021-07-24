@@ -1,7 +1,7 @@
 from typing import Union, Tuple, Any, Optional
 from functools import partial
 import numpy as np
-from scipy.optimize import minimize
+from scipy.optimize import minimize, LinearConstraint
 import eagerpy as ep
 import foolbox as fb
 from foolbox import attacks as fa
@@ -10,8 +10,8 @@ from foolbox.distances import LpDistance
 from foolbox.criteria import Misclassification, TargetedMisclassification
 from foolbox.attacks.base import MinimizationAttack, T, get_criterion, raise_if_kwargs
 
+from cyipopt import minimize_ipopt
 import torch
-from utils import dev
 
 class OrthogonalAttack(MinimizationAttack):
     def __init__(self, input_attack, params, adv_dirs=[], random_start=False):
@@ -61,7 +61,16 @@ class CarliniWagner(fa.L2CarliniWagnerAttack):
         def is_adversarial(perturbed: ep.Tensor, logits: ep.Tensor) -> ep.Tensor:
             if change_classes_logits != 0:
                 logits += ep.onehot_like(logits, classes, value=change_classes_logits)
-            return criterion_(perturbed, logits)
+            outputs_, restore_type = ep.astensor_(logits)
+            del perturbed, logits
+            classes_ = outputs_.argmax(axis=-1)
+            sorted = outputs_.sort(axis=-1)
+            assert classes_.shape == classes.shape
+            is_adv = classes != classes_
+            if not is_adv and int((sorted[0,-2]*10000).raw) == int((sorted[:,-1]*1000).raw):
+                is_adv.raw[0] = True
+            return restore_type(is_adv)
+
 
         if classes.shape != (N,):
             name = "target_classes" if targeted else "labels"
@@ -72,12 +81,13 @@ class CarliniWagner(fa.L2CarliniWagnerAttack):
         rows = range(N)
 
         def loss_fun(
-                z: ep.Tensor, consts: ep.Tensor
+                delta: ep.Tensor, consts: ep.Tensor
         ) -> Tuple[ep.Tensor, Tuple[ep.Tensor, ep.Tensor]]:
             # assert delta.shape == x.shape
-            assert consts.shape == (N,)
-            adv = (z.reshape((1,-1)).matmul(basis_)).reshape(x.shape) + x
+            # assert consts.shape == (N,)
 
+            # adv = (z.reshape((1,-1)).matmul(basis_)).reshape(x.shape) + x
+            adv = delta
             logits = model(adv)
 
             if targeted:
@@ -93,7 +103,7 @@ class CarliniWagner(fa.L2CarliniWagnerAttack):
             is_adv_loss = is_adv_loss + self.confidence
             is_adv_loss = ep.maximum(0, is_adv_loss)
             is_adv_loss = is_adv_loss * consts
-            squared_norms = (adv - x).flatten(1,-1).square().sum(axis=-1)
+            squared_norms = (adv - x).flatten(1, -1).square().sum(axis=-1)
 
             loss = is_adv_loss.sum() + squared_norms.sum()
 
@@ -101,30 +111,49 @@ class CarliniWagner(fa.L2CarliniWagnerAttack):
 
         loss_aux_and_grad = ep.value_and_grad_fn(x, loss_fun, has_aux=True)
 
-        def loss_and_grad(z, consts):
-            z_ = ep.from_numpy(x, z.astype(np.float32))
-            loss, _, gradient = loss_aux_and_grad(z_, consts)
+        def loss_and_grad(delta, consts):
+            delta = ep.from_numpy(x, delta.astype(np.float32)).reshape(x.shape)
+            loss, _, gradient = loss_aux_and_grad(delta, consts)
             loss_np = loss.numpy()
             grad_np = gradient.flatten().numpy()
             return loss_np, grad_np
 
+        def obj(delta, consts):
+            delta = ep.from_numpy(x, delta.astype(np.float32)).reshape(x.shape)
+            loss, _, gradient = loss_aux_and_grad(delta, consts)
+            loss_np = loss.numpy().item()
+            return loss_np
+
+        def grad(delta,consts):
+            delta = ep.from_numpy(x, delta.astype(np.float32)).reshape(x.shape)
+            loss, _, gradient = loss_aux_and_grad(delta, consts)
+            grad_np = gradient.flatten().numpy()
+            return grad_np
+
         x_np = x.flatten().numpy()
 
-        basis = make_orth_basis(dirs)/1e2
-        basis_ = ep.from_numpy(x, basis.astype(np.float32))
+        # basis = make_orth_basis(dirs)/1e2
+        # basis_ = ep.from_numpy(x, basis.astype(np.float32))
 
-        con1 = {'type': 'ineq', 'fun': lambda z, basis, x_np: (z@basis)+x_np, 'args': (basis, x_np, )}
-        con2 = {'type': 'ineq', 'fun': lambda z, basis, x_np: 1-((z @ basis) + x_np), 'args': (basis, x_np,)}
-        cons = (con1, con2)
+        # cons = (LinearConstraint(basis.T, lb=-x_np, ub=1-x_np))
 
-        z = np.zeros(len(basis))
+        # z = np.zeros(len(basis))
 
-        # bnds = np.repeat([[0, 1]], 784, axis=0)
-        # cons = ()
-        # if len(dirs)>0:
-        #     for d in dirs:
-        #         con = {'type': 'eq', 'fun': lambda adv, d, x_np: ((adv-x_np)*d).sum(), 'args': (d, x_np, )}
-        #         cons = cons + (con,)
+
+        # cons = [
+        #     {'type': 'ineq', 'fun': lambda z, basis, x_np: z@basis + x_np , 'args': (basis,x_np)},
+        #     {'type': 'ineq', 'fun': lambda z, basis, x_np: 1 - (z@basis + x_np) , 'args': (basis,x_np)},
+        # ]
+
+        bnds = [(0, 1) for _ in range(len(x_np))]
+
+        cons = ()
+
+        if len(dirs)>0:
+            for d in dirs:
+                con = {'type': 'eq', 'fun': lambda adv, d, x_np: ((adv-x_np)*d).sum(), 'args': (d, x_np, )}
+                cons = cons + (con,)
+
         best_bin_search_step = 0
         consts = self.initial_const * np.ones((N,))
         lower_bounds = np.zeros((N,))
@@ -143,11 +172,13 @@ class CarliniWagner(fa.L2CarliniWagnerAttack):
 
             consts_ = ep.from_numpy(x, consts.astype(np.float32))
 
-            res = minimize(loss_and_grad, z, jac=True, args=(consts_), method='trust-constr',
-                           constraints=cons, options={'maxiter': self.steps, 'xtol': 1e-05, 'gtol': 1e-05, 'disp': True, 'verbose':2})
-            # print(res.message)
+            res = minimize_ipopt(obj, x0=x_np, jac=grad, constraints=cons, bounds=bnds, args=(consts_),
+                                 options={'maxiter': self.steps, 'disp': 2})
 
-            perturbed = ep.from_numpy(x, ((res.x@basis) + x_np).astype(np.float32)).reshape(x.shape)
+            # res = minimize(loss_and_grad, z, jac=True, bounds=bnds, args=(consts_),
+            #                method='trust-constr', constraints=cons, options={'maxiter': self.steps, 'verbose':2})
+
+            perturbed = ep.from_numpy(x, (res.x).astype(np.float32)).reshape(x.shape)
             valid_res = True
 
             if perturbed.max() > 1.001 or perturbed.min() < -0.001:

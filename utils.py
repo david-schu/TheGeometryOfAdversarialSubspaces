@@ -8,11 +8,15 @@ def orth_check(adv_dirs):
     return orth, np.allclose(orth, np.identity(orth.shape[0]),atol=1e-2)
 
 
-def classification(img, model):
+def classification(img, label, model):
     if not torch.is_tensor(img):
         img = torch.tensor(img, device=dev())
-    pred = model(img).cpu().detach().numpy()
-    img_class = np.argmax(pred, axis=-1)
+    pred = model(img).cpu().detach().numpy()[0]
+    sorted = np.sort(pred)
+    img_class = np.argmax(pred)
+    is_adv = label != img_class
+    if not is_adv and int(sorted[-2] * 10000) == int(sorted[-1] * 10000):
+        img_class = pred.argsort()[-2]
     return img_class
 
 
@@ -24,18 +28,18 @@ def dirs_to_attack_format(dirs):
     return attack_dirs
 
 
-def load_data(n, bounds=(0., 1.), random=True, d_set='MNIST'):
-    if d_set=='MNIST':
-        dset = datasets.MNIST(root='../data', download=True)
+def load_data(n, bounds=(0., 1.), random=True, d_set='MNIST', train=True):
+    if d_set == 'MNIST':
+        dset = datasets.MNIST(root='../data', train=train, download=True)
     elif d_set == 'CIFAR':
-        dset = datasets.CIFAR10(root='../data', download=True)
+        dset = datasets.CIFAR10(root='../data', train=train, download=True)
     indices = np.arange(len(dset.data))
     if random:
         np.random.shuffle(indices)
     images = dset.data[indices[:n]]
     images = images / 255 * (bounds[1] - bounds[0]) + bounds[0]
 
-    if d_set=='MNIST':
+    if d_set == 'MNIST':
         images = images.unsqueeze(1)
         labels = dset.targets[indices[:n]]
     elif d_set == 'CIFAR':
@@ -59,7 +63,3 @@ def map_to(x, tmin, tmax, rmin=0, rmax=1):
     else:
         x_t = (x-rmin)*(tmax-tmin)/(rmax-rmin)+tmin
     return x_t
-
-
-    return adv
-
