@@ -4,6 +4,7 @@ sys.path.insert(0, '../data')
 
 import numpy as np
 import torch
+
 from tqdm import tqdm
 
 # own modules
@@ -21,7 +22,7 @@ d_set = 'MNIST'
 
 # set attack parameters
 attack_params = {
-        'binary_search_steps': 10,
+        'binary_search_steps': 6,
         'initial_const': 1e-2,
         'steps': 500,
         'abort_early': True
@@ -43,7 +44,6 @@ torch.manual_seed(0)
 model = md.madry()
 # model.load_state_dict(torch.load('./../models/adv_trained_l2.pt', map_location=torch.device(dev())))      # madry robust model
 model.load_state_dict(torch.load('./../models/natural.pt', map_location=torch.device(dev())))      # natural cnn - same architecture as madry robust model but nmot adversarially trained
-# model = mz.get_VAE(n_iter=50)   # ABS model
 
 model.eval()
 
@@ -70,7 +70,7 @@ data = {
     'dirs': dirs,
     'adv_class': adv_class,
     'pert_lengths': pert_lengths,
-    'images': images,
-    'labels': labels,
+    'images': images.detach().cpu().numpy(),
+    'labels': labels.detach().cpu().numpy(),
 }
 np.save('/home/bethge/dschultheiss/AdversarialDecomposition/data/cnn_single_trust_reg.npy', data)

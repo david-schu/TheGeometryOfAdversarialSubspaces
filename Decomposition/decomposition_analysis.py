@@ -12,7 +12,7 @@ from matplotlib.ticker import FormatStrFormatter
 import time
 
 ### load necessary data
-data = np.load('../data/cnn5.npy', allow_pickle=True).item()
+data = np.load('../data/cnn.npy', allow_pickle=True).item()
 advs = data['advs']
 pert_lengths = data['pert_lengths']
 classes = data['adv_class']
@@ -24,7 +24,7 @@ labels = data['labels']
 
 
 
-data = np.load('../data/madry_l2_5.npy', allow_pickle=True).item()
+data = np.load('../data/robust.npy', allow_pickle=True).item()
 advs_madry = data['advs']
 pert_lengths_madry = data['pert_lengths']
 classes_madry = data['adv_class']
