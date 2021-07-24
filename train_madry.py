@@ -5,7 +5,7 @@ from models import model, eval
 train_batch_size = 50
 eval_batch_size = 200
 learning_rate = 1e-4
-epsilon = [1]
+epsilon = [3]
 nb_epochs = 5
 
 seeds = [12, 69, 420, 1202, 3000]
