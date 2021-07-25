@@ -6,20 +6,18 @@ train_batch_size = 50
 eval_batch_size = 200
 learning_rate = 1e-4
 epsilon = [5]
-nb_epochs = 2
+nb_epochs = 1
 
 train_loader = torch.utils.data.DataLoader(
     datasets.MNIST('./data', train=True, download=True,
                    transform=transforms.Compose([
-                       transforms.ToTensor(),
-                       transforms.Normalize(0.5, 0.5)])),
+                       transforms.ToTensor()])),
     batch_size=train_batch_size, shuffle=True)
 
 test_loader = torch.utils.data.DataLoader(
     datasets.MNIST('./data', train=False,
                    transform=transforms.Compose([
-                       transforms.ToTensor(),
-                       transforms.Normalize(0.5, 0.5)])),
+                       transforms.ToTensor()])),
     batch_size=eval_batch_size)
 
 seeds = [12, 69, 420, 1202, 3000]
