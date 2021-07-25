@@ -41,7 +41,7 @@ def evalAdvAttack(model=None, test_loader=None, epsilon=[0.3]):
                                              bounds=(0., 1.),  # num_classes=10,
                                              device=u.dev())
         attack = fa.L2ProjectedGradientDescentAttack(abs_stepsize=0.1,
-                                                       steps=500,
+                                                       steps=100,
                                                        random_start=True)
         xs, _, success = attack(fmodel, xs, ys, epsilons=epsilon)
         xs, ys = Variable(xs[0]), Variable(ys)
