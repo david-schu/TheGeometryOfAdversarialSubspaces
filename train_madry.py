@@ -6,7 +6,7 @@ train_batch_size = 50
 eval_batch_size = 200
 learning_rate = 1e-3
 epsilon = [2]
-nb_epochs = 1
+nb_epochs = 5
 
 train_loader = torch.utils.data.DataLoader(
     datasets.MNIST('./data', train=True, download=True,
