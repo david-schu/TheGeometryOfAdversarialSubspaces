@@ -4,9 +4,9 @@ from models import model, eval
 
 train_batch_size = 50
 eval_batch_size = 200
-learning_rate = 1e-4
-epsilon = [5]
-nb_epochs = 1
+learning_rate = 1e-3
+epsilon = [3]
+nb_epochs = 5
 
 train_loader = torch.utils.data.DataLoader(
     datasets.MNIST('./data', train=True, download=True,
@@ -27,8 +27,8 @@ for i, seed in enumerate(seeds):
     torch.manual_seed(seed)
 
     # Initialize model and data loader
-    model_nat = model.madry()
-    model_robust = model.madry()
+    model_nat = model.madry_diff()
+    model_robust = model.madry_diff()
     if torch.cuda.is_available():
         model_nat = model_nat.cuda()
         model_robust = model_robust.cuda()
