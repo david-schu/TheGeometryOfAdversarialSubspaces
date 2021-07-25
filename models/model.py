@@ -90,7 +90,7 @@ class model_trainable(torch.nn.Module):
                                                      bounds=(0., 1.),  # num_classes=10,
                                                      device=u.dev())
                 attack = fa.L2ProjectedGradientDescentAttack(abs_stepsize=0.01,
-                                                               steps=100,
+                                                               steps=500,
                                                                random_start=True)
                 xs, _, success = attack(fmodel, xs, ys, epsilons=epsilon)
 
