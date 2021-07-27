@@ -43,9 +43,9 @@ def evalAdvAttack(model=None, test_loader=None, epsilon=[0.3]):
         attack = fa.L2ProjectedGradientDescentAttack(abs_stepsize=0.1,
                                                        steps=100,
                                                        random_start=True)
-        xs, _, success = attack(fmodel, xs, ys, epsilons=epsilon)
-        xs, ys = Variable(xs[0]), Variable(ys)
-        preds1 = model(xs)
+        adv, _, success = attack(fmodel, xs, ys, epsilons=epsilon)
+        adv, ys = Variable(adv[0]), Variable(ys)
+        preds1 = model(adv)
         preds_np1 = preds1.cpu().detach().numpy()
         finalPred = np.argmax(preds_np1, axis=1)
         correct += (finalPred == ys.cpu().detach().numpy()).sum()
