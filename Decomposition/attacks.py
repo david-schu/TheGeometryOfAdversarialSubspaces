@@ -111,10 +111,10 @@ class CarliniWagner(fa.L2CarliniWagnerAttack):
 
         loss_aux_and_grad = ep.value_and_grad_fn(x, loss_fun, has_aux=True)
 
-        def loss_and_grad(adv, consts):
+        def loss_and_grad(z, consts):
             # adv = ep.from_numpy(x, adv.astype(np.float32)).reshape(x.shape)
-            adv = ep.from_numpy(x, adv.astype(np.float32))
-            loss, _, gradient = loss_aux_and_grad(adv, consts)
+            z = ep.from_numpy(x, z.astype(np.float32))
+            loss, _, gradient = loss_aux_and_grad(z, consts)
             loss_np = loss.numpy().item()
             grad_np = gradient.flatten().numpy()
             return loss_np, grad_np
@@ -184,7 +184,7 @@ class CarliniWagner(fa.L2CarliniWagnerAttack):
 
                 if found_advs_iter:
                     pert = perturbed - x
-                    scaled_pert = torch.linspace(.5, 1, 1000).reshape((-1, 1, 1)) * pert.reshape(x.shape[1:])
+                    scaled_pert = ep.from_numpy(x,np.linspace(.5, 1, 1000)).reshape((-1, 1, 1)) * pert.reshape(x.shape[1:])
                     idx = (model((x+scaled_pert.expand_dims(1))).argmax(axis=1)==labels).sum()
                     perturbed = x + scaled_pert[idx].reshape(x.shape)
 
