@@ -32,15 +32,17 @@ def run_attack(model,
     adv_dirs = torch.zeros((n_adv_dims, n_channels, n_pixel), device=dev())
     dirs=[]
 
-    for run in range(n_adv_dims):
+    dim = 0
+    run = 0
+    while dim < n_adv_dims:
+
         if verbose:
             print('Run %d' % (run + 1))
-
+        run += 1
         attack = OrthogonalAttack(input_attack=input_attack,
                                   params=attack_params,
                                   adv_dirs=dirs,
                                   random_start=random_start)
-
         _, adv, success = attack(fmodel, image, label, epsilons=epsilons)
         adv = adv[0]
         # check if adversarials were found and stop early if not
@@ -58,13 +60,14 @@ def run_attack(model,
         a_ = adv.flatten()
         pert_length = torch.norm(a_ - x_orig)
 
-        advs[run] = a_
+        advs[dim] = a_
         adv_dir = (a_ - x_orig) / pert_length
-        adv_dirs[run] = adv_dir
-        adv_class[run] = class_
-        pert_lengths[run] = pert_length
+        adv_dirs[dim] = adv_dir
+        adv_class[dim] = class_
+        pert_lengths[dim] = pert_length
 
-        dirs = adv_dirs[:run+1].flatten(-2, -1).detach().cpu().numpy()
+        dirs = adv_dirs[:dim+1].flatten(-2, -1).detach().cpu().numpy()
+        dim += 1
 
 
     return advs, adv_dirs, adv_class, pert_lengths
