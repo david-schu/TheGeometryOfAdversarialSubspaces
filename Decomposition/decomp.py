@@ -22,9 +22,9 @@ d_set = 'MNIST'
 
 # set attack parameters
 attack_params = {
-        'binary_search_steps': 8,
-        'initial_const': 1e-1,
-        'steps': 200,
+        'binary_search_steps': 12,
+        'initial_const': 1e-2,
+        'steps': 500,
         'abort_early': True
     }
 

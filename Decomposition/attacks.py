@@ -87,8 +87,8 @@ class CarliniWagner(fa.L2CarliniWagnerAttack):
             # assert delta.shape == x.shape
             # assert consts.shape == (N,)
 
-            adv = (basis_.matmul(z.expand_dims(-1))).reshape(x.shape) + x
-            # adv = delta
+            # adv = (basis_.matmul(z.expand_dims(-1))).reshape(x.shape) + x
+            adv = z
             logits = model(adv)
             if targeted:
                 c_minimize = fa.carlini_wagner.best_other_classes(logits, classes)
@@ -111,34 +111,34 @@ class CarliniWagner(fa.L2CarliniWagnerAttack):
 
         loss_aux_and_grad = ep.value_and_grad_fn(x, loss_fun, has_aux=True)
 
-        def loss_and_grad(z, consts):
-            # adv = ep.from_numpy(x, adv.astype(np.float32)).reshape(x.shape)
-            z = ep.from_numpy(x, z.astype(np.float32))
-            loss, _, gradient = loss_aux_and_grad(z, consts)
+        def loss_and_grad(adv, consts):
+            adv = ep.from_numpy(x, adv.astype(np.float32)).reshape(x.shape)
+            # z = ep.from_numpy(x, z.astype(np.float32))
+            loss, _, gradient = loss_aux_and_grad(adv, consts)
             loss_np = loss.numpy().item()
             grad_np = gradient.flatten().numpy()
             return loss_np, grad_np
 
         x_np = x.flatten().numpy()
 
-        basis = make_orth_basis(dirs) / 1e2
-        basis_ = ep.from_numpy(x, basis.astype(np.float32))
-        z = np.zeros(basis.shape[-1])
-        con1 = {'type': 'ineq', 'fun': lambda z, basis, x_np: (basis @ z) + x_np, 'args': (basis, x_np,),
-                'jac': lambda z, basis, x_np: basis}
-        con2 = {'type': 'ineq', 'fun': lambda z, basis, x_np: 1 - ((basis @ z) + x_np), 'args': (basis, x_np,),
-                'jac': lambda z, basis, x_np: -basis}
-        cons = (con1, con2)
+        # basis = make_orth_basis(dirs) / 1e2
+        # basis_ = ep.from_numpy(x, basis.astype(np.float32))
+        # z = np.zeros(basis.shape[-1])
+        # con1 = {'type': 'ineq', 'fun': lambda z, basis, x_np: (basis @ z) + x_np, 'args': (basis, x_np,),
+        #         'jac': lambda z, basis, x_np: basis}
+        # con2 = {'type': 'ineq', 'fun': lambda z, basis, x_np: 1 - ((basis @ z) + x_np), 'args': (basis, x_np,),
+        #         'jac': lambda z, basis, x_np: -basis}
+        # cons = (con1, con2)
 
-        # bnds = [(0, 1) for _ in range(len(x_np))]
-        #
-        # cons = ()
-        #
-        # if len(dirs)>0:
-        #     for d in dirs:
-        #         con = {'type': 'eq', 'fun': lambda adv, d, x_np: ((adv-x_np)*d).sum(), 'args': (d, x_np, ),
-        #                'jac': lambda adv, d, x_np: d}
-        #         cons = cons + (con,)
+        bnds = [(0, 1) for _ in range(len(x_np))]
+
+        cons = ()
+
+        if len(dirs)>0:
+            for d in dirs:
+                con = {'type': 'eq', 'fun': lambda adv, d, x_np: ((adv-x_np)*d).sum(), 'args': (d, x_np, ),
+                       'jac': lambda adv, d, x_np: d}
+                cons = cons + (con,)
 
         best_bin_search_step = 0
         consts = self.initial_const * np.ones((N,))
@@ -158,14 +158,15 @@ class CarliniWagner(fa.L2CarliniWagnerAttack):
 
             consts_ = ep.from_numpy(x, consts.astype(np.float32))
 
-            res = minimize_ipopt(loss_and_grad, x0=z, jac=True, constraints=cons, args=(consts_),
-                                 tol=1e-5, options={'maxiter': self.steps, 'disp': 0, 'constr_viol_tol': 1e-5,
+            res = minimize_ipopt(loss_and_grad, x0=x_np, jac=True, constraints=cons, args=(consts_),
+                                 tol=1e-5, bounds=bnds,options={'maxiter': self.steps, 'disp': 0, 'constr_viol_tol': 1e-5,
                                                     'acceptable_constr_viol_tol': 1e-4, 'jac_c_constant': 'yes',
                                                     'jac_d_constant': 'yes',
                                                     'resto_failure_feasibility_threshold': 1e-4})
 
             # perturbed = ep.from_numpy(x, (res.x).astype(np.float32)).reshape(x.shape)
-            perturbed = ep.from_numpy(x, ((basis @ res.x) + x_np).astype(np.float32)).reshape(x.shape)
+            # perturbed = ep.from_numpy(x, ((basis @ res.x) + x_np).astype(np.float32)).reshape(x.shape)
+            perturbed = ep.from_numpy(x,res.x.astype(np.float32)).reshape(x.shape)
             valid_res = True
 
             if perturbed.max() > 1.001 or perturbed.min() < -0.001:
