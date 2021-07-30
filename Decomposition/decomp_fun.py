@@ -12,27 +12,27 @@ from run_attack import run_attack
 from models import model as md
 
 if __name__ == "__main__":
-    model_id = sys.argv[0]
-    is_natural = sys.argv[1]
-    batch_n = sys.argv[2]
+    model_id = int(sys.argv[1])
+    is_natural = int(sys.argv[2])
+    batch_n = int(sys.argv[3])
     ## user initialization
 
     # set number of images for attack and batchsize (shouldn't be larger than 20)
-    n_images = 20
+    n_images = 1
     pre_data = None
     d_set = 'MNIST'
 
     # set attack parameters
     attack_params = {
-            'binary_search_steps': 9,
-            'initial_const': 1e-1,
+            'binary_search_steps': 10,
+            'initial_const': 1e-2,
             'steps': 500,
             'abort_early': True
         }
 
     # set hyperparameters
     params = {
-        'n_adv_dims': 30,
+        'n_adv_dims': 5,
         'early_stop': 3,
         'input_attack': CarliniWagner,
         'random_start': False
@@ -48,15 +48,14 @@ if __name__ == "__main__":
     else:
         model_path = './../models/robust_' + str(model_id) + '.pt'
     model = md.madry_diff()
-    # model.load_state_dict(torch.load('./../models/adv_trained_l2.pt', map_location=torch.device(dev())))      # madry robust model
     model.load_state_dict(torch.load(model_path, map_location=torch.device(dev())))      # natural cnn - same architecture as madry robust model but nmot adversarially trained
-
     model.eval()
 
     # load batched data
     images, labels = load_data(n_images,train=False, bounds=(0., 1.), d_set=d_set, random=False)
     images = images[batch_n*n_images:batch_n*n_images+n_images]
     labels = labels[batch_n*n_images:batch_n*n_images+n_images]
+    print(len(images))
 
     # initialize data arrays
     advs = np.zeros((n_images, params['n_adv_dims'], images[0].shape[0], images[0].shape[-1]**2))
