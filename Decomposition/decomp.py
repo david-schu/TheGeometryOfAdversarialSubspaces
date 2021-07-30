@@ -22,15 +22,15 @@ d_set = 'MNIST'
 
 # set attack parameters
 attack_params = {
-        'binary_search_steps': 12,
+        'binary_search_steps': 10,
         'initial_const': 1e-2,
-        'steps': 500,
+        'steps': 100,
         'abort_early': True
     }
 
 # set hyperparameters
 params = {
-    'n_adv_dims': 30,
+    'n_adv_dims': 5,
     'early_stop': 3,
     'input_attack': CarliniWagner,
     'random_start': False
