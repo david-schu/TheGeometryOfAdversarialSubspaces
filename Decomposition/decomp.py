@@ -5,7 +5,6 @@ sys.path.insert(0, '../data')
 import numpy as np
 import torch
 
-from tqdm import tqdm
 
 # own modules
 from utils import load_data, dev
@@ -23,7 +22,7 @@ d_set = 'MNIST'
 # set attack parameters
 attack_params = {
         'binary_search_steps': 10,
-        'initial_const': 1e-2,
+        'initial_const': 1e-1,
         'steps': 100,
         'abort_early': True
     }

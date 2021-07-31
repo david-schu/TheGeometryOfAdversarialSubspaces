@@ -147,13 +147,13 @@ class madry(model_trainable):
 class madry_diff(model_trainable):
     def __init__(self):
         super(madry_diff, self).__init__()
-        self.conv1 = nn.Conv2d(1, 32, 5, padding=2)
-        self.maxPool1 = nn.MaxPool2d(kernel_size=2, stride=2)
-        self.conv2 = nn.Conv2d(32, 64, 5, padding=2)
-        self.maxPool2 = nn.MaxPool2d(kernel_size=2, stride=2)
-        self.fc1 = nn.Linear(64 * 7 * 7, 1024)
-        self.fc2 = nn.Linear(1024, 10)
-        self.elu = nn.ELU()
+        self.conv1 = nn.Conv2d(1, 32, 5, padding=2).double()
+        self.maxPool1 = nn.MaxPool2d(kernel_size=2, stride=2).double()
+        self.conv2 = nn.Conv2d(32, 64, 5, padding=2).double()
+        self.maxPool2 = nn.MaxPool2d(kernel_size=2, stride=2).double()
+        self.fc1 = nn.Linear(64 * 7 * 7, 1024).double()
+        self.fc2 = nn.Linear(1024, 10).double()
+        self.elu = nn.ELU().double()
 
 
     def forward(self, x):

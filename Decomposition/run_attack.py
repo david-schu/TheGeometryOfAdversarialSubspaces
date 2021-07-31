@@ -69,5 +69,5 @@ def run_attack(model,
         dirs = adv_dirs[:dim+1].flatten(-2, -1).detach().cpu().numpy()
         dim += 1
 
-
+    print('Dimensions' + str(dim))
     return advs, adv_dirs, adv_class, pert_lengths
