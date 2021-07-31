@@ -32,7 +32,7 @@ if __name__ == "__main__":
 
     # set hyperparameters
     params = {
-        'n_adv_dims': 5,
+        'n_adv_dims': 15,
         'early_stop': 3,
         'input_attack': CarliniWagner,
         'random_start': False

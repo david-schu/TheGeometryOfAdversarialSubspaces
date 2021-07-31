@@ -47,7 +47,7 @@ def load_data(n, bounds=(0., 1.), random=True, d_set='MNIST', train=True):
         labels = np.array(dset.targets)[indices[:n]]
     images = torch.as_tensor(images, device=dev())
     labels = torch.as_tensor(labels, device=dev())
-    return images, labels
+    return images.double(), labels
 
 
 def dev():
