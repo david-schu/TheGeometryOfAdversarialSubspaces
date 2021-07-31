@@ -99,13 +99,11 @@ class CarliniWagner(fa.L2CarliniWagnerAttack):
             return loss, (adv, logits)
 
         loss_aux_and_grad = ep.value_and_grad_fn(x, loss_fun, has_aux=True)
-        #     hess_func = lambda x: model_(x)[:,experiment_params['target_model_id']] - model_(x)[:,experiment_params['adv_neuron_id']]
-        #     hessian = torch.autograd.functional.hessian(hess_func, target_torch_image).reshape(784,784)
-        # np_hessian = hessian.cpu().detach().numpy()
-        def loss_and_grad(z, consts):
-            # adv = ep.from_numpy(x, adv.astype(np.float32)).reshape(x.shape)
-            z = ep.from_numpy(x, z.astype(np.float64))
-            loss, _, gradient = loss_aux_and_grad(z, consts)
+
+        def loss_and_grad(var_opt, consts):
+            # var_opt = ep.from_numpy(x, var_opt.astype(np.float64)).reshape(x.shape)
+            var_opt = ep.from_numpy(x, var_opt.astype(np.float64))
+            loss, _, gradient = loss_aux_and_grad(var_opt, consts)
             loss_np = loss.numpy().item()
             grad_np = gradient.flatten().numpy()
             return loss_np, grad_np
@@ -120,7 +118,7 @@ class CarliniWagner(fa.L2CarliniWagnerAttack):
         con2 = {'type': 'ineq', 'fun': lambda z, basis, x_np: 1 - ((basis @ z) + x_np), 'args': (basis, x_np,),
                 'jac': lambda z, basis, x_np: -basis}
         cons = (con1, con2)
-        bnds = None
+        # bnds = None
 
 
         # bnds = [(0, 1) for _ in range(len(x_np))]
@@ -151,11 +149,11 @@ class CarliniWagner(fa.L2CarliniWagnerAttack):
 
             consts_ = ep.from_numpy(x, consts.astype(np.float64))
 
-            res = minimize_ipopt(loss_and_grad, x0=z, jac=True,  constraints=cons, args=(consts_),
-                                 tol=1e-5, options={'maxiter': self.steps, 'disp': 5, 'jac_c_constant': 'yes',
+            res = minimize_ipopt(loss_and_grad, x0=z, jac=True, constraints=cons, args=(consts_),
+                                 tol=1e-5, options={'maxiter': self.steps, 'disp': 0, 'jac_c_constant': 'yes',
                                                     'jac_d_constant': 'yes'})
 
-            # perturbed = ep.from_numpy(x, (res.x).astype(np.float32)).reshape(x.shape)
+            # perturbed = ep.from_numpy(x, (res.x).astype(np.float64)).reshape(x.shape)
             perturbed = ep.from_numpy(x, ((basis @ res.x) + x_np).astype(np.float64)).reshape(x.shape)
             valid_res = True
 
