@@ -18,7 +18,8 @@ if __name__ == "__main__":
     ## user initialization
 
     # set number of images for attack and batchsize (shouldn't be larger than 20)
-    n_images = 4
+    n_images = 120
+    batchsize =4
     pre_data = None
     d_set = 'MNIST'
 
@@ -50,12 +51,10 @@ if __name__ == "__main__":
     model = md.madry_diff()
     model.load_state_dict(torch.load(model_path, map_location=torch.device(dev())))      # natural cnn - same architecture as madry robust model but nmot adversarially trained
     model.eval()
-
     # load batched data
-    images, labels = load_data(n_images,train=False, bounds=(0., 1.), d_set=d_set, random=False)
-    images = images[batch_n*n_images:batch_n*n_images+n_images]
-    labels = labels[batch_n*n_images:batch_n*n_images+n_images]
-    print(len(images))
+    images, labels = load_data(n_images, train=False, bounds=(0., 1.), d_set=d_set, random=False)
+    images = images[(batch_n*batchsize):(batch_n*batchsize+batchsize)]
+    labels = labels[(batch_n*batchsize):(batch_n*batchsize+batchsize)]
 
     # initialize data arrays
     advs = np.zeros((n_images, params['n_adv_dims'], images[0].shape[0], images[0].shape[-1]**2))
