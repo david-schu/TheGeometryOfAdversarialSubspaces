@@ -18,7 +18,7 @@ if __name__ == "__main__":
     ## user initialization
 
     # set number of images for attack and batchsize (shouldn't be larger than 20)
-    n_images = 1
+    n_images = 5
     pre_data = None
     d_set = 'MNIST'
 
