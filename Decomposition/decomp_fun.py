@@ -18,7 +18,7 @@ if __name__ == "__main__":
     ## user initialization
 
     # set number of images for attack and batchsize (shouldn't be larger than 20)
-    n_images = 5
+    n_images = 4
     pre_data = None
     d_set = 'MNIST'
 
@@ -72,19 +72,19 @@ if __name__ == "__main__":
         adv_class[i] = new_classes.cpu().detach().numpy()
         pert_lengths[i] = new_pert_lengths.cpu().detach().numpy()
 
-    data = {
-        'advs': advs,
-        'dirs': dirs,
-        'adv_class': adv_class,
-        'pert_lengths': pert_lengths,
-        'images': images.detach().cpu().numpy(),
-        'labels': labels.detach().cpu().numpy(),
-    }
+        data = {
+            'advs': advs,
+            'dirs': dirs,
+            'adv_class': adv_class,
+            'pert_lengths': pert_lengths,
+            'images': images.detach().cpu().numpy(),
+            'labels': labels.detach().cpu().numpy(),
+        }
 
-    if is_natural:
-        save_path = '/home/bethge/dschultheiss/AdversarialDecomposition/data/natural' + str(model_id) + '_'\
-                    + str(batch_n) + '.npy'
-    else:
-        save_path = '/home/bethge/dschultheiss/AdversarialDecomposition/data/robust' + str(model_id)\
-                    + '_' + str(batch_n) + '.npy'
-    np.save(save_path, data)
+        if is_natural:
+            save_path = '/home/bethge/dschultheiss/AdversarialDecomposition/data/natural' + str(model_id) + '_'\
+                        + str(batch_n) + '.npy'
+        else:
+            save_path = '/home/bethge/dschultheiss/AdversarialDecomposition/data/robust' + str(model_id)\
+                        + '_' + str(batch_n) + '.npy'
+        np.save(save_path, data)
