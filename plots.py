@@ -380,11 +380,13 @@ def plot_var_hist(classes, labels, title=None, with_colors=True):
         data[u.astype(int), l] = c / np.sum(c) * var
 
     y_off = np.zeros(10)
+
+    fig, ax = plt.subplots()
     for idx in range(10):
         if with_colors:
-            plt.bar(range(10), data[idx], bar_width, bottom=y_off,  color=colors[idx])
+            ax.bar(range(10), data[idx], bar_width, bottom=y_off,  color=colors[idx])
         else:
-            plt.bar(range(10), data[idx], bar_width, bottom=y_off, color='k')
+            ax.bar(range(10), data[idx], bar_width, bottom=y_off, color='k')
         y_off += data[idx]
     plt.xlabel('original class label')
     plt.ylabel('mean number of adversarial classes')
@@ -392,9 +394,10 @@ def plot_var_hist(classes, labels, title=None, with_colors=True):
     plt.xticks(range(10))
     if not title is None:
         plt.title(title)
-    plt.ylim(0,2.5)
+    plt.ylim(0,1)
     plt.tight_layout()
-    plt.show()
+
+    return fig, ax
 
 
 def show_consistency(adv_dirs):
