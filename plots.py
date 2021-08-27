@@ -373,7 +373,7 @@ def plot_var_hist(classes, labels, title=None, with_colors=True):
               'tab:cyan', 'tab:olive']
     data = np.zeros((10,10))
     for l in range(10):
-        var = np.mean(np.array([len(np.unique(x[~np.isnan(x)])) for x in classes[labels == l]]))
+        var = np.mean(np.array([len(np.unique(x[~np.isnan(x)]))/len(x[~np.isnan(x)]) for x in classes[labels == l]]))
         u, c = np.unique(classes[labels == l], return_counts=True)
         c = c[~np.isnan(u)]
         u = u[~np.isnan(u)]
