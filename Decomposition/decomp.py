@@ -11,19 +11,20 @@ from utils import load_data, dev
 from attacks import CarliniWagner
 from run_attack import run_attack
 from models import model as md
+from sklearn.model_selection import train_test_split
 
 ## user initialization
 
 # set number of images for attack and batchsize (shouldn't be larger than 20)
-n_images = 1
+n_images = 50
 pre_data = None
 d_set = 'MNIST'
 
 # set attack parameters
 attack_params = {
-        'binary_search_steps': 15,
-        'initial_const': 1e-2,
-        'steps': 500,
+        'binary_search_steps': 10,
+        'initial_const': 1e-1,
+        'steps': 300,
         'abort_early': True
     }
 
@@ -42,12 +43,19 @@ torch.manual_seed(0)
 # load a model
 model = md.madry_diff()
 # model.load_state_dict(torch.load('./../models/adv_trained_l2.pt', map_location=torch.device(dev())))      # madry robust model
-model.load_state_dict(torch.load('./../models/natural_0.pt', map_location=torch.device(dev())))      # natural cnn - same architecture as madry robust model but nmot adversarially trained
+model.load_state_dict(torch.load('./../models/natural_1.pt', map_location=torch.device(dev())))      # natural cnn - same architecture as madry robust model but nmot adversarially trained
 
 model.eval()
 
 # load batched data
-images, labels = load_data(n_images, bounds=(0., 1.), d_set=d_set, random=False)
+all_images, all_labels = load_data(10000,train=False, bounds=(0., 1.), d_set=d_set, random=False)
+images = all_images[all_labels==0][:n_images]
+labels = all_labels[all_labels==0][:n_images]
+for l in np.arange(1,10):
+   images = torch.cat((images,all_images[all_labels==l][:50]),0)
+   labels = torch.cat((labels, all_labels[all_labels == l][:50]), 0)
+
+del all_images, all_labels
 
 # initialize data arrays
 advs = np.zeros((n_images, params['n_adv_dims'], images[0].shape[0], images[0].shape[-1]**2))

@@ -43,6 +43,7 @@ def run_attack(model,
                                   params=attack_params,
                                   adv_dirs=dirs,
                                   random_start=random_start)
+        # attack = foolbox.attacks.L2CarliniWagnerAttack(**attack_params)
         _, adv, success = attack(fmodel, image, label, epsilons=epsilons)
         adv = adv[0]
         # check if adversarials were found and stop early if not
