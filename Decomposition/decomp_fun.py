@@ -25,7 +25,7 @@ if __name__ == "__main__":
 
     # set attack parameters
     attack_params = {
-            'binary_search_steps': 12,
+            'binary_search_steps': 10,
             'initial_const': 1e-1,
             'steps': 300,
             'abort_early': True

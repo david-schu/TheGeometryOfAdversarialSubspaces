@@ -23,8 +23,8 @@ d_set = 'MNIST'
 # set attack parameters
 attack_params = {
         'binary_search_steps': 10,
-        'initial_const': 1e-1,
-        'steps': 300,
+        'initial_const': 1e-2,
+        'steps': 500,
         'abort_early': True
     }
 
@@ -43,7 +43,7 @@ torch.manual_seed(0)
 # load a model
 model = md.madry_diff()
 # model.load_state_dict(torch.load('./../models/adv_trained_l2.pt', map_location=torch.device(dev())))      # madry robust model
-model.load_state_dict(torch.load('./../models/natural_1.pt', map_location=torch.device(dev())))      # natural cnn - same architecture as madry robust model but nmot adversarially trained
+model.load_state_dict(torch.load('./../models/natural_0.pt', map_location=torch.device(dev())))      # natural cnn - same architecture as madry robust model but nmot adversarially trained
 
 model.eval()
 
