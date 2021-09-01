@@ -55,6 +55,7 @@ if __name__ == "__main__":
     # load batched data
     data = np.load('../data/MNIST/stable_data.npy', allow_pickle=True).item()
     all_images, all_labels = data['images'], data['labels']
+    images = all_images[all_labels == 0][:n_images]
     labels = all_labels[all_labels == 0][:n_images]
     for l in np.arange(1, 10):
         images = torch.cat((images, all_images[all_labels == l][:50]), 0)
