@@ -385,10 +385,11 @@ def plot_var_hist(classes, labels, title=None, with_colors=True):
     for idx in range(10):
         if with_colors:
             ax.bar(range(10), data[idx], bar_width, bottom=y_off,  color=colors[idx])
-        else:
-            ax.bar(range(10), data[idx], bar_width, bottom=y_off, color='k')
             plt.legend(['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'], title='adversarial label',
                        bbox_to_anchor=(1.05, 1), loc='upper left')
+        else:
+            ax.bar(range(10), data[idx], bar_width, bottom=y_off, color='k')
+
         y_off += data[idx]
     plt.xlabel('original class label')
     plt.ylabel('mean number of adversarial classes')
