@@ -51,9 +51,10 @@ if __name__ == "__main__":
     model = md.madry_diff()
     model.load_state_dict(torch.load(model_path, map_location=torch.device(dev())))      # natural cnn - same architecture as madry robust model but nmot adversarially trained
     model.eval()
+
     # load batched data
-    all_images, all_labels = load_data(10000, train=False, bounds=(0., 1.), d_set=d_set, random=False)
-    images = all_images[all_labels == 0][:n_images]
+    data = np.load('../data/MNIST/stable_data.npy', allow_pickle=True).item()
+    all_images, all_labels = data['images'], data['labels']
     labels = all_labels[all_labels == 0][:n_images]
     for l in np.arange(1, 10):
         images = torch.cat((images, all_images[all_labels == l][:50]), 0)
