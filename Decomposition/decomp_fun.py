@@ -65,6 +65,9 @@ if __name__ == "__main__":
     images = images[(batch_n*batchsize):(batch_n*batchsize+batchsize)]
     labels = labels[(batch_n*batchsize):(batch_n*batchsize+batchsize)]
 
+    images = images.to(dev())
+    labels = labels.to(dev())
+
     # initialize data arrays
     advs = np.zeros((batchsize, params['n_adv_dims'], images[0].shape[0], images[0].shape[-1]**2))
     dirs = np.zeros((batchsize, params['n_adv_dims'], images[0].shape[0], images[0].shape[-1]**2))
