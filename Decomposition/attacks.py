@@ -149,7 +149,7 @@ class CarliniWagner(fa.L2CarliniWagnerAttack):
 
             consts_ = ep.from_numpy(x, consts.astype(np.float64))
 
-            init = (x_np+np.random.normal(scale=1,size=x_np.shape)).clip(0,1)
+            init = (x_np+np.random.normal(scale=1, size=x_np.shape)).clip(0, 1)
             res = minimize_ipopt(loss_and_grad, x0=init,
                                  jac=True, constraints=cons, args=(consts_),  bounds=bnds,
                                  options={'maxiter': self.steps, 'disp':0, 'jac_c_constant': 'yes',
