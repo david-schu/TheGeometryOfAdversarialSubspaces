@@ -2,7 +2,7 @@ import matplotlib
 
 from matplotlib import pyplot as plt
 import numpy as np
-from utils import orth_check, map_to
+from utils import orth_check, map_to, dev
 from matplotlib.ticker import FormatStrFormatter
 import matplotlib.patches as mpatches
 import torch
@@ -287,8 +287,8 @@ def plot_dec_space(orig, adv1, adv2, model, show_legend=True, show_advs=True, ov
     y = np.linspace(-offset, len_grid, n_grid)
     X, Y = np.meshgrid(x, y)
     advs = orig + (dir1 * np.reshape(X, (-1, 1)) + dir2 * np.reshape(Y, (-1, 1)))
-    advs = np.array(np.reshape(advs, (-1, 1, 28, 28)).astype('float64'), dtype='float32')
-    input = torch.split(torch.tensor(advs), 20)
+    advs = np.array(np.reshape(advs, (-1, 1, 28, 28)).astype('float64'))
+    input = torch.split(torch.tensor(advs, device=dev()), 20)
 
     preds = np.empty((0, 10))
     for batch in input:
@@ -308,9 +308,10 @@ def plot_dec_space(orig, adv1, adv2, model, show_legend=True, show_advs=True, ov
 
     plt.imshow(classes, cmap=new_cmap, origin='lower', vmin=0, vmax=9)
     if overlay_inbounds:
-        new_cmap2 = ListedColormap(['none', 'red'])
-        out_of_bounds = np.logical_or(advs.max(axis=(1,2,3))>1, advs.min(axis=(1,2,3)<0)).reshape((n_grid, n_grid))
-        plt.imshow(out_of_bounds, cmap=new_cmap2, origin='lower', alpha=.2)
+        new_cmap2 = ListedColormap(['none', 'k'])
+        out_of_bounds = np.logical_or(advs.max(axis=(1,2,3))>1, advs.min(axis=(1,2,3))<0).reshape((n_grid, n_grid))
+        plt.imshow(out_of_bounds, cmap=new_cmap2, origin='lower', alpha=.5)
+
     plt.axvline(offset*n_grid/(offset+len_grid), c='k', ls='--', alpha=0.5)
     plt.axhline(offset*n_grid/(offset+len_grid), c='k', ls='--', alpha=0.5)
 
