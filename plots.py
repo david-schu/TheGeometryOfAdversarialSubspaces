@@ -273,7 +273,7 @@ def plot_cw_surface(orig, adv1, adv2, model):
     plt.show()
 
 
-def plot_dec_space(orig, adv1, adv2, model, show_legend=True, show_advs=True):
+def plot_dec_space(orig, adv1, adv2, model, show_legend=True, show_advs=True, overlay_inbounds=False):
     orig = np.reshape(orig, (784))
     len1 = np.linalg.norm(adv1-orig)
     len2 = np.linalg.norm(adv2-orig)
@@ -307,6 +307,10 @@ def plot_dec_space(orig, adv1, adv2, model, show_legend=True, show_advs=True):
     new_cmap = ListedColormap(colors)
 
     plt.imshow(classes, cmap=new_cmap, origin='lower', vmin=0, vmax=9)
+    if overlay_inbounds:
+        new_cmap2 = ListedColormap(['none', 'red'])
+        out_of_bounds = np.logical_or(advs.max(axis=(1,2,3))>1, advs.min(axis=(1,2,3)<0)).reshape((n_grid, n_grid))
+        plt.imshow(out_of_bounds, cmap=new_cmap2, origin='lower', alpha=.2)
     plt.axvline(offset*n_grid/(offset+len_grid), c='k', ls='--', alpha=0.5)
     plt.axhline(offset*n_grid/(offset+len_grid), c='k', ls='--', alpha=0.5)
 
