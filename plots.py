@@ -68,36 +68,6 @@ def plot_mean_advs(advs, images, classes, labels, pert_lengths, n=10, vmin=0, vm
     return plot_advs(advs[min_idx], images[min_idx], classes[min_idx], labels[min_idx], n=n, vmin=vmin, vmax=vmax)
 
 
-def plot_pert_len_difs(advs_natural, advs_robust, images, n=10, ord=2):
-    n = np.minimum(n, advs_natural[0].shape[-2])
-    pert_len_natural = np.linalg.norm(advs_natural - images.reshape((-1, 1, 784)), ord=ord, axis=-1)
-    pert_len_robust = np.linalg.norm(advs_robust - images.reshape((-1, 1, 784)), ord=ord, axis=-1)
-    pert_len_natural[np.all(advs_natural == 0, axis=-1)] = np.nan
-    pert_len_robust[np.all(advs_robust == 0, axis=-1)] = np.nan
-
-    pert_len_difs = pert_len_robust - pert_len_natural
-    pert_len_difs = pert_len_difs[:, :n]
-    mask = ~np.isnan(pert_len_difs)
-    filtered_data = [d[m] for d, m in zip(pert_len_difs.T, mask.T)]
-
-    boxprops = dict(color='tab:blue', linewidth=1.5, alpha=0.7)
-    whiskerprops = dict(color='tab:blue', alpha=0.7)
-    capprops = dict(color='tab:blue', alpha=0.7)
-    medianprops = dict(linestyle=None, linewidth=0)
-    meanpointprops = dict(marker='o', markeredgecolor='black',
-                          markerfacecolor='tab:orange')
-    plt.boxplot(filtered_data, whis=[10, 90], showfliers=False, showmeans=True, boxprops=boxprops,
-                whiskerprops=whiskerprops, capprops=capprops, meanprops=meanpointprops, medianprops=medianprops)
-    plt.title('Difference of perturbation lengths between robust and natural model')
-    plt.xlabel('d')
-    if ord == np.inf:
-        plt.ylabel('adversarial vector length ($\ell_\infty-norm$)')
-    else:
-        plt.ylabel('adversarial vector length ($\ell_%d-norm$)' % (ord))
-
-    return fig, ax
-
-
 def plot_pert_lengths(pert_lengths, n=10, labels=None, ord=2):
     n = np.minimum(n, pert_lengths[0].shape[1])
     pert_lengths = [p[:,:n] for p in pert_lengths]
@@ -146,77 +116,6 @@ def plot_pert_lengths_single(adv_class, pert_lengths):
     plt.legend()
     plt.show()
 
-
-def plot_losses(losses, orth_const):
-    idx = np.argmin(losses)
-    fig, ax = plt.subplots(2, 2, squeeze=False)
-    fig.subplots_adjust(hspace=0.5)
-    plt.suptitle('orth_const =' + str(orth_const))
-    ax[0, 0].set_title('overall loss')
-    ax[0, 0].plot(range(idx), losses[0, :idx])
-    ax[0, 1].set_title('is_adversarial loss')
-    ax[0, 1].plot(range(idx), losses[1, :idx])
-    ax[1, 0].set_title('squared_norms loss')
-    ax[1, 0].plot(range(idx), losses[2, :idx])
-    ax[1, 0].yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
-    ax[1, 1].set_title('is_orth loss')
-    ax[1, 1].plot(range(idx), losses[3, :idx])
-
-    return fig, ax
-
-
-def plot_label_heatmap(classes, labels, show_all=True):
-    adv_table = np.zeros((10, 10))
-    for i in range(10):
-        u, counts = np.unique(classes[labels == i], return_counts=True)
-        counts = counts[~np.isnan(u)]
-        u = u[~np.isnan(u)]
-        adv_table[i, u.astype(int)] = counts/sum(counts)
-
-    if show_all:
-        n = classes.shape[-1]+1
-        cols = int(np.ceil(n/2))
-        rows = int(np.ceil(n/cols))
-        fig, ax = plt.subplots(rows, cols, sharex=True, sharey=True)
-        ax[0, 0].imshow(adv_table, vmin=0, vmax=1)
-        ax[0, 0].set_yticks(range(10))
-        ax[0, 0].set_xticks(range(10))
-        ax[0, 0].set_title('All Adversarials')
-
-        for j, a in enumerate(ax.flatten()[1:]):
-            adv_table = np.zeros((10, 10))
-            for i in range(10):
-                u, counts = np.unique(classes[labels == i, j], return_counts=True)
-                counts = counts[~np.isnan(u)]
-                u = u[~np.isnan(u)]
-                adv_table[i, u.astype(int)] = counts / sum(counts)
-            im = a.imshow(adv_table, vmin=0, vmax=1)
-            a.set_title('Adversarial ' + str(j+1))
-
-        fig.text(0.5, 0.04, 'adversarial class', ha='center')
-        fig.text(0.04, 0.5, 'original class', va='center', rotation='vertical')
-
-        cbar = fig.colorbar(im, ax=ax.ravel().tolist())
-        cbar.ax.set_ylabel('normalized frequency', rotation=-90, va="bottom")
-        plt.suptitle('Frequencies of adversarial classes')
-
-    else:
-        ax = plt.gca()
-
-        # Plot the heatmap
-        im = ax.imshow(adv_table, vmin=0, vmax=1)
-
-        # Create colorbar
-        cbar = ax.figure.colorbar(im, ax=ax)
-        cbar.ax.set_ylabel('normalized frequency', rotation=-90, va="bottom")
-        ax.tick_params(top=True, bottom=False,
-                       labeltop=True, labelbottom=False)
-        ax.set_xlabel('adversarial class')
-        ax.set_ylabel('original class')
-        ax[0, 0].set_yticks(range(10))
-        ax[0, 0].set_xticks(range(10))
-        ax.xaxis.set_label_position('top')
-    plt.show()
 
 
 def plot_cw_surface(orig, adv1, adv2, model):
@@ -296,7 +195,7 @@ def plot_dec_space(orig, adv1, adv2, model, show_legend=True, show_advs=True, ov
 
     classes = np.argmax(preds, axis=-1).reshape((n_grid, n_grid))
 
-    ax = plt.gca()
+    fig, ax = plt.subplots()
     colors = ['tab:orange', 'tab:green', 'tab:brown', 'tab:grey', 'tab:blue', 'tab:pink','tab:cyan', 'tab:olive', 'tab:red', 'tab:purple']
     labels = []
     colorList = []
@@ -335,6 +234,7 @@ def plot_dec_space(orig, adv1, adv2, model, show_legend=True, show_advs=True, ov
     if show_legend:
         # Add legend with proxy artists
         plt.legend(handles=labels, title='predicted class')
+    return fig, ax
 
 
 def plot_contrasted_dec_space(orig, adv1, adv2, model, n=4):
@@ -422,7 +322,6 @@ def show_consistency(adv_dirs):
 
 
 def show_orth(adv_dirs):
-
     orth = orth_check(adv_dirs)
     table = plt.table(np.around(orth, decimals=2), loc='center')
     table.scale(1, 1.5)
