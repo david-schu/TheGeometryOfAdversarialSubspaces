@@ -18,16 +18,16 @@ if __name__ == "__main__":
     ## user initialization
 
     # set number of images for attack and batchsize (shouldn't be larger than 20)
-    n_images = 50
-    batchsize = 20
+    n_images = 10
+    batchsize = 2
     pre_data = None
     d_set = 'MNIST'
 
     # set attack parameters
     attack_params = {
-            'binary_search_steps': 10,
-            'initial_const': 1e-1,
-            'steps': 300,
+            'binary_search_steps': 11,
+            'initial_const': 1e-2,
+            'steps': 100,
             'abort_early': True
         }
 
@@ -58,8 +58,8 @@ if __name__ == "__main__":
     images = all_images[all_labels == 0][:n_images]
     labels = all_labels[all_labels == 0][:n_images]
     for l in np.arange(1, 10):
-        images = torch.cat((images, all_images[all_labels == l][:50]), 0)
-        labels = torch.cat((labels, all_labels[all_labels == l][:50]), 0)
+        images = torch.cat((images, all_images[all_labels == l][:n_images]), 0)
+        labels = torch.cat((labels, all_labels[all_labels == l][:n_images]), 0)
     del all_images, all_labels
 
     images = images[(batch_n*batchsize):(batch_n*batchsize+batchsize)]
@@ -93,9 +93,9 @@ if __name__ == "__main__":
         }
 
         if is_natural:
-            save_path = '/home/bethge/dschultheiss/AdversarialDecomposition/data/natural' + str(model_id) + '_'\
+            save_path = '../data/natural_complement_' + str(model_id) + '_'\
                         + str(batch_n) + '.npy'
         else:
-            save_path = '/home/bethge/dschultheiss/AdversarialDecomposition/data/robust' + str(model_id)\
+            save_path = '../data/robust_complement_' + str(model_id)\
                         + '_' + str(batch_n) + '.npy'
         np.save(save_path, data)
