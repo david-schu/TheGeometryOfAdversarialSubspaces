@@ -8,6 +8,7 @@ from foolbox.distances import LpDistance
 from foolbox.criteria import Misclassification, TargetedMisclassification
 from foolbox.attacks.base import MinimizationAttack, T, get_criterion, raise_if_kwargs
 
+from utils import make_orth_basis
 from cyipopt import minimize_ipopt
 
 
@@ -206,24 +207,3 @@ class CarliniWagner(fa.L2CarliniWagnerAttack):
                 break
 
         return restore_type(best_advs)
-
-
-def make_orth_basis(dirs):
-    n_iterations = 3
-    n_pixel = 784  # dirs.shape[-1]
-    basis = np.random.uniform(-1, 1, (n_pixel - len(dirs), n_pixel))
-    basis = basis / np.linalg.norm(basis, axis=-1, keepdims=True)
-    if len(dirs) > 0:
-        basis_with_dirs = np.concatenate((dirs, basis), axis=0)
-    else:
-        basis_with_dirs = basis
-
-    for it in range(n_iterations):
-        for i, v in enumerate(basis):
-            v_orth = v - ((basis_with_dirs[:len(dirs) + i] * v.reshape((1, -1))).sum(-1, keepdims=True) *
-                          basis_with_dirs[:len(dirs) + i]).sum(0)
-            u_orth = v_orth / np.linalg.norm(v_orth)
-            basis_with_dirs[len(dirs) + i] = u_orth
-            basis[i] = u_orth
-
-    return basis.T
