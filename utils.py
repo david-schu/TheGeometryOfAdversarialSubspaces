@@ -64,7 +64,7 @@ def map_to(x, tmin, tmax, rmin=0, rmax=1):
         x_t = (x-rmin)*(tmax-tmin)/(rmax-rmin)+tmin
     return x_t
 
-def make_orth_basis(dirs):
+def make_orth_basis(dirs=[]):
     n_iterations = 3
     n_pixel = 784  # dirs.shape[-1]
     basis = np.random.uniform(-1, 1, (n_pixel - len(dirs), n_pixel))
@@ -82,4 +82,4 @@ def make_orth_basis(dirs):
             basis_with_dirs[len(dirs) + i] = u_orth
             basis[i] = u_orth
 
-    return basis.T
+    return basis

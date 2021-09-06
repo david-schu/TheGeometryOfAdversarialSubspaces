@@ -113,7 +113,7 @@ class CarliniWagner(fa.L2CarliniWagnerAttack):
 
         x_np = x.flatten().numpy()
 
-        basis = make_orth_basis(dirs) / 1e2
+        basis = make_orth_basis(dirs).T / 1e2
         basis_ = ep.from_numpy(x, basis.astype(np.float64))
         con1 = {'type': 'ineq', 'fun': lambda z, basis, x_np: (basis @ z) + x_np, 'args': (basis, x_np,),
                 'jac': lambda z, basis, x_np: basis}
