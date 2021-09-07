@@ -80,12 +80,12 @@ def plot_pert_len_difs(advs_natural, advs_robust, images, n=10, ord=2):
     mask = ~np.isnan(pert_len_difs)
     filtered_data = [d[m] for d, m in zip(pert_len_difs.T, mask.T)]
 
-    boxprops = dict(color='tab:blue', linewidth=1.5, alpha=0.7)
-    whiskerprops = dict(color='tab:blue', alpha=0.7)
-    capprops = dict(color='tab:blue', alpha=0.7)
+    boxprops = dict(color='blue', linewidth=1.5, alpha=0.7)
+    whiskerprops = dict(color='blue', alpha=0.7)
+    capprops = dict(color='blue', alpha=0.7)
     medianprops = dict(linestyle=None, linewidth=0)
     meanpointprops = dict(marker='o', markeredgecolor='black',
-                          markerfacecolor='tab:orange')
+                          markerfacecolor='orange')
     plt.boxplot(filtered_data, whis=[10, 90], showfliers=False, showmeans=True, boxprops=boxprops,
                 whiskerprops=whiskerprops, capprops=capprops, meanprops=meanpointprops, medianprops=medianprops)
     plt.title('Difference of perturbation lengths between robust and natural model')
@@ -101,7 +101,7 @@ def plot_pert_len_difs(advs_natural, advs_robust, images, n=10, ord=2):
 def plot_pert_lengths(pert_lengths, n=10, labels=None, ord=2):
     n = np.minimum(n, pert_lengths[0].shape[1])
     pert_lengths = [p[:,:n] for p in pert_lengths]
-    colors = ['tab:blue', 'tab:orange', 'tab:green']
+    colors = ['blue', 'orange', 'green']
     l = []
 
     fig, ax = plt.subplots()
@@ -250,7 +250,7 @@ def plot_cw_surface(orig, adv1, adv2, model):
     fig = plt.figure()
     ax = fig.gca(projection='3d')
     plot_colors = np.empty(X.shape, dtype=object)
-    colors = ['tab:orange', 'tab:green', 'tab:brown', 'tab:grey', 'tab:pink', 'tab:blue','tab:cyan', 'tab:olive', 'tab:red', 'tab:purple']
+    colors = ['orange', 'green', 'brown', 'grey', 'pink', 'blue','cyan', 'olive', 'red', 'purple']
     labels = []
     for i, c in enumerate(np.unique(classes)):
         labels.append(mpatches.Patch(color=colors[c], label='Class ' + str(c)))
@@ -297,7 +297,7 @@ def plot_dec_space(orig, adv1, adv2, model, show_legend=True, show_advs=True, ov
     classes = np.argmax(preds, axis=-1).reshape((n_grid, n_grid))
 
     ax = plt.gca()
-    colors = ['tab:orange', 'tab:green', 'tab:brown', 'tab:grey', 'tab:blue', 'tab:pink','tab:cyan', 'tab:olive', 'tab:red', 'tab:purple']
+    colors = ['orange', 'green', 'brown', 'grey', 'blue', 'pink','cyan', 'olive', 'red', 'purple']
     labels = []
     colorList = []
     for i, c in enumerate(np.unique(classes)):
@@ -320,9 +320,9 @@ def plot_dec_space(orig, adv1, adv2, model, show_legend=True, show_advs=True, ov
 
     if show_advs:
         plt.plot((offset+len1)*n_grid/(offset+len_grid), offset*n_grid/(offset+len_grid),
-                 markeredgecolor='black', markerfacecolor='tab:red', marker='o')
+                 markeredgecolor='black', markerfacecolor='red', marker='o')
         plt.plot(offset*n_grid/(offset+len_grid), (offset+len2)*n_grid/(offset+len_grid),
-                 markeredgecolor='black', markerfacecolor='tab:red', marker='o')
+                 markeredgecolor='black', markerfacecolor='red', marker='o')
 
     ax.set_xlabel('dir 1 ($\ell_2$-length)', fontdict={'fontsize': 15})
     ax.set_ylabel('dir 2 ($\ell_2$-length)', fontdict={'fontsize': 15})
@@ -362,8 +362,8 @@ def plot_contrasted_dec_space(orig, adv1, adv2, model, n=4):
         plt.xticks([])
         plt.yticks([])
 
-    # colors = ['tab:orange', 'tab:green', 'tab:brown', 'tab:grey', 'tab:pink', 'tab:blue', 'tab:cyan', 'tab:olive',
-    #           'tab:red', 'tab:purple']
+    # colors = ['orange', 'green', 'brown', 'grey', 'pink', 'blue', 'cyan', 'olive',
+    #           'red', 'purple']
     # labels = []
     # for c in range(10):
     #     labels.append(mpatches.Patch(color=colors[c], label='Class ' + str(c)))
@@ -374,8 +374,8 @@ def plot_contrasted_dec_space(orig, adv1, adv2, model, n=4):
 
 def plot_var_hist(classes, labels, title=None, with_colors=True):
     bar_width = 0.4
-    colors = ['tab:blue', 'tab:orange', 'tab:green', 'tab:purple', 'tab:red', 'tab:brown', 'tab:grey', 'tab:pink',
-              'tab:cyan', 'tab:olive']
+    colors = ['blue', 'orange', 'green', 'purple', 'red', 'brown', 'grey', 'pink',
+              'cyan', 'olive']
     data = np.zeros((10,10))
     for l in range(10):
         var = np.mean(np.array([(len(np.unique(x[~np.isnan(x)]))-1)/(len(x[~np.isnan(x)])-1) for x in classes[labels == l]]))
