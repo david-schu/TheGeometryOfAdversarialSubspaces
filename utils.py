@@ -45,8 +45,8 @@ def load_data(n, bounds=(0., 1.), random=True, d_set='MNIST', train=True):
     elif d_set == 'CIFAR':
         images = images.transpose(0, 3, 1, 2)
         labels = np.array(dset.targets)[indices[:n]]
-    images = torch.as_tensor(images, device=dev())
-    labels = torch.as_tensor(labels, device=dev())
+    images = torch.as_tensor(images)
+    labels = torch.as_tensor(labels)
     return images.double(), labels
 
 
