@@ -4,6 +4,8 @@ sys.path.insert(0, '../data')
 
 import numpy as np
 import torch
+from robustness.model_utils import make_and_restore_model
+from robustness.datasets import CIFAR
 
 # own modules
 from utils import load_data, dev
@@ -40,16 +42,24 @@ if __name__ == "__main__":
     }
 
     # set seeds
-    np.random.seed(0)
+    # np.random.seed(0)
     torch.manual_seed(0)
 
     # load a model
+    # if is_natural:
+    #     model_path = './../models/natural_' + str(model_id) + '.pt'
+    # else:
+    #     model_path = './../models/robust_' + str(model_id) + '.pt'
+    # model = md.madry_diff()
+    # model.load_state_dict(torch.load(model_path, map_location=torch.device(dev())))      # natural cnn - same architecture as madry robust model but nmot adversarially trained
+
     if is_natural:
-        model_path = './../models/natural_' + str(model_id) + '.pt'
+        model_path = './../models/cifar_nat.pt'
     else:
-        model_path = './../models/robust_' + str(model_id) + '.pt'
-    model = md.madry_diff()
-    model.load_state_dict(torch.load(model_path, map_location=torch.device(dev())))      # natural cnn - same architecture as madry robust model but nmot adversarially trained
+        model_path = './../models/cifar_l2_0_5.pt'
+    ds = CIFAR('../data/cifar-10-batches-py')
+    model, _ = make_and_restore_model(arch='resnet50', dataset=ds, resume_path=model_path)
+    model.to(dev())
     model.eval()
 
     # load batched data
@@ -69,8 +79,8 @@ if __name__ == "__main__":
     labels = labels.to(dev())
 
     # initialize data arrays
-    advs = np.zeros((batchsize, params['n_adv_dims'], images[0].shape[0], images[0].shape[-1]**2))
-    dirs = np.zeros((batchsize, params['n_adv_dims'], images[0].shape[0], images[0].shape[-1]**2))
+    advs = np.zeros((batchsize, params['n_adv_dims'], images[0].shape[0] * images[0].shape[-1]**2))
+    dirs = np.zeros((batchsize, params['n_adv_dims'], images[0].shape[0] * images[0].shape[-1]**2))
     pert_lengths = np.zeros((batchsize, params['n_adv_dims']))
     adv_class = np.zeros((batchsize, params['n_adv_dims']))
 
@@ -93,9 +103,7 @@ if __name__ == "__main__":
         }
 
         if is_natural:
-            save_path = '../data/natural_complement_' + str(model_id) + '_'\
-                        + str(batch_n) + '.npy'
+            save_path = '../data/cifar_natural_' + str(batch_n) + '.npy'
         else:
-            save_path = '../data/robust_complement_' + str(model_id)\
-                        + '_' + str(batch_n) + '.npy'
+            save_path = '../data/cifar_robust_' + str(batch_n) + '.npy'
         np.save(save_path, data)

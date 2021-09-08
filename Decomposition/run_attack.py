@@ -23,13 +23,13 @@ def run_attack(model,
     # initialize variables
     n_pixel = image.shape[-1] ** 2
     n_channels = image.shape[1]
-    x_orig = image.reshape([n_channels, n_pixel])
+    x_orig = image.flatten()
 
     count = 0
     pert_lengths = torch.zeros(n_adv_dims, device=dev())
     adv_class = torch.zeros(n_adv_dims, device=dev(), dtype=int)
-    advs = torch.zeros((n_adv_dims, n_channels, n_pixel), device=dev())
-    adv_dirs = torch.zeros((n_adv_dims, n_channels, n_pixel), device=dev())
+    advs = torch.zeros((n_adv_dims, n_channels * n_pixel), device=dev())
+    adv_dirs = torch.zeros((n_adv_dims, n_channels * n_pixel), device=dev())
     dirs=[]
 
     dim = 0
@@ -67,7 +67,7 @@ def run_attack(model,
         adv_class[dim] = class_
         pert_lengths[dim] = pert_length
 
-        dirs = adv_dirs[:dim+1].flatten(-2, -1).detach().cpu().numpy()
+        dirs = adv_dirs[:dim+1].detach().cpu().numpy()
         dim += 1
 
     print('Dimensions' + str(dim))
