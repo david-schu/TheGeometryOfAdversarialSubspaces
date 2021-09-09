@@ -4,7 +4,7 @@ sys.path.insert(0, '../data')
 
 import numpy as np
 import torch
-from robustness.model_utils import make_and_restore_model
+import dill
 from robustness.datasets import CIFAR
 
 # own modules
@@ -23,12 +23,11 @@ if __name__ == "__main__":
     n_images = 10
     batchsize = 2
     pre_data = None
-    d_set = 'MNIST'
 
     # set attack parameters
     attack_params = {
-            'binary_search_steps': 11,
-            'initial_const': 1e-2,
+            'binary_search_steps': 10,
+            'initial_const': 1e-3,
             'steps': 100,
             'abort_early': True
         }
@@ -57,13 +56,17 @@ if __name__ == "__main__":
         model_path = './../models/cifar_nat.pt'
     else:
         model_path = './../models/cifar_l2_0_5.pt'
+        
     ds = CIFAR('../data/cifar-10-batches-py')
-    model, _ = make_and_restore_model(arch='resnet50', dataset=ds, resume_path=model_path)
+    classifier_model = ds.get_model('resnet50', False)
+    model = md.cifar_pretrained(classifier_model, ds)
+
+    checkpoint = torch.load(model_path, pickle_module=dill, map_location=torch.device(dev()))
     model.to(dev())
     model.eval()
 
     # load batched data
-    data = np.load('../data/MNIST/stable_data.npy', allow_pickle=True).item()
+    data = np.load('../data/CIFAR/stable_data.npy', allow_pickle=True).item()
     all_images, all_labels = data['images'], data['labels']
     images = all_images[all_labels == 0][:n_images]
     labels = all_labels[all_labels == 0][:n_images]
