@@ -184,14 +184,14 @@ def plot_dec_space(orig, adv1, adv2, model, show_legend=True, show_advs=True, ov
     dir1 = (adv1 - orig) / len1
     dir2 = (adv2 - orig) / len2
 
-    n_grid = 100
-    len_grid = np.maximum(2.5, np.maximum(len1,len2)+1)
+    n_grid = 30
+    len_grid = 2*np.maximum(len1,len2)
     offset = 0.1
     x = np.linspace(-offset, len_grid, n_grid)
     y = np.linspace(-offset, len_grid, n_grid)
     X, Y = np.meshgrid(x, y)
     advs = orig + (dir1 * np.reshape(X, (-1, 1)) + dir2 * np.reshape(Y, (-1, 1)))
-    advs = np.array(np.reshape(advs, ((-1,) +shape)).astype('float64'))
+    advs = np.array(np.reshape(advs, ((-1,) + shape)).astype('float64'))
     input = torch.split(torch.tensor(advs, device=dev()), 20)
 
     preds = np.empty((0, 10))
