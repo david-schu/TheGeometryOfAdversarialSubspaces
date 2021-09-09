@@ -63,6 +63,8 @@ if __name__ == "__main__":
 
     checkpoint = torch.load(model_path, pickle_module=dill, map_location=torch.device(dev()))
     state_dict_path = 'model'
+    if not ('model' in checkpoint):
+        state_dict_path = 'state_dict'
     sd = checkpoint[state_dict_path]
     sd = {k[len('module.'):]: v for k, v in sd.items()}
     model.load_state_dict(sd)
