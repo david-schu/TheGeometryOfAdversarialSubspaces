@@ -21,20 +21,20 @@ if __name__ == "__main__":
 
     # set number of images for attack and batchsize (shouldn't be larger than 20)
     n_images = 10
-    batchsize = 2
+    batchsize = 5
     pre_data = None
 
     # set attack parameters
     attack_params = {
             'binary_search_steps': 10,
             'initial_const': 1e-3,
-            'steps': 100,
+            'steps': 200,
             'abort_early': True
         }
 
     # set hyperparameters
     params = {
-        'n_adv_dims': 30,
+        'n_adv_dims': 50,
         'early_stop': 3,
         'input_attack': CarliniWagner,
         'random_start': False
