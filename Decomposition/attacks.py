@@ -191,7 +191,7 @@ class CarliniWagner(fa.L2CarliniWagnerAttack):
                     correct_classes = np.zeros(n_scales)
                     for batch in range(int(n_scales/batchsize)):
                         correct_classes[batch*batchsize:(batch+1)*batchsize] = \
-                            (model(md_in[batch*batchsize:(batch+1)*batchsize]).argmax(axis=1) == labels).raw
+                            (model(md_in[batch*batchsize:(batch+1)*batchsize]).argmax(axis=1) == labels).numpy()
                     idx = int(correct_classes.sum())
                     perturbed = x + scaled_pert[idx].reshape(x.shape)
 
