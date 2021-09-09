@@ -1,16 +1,13 @@
-import matplotlib
-
 from matplotlib import pyplot as plt
 import numpy as np
 from utils import orth_check, map_to, dev
-from matplotlib.ticker import FormatStrFormatter
 import matplotlib.patches as mpatches
 import torch
 from mpl_toolkits.mplot3d import art3d
 from matplotlib.colors import ListedColormap
 
 
-def plot_advs(advs, orig=None, classes=None, orig_class=None, n=10,vmin=0,vmax=1):
+def plot_advs(advs, shape, orig=None, classes=None, orig_class=None, n=10, vmin=0, vmax=1):
     if orig is None:
         j = 0
     else:
@@ -26,12 +23,19 @@ def plot_advs(advs, orig=None, classes=None, orig_class=None, n=10,vmin=0,vmax=1
     max_val = np.maximum(abs(np.min(dirs)), abs(np.max(dirs)))
     min_val = - max_val
 
-    dirs = np.reshape(dirs, [-1,28,28])
-    advs = np.reshape(advs, [-1,28,28])
+    if shape[0]==3:
+        dirs = np.reshape(dirs, ((-1,) + shape)).transpose((0,2,3,1))
+        advs = np.reshape(advs, ((-1,) + shape)).transpose((0,2,3,1))
+    else:
+        dirs = np.reshape(dirs, [-1,shape[1],shape[2]])
+        advs = np.reshape(advs, [-1,shape[1],shape[2]])
     fig, ax = plt.subplots(2, n + j, squeeze=False)
 
     if not (orig is None):
-        orig = np.reshape(orig, [28, 28])
+        if shape[0]==3:
+            orig = np.reshape(orig, shape)
+        else:
+            orig = np.reshape(orig, shape[1:])
         ax[0, 0].set_title('original')
         ax[0, 0].imshow(orig, cmap='gray', vmin=vmin, vmax=vmax)
         ax[0, 0].set_xticks([])
@@ -44,12 +48,12 @@ def plot_advs(advs, orig=None, classes=None, orig_class=None, n=10,vmin=0,vmax=1
         ax[0, i + j].set_title('Adversarial ' + str(i + 1))
         if with_classes:
             ax[0, i + j].set_xlabel('\u279E ' + str(int(classes[i])), fontdict={'fontsize': 15})
-        im_adv = ax[0, i + j].imshow(a.reshape([28, 28]), cmap='gray', vmin=vmin, vmax=vmax)
+        im_adv = ax[0, i + j].imshow(a, cmap='gray', vmin=vmin, vmax=vmax)
         ax[0, i + j].set_xticks([])
         ax[0, i + j].set_yticks([])
         ax[1, i + j].set_title('Perturbation ' + str(i + 1))
 
-        im_pert = ax[1, i + j].imshow(d.reshape([28, 28]), vmin=min_val, vmax=max_val)
+        im_pert = ax[1, i + j].imshow(d, vmin=min_val, vmax=max_val)
         ax[1, i + j].set_xticks([])
         ax[1, i + j].set_yticks([])
 
@@ -173,7 +177,8 @@ def plot_cw_surface(orig, adv1, adv2, model):
 
 
 def plot_dec_space(orig, adv1, adv2, model, show_legend=True, show_advs=True, overlay_inbounds=False):
-    orig = np.reshape(orig, (784))
+    shape = orig.shape
+    orig = orig.flatten()
     len1 = np.linalg.norm(adv1-orig)
     len2 = np.linalg.norm(adv2-orig)
     dir1 = (adv1 - orig) / len1
@@ -186,7 +191,7 @@ def plot_dec_space(orig, adv1, adv2, model, show_legend=True, show_advs=True, ov
     y = np.linspace(-offset, len_grid, n_grid)
     X, Y = np.meshgrid(x, y)
     advs = orig + (dir1 * np.reshape(X, (-1, 1)) + dir2 * np.reshape(Y, (-1, 1)))
-    advs = np.array(np.reshape(advs, (-1, 1, 28, 28)).astype('float64'))
+    advs = np.array(np.reshape(advs, ((-1,) +shape)).astype('float64'))
     input = torch.split(torch.tensor(advs, device=dev()), 20)
 
     preds = np.empty((0, 10))
