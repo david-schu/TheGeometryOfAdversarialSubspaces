@@ -4,6 +4,7 @@ from torch.autograd import Variable
 from torch import optim
 import numpy as np
 import utils as u
+from robustness.attacker import AttackerModel
 
 
 NB_EPOCHS = 10
@@ -196,3 +197,8 @@ class cifar_model(torch.nn.Module):
         x = self.relu(self.fc1(x))
         x = self.fc2(x)
         return x
+
+
+class cifar_pretrained(AttackerModel):
+    def forward(self, x):
+        return AttackerModel.forward(self, x, with_image=False)

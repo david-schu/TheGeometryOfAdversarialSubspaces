@@ -104,8 +104,8 @@ class CarliniWagner(fa.L2CarliniWagnerAttack):
         loss_aux_and_grad = ep.value_and_grad_fn(x, loss_fun, has_aux=True)
 
         def loss_and_grad(var_opt, consts):
-            # var_opt = ep.from_numpy(x, var_opt.astype(np.float64)).reshape(x.shape)
-            var_opt = ep.from_numpy(x, var_opt.astype(np.float64))
+            var_opt = ep.from_numpy(x, var_opt.astype(np.float64)).reshape(x.shape)
+            # var_opt = ep.from_numpy(x, var_opt.astype(np.float64))
             loss, _, gradient = loss_aux_and_grad(var_opt, consts)
             loss_np = loss.numpy().item()
             grad_np = gradient.flatten().numpy()
@@ -152,7 +152,7 @@ class CarliniWagner(fa.L2CarliniWagnerAttack):
             init = (x_np+np.random.normal(scale=1, size=x_np.shape)).clip(0, 1)
             res = minimize_ipopt(loss_and_grad, x0=init,
                                  jac=True, constraints=cons, args=(consts_),  bounds=bnds,
-                                 options={'maxiter': self.steps, 'disp':0, 'jac_c_constant': 'yes',
+                                 options={'maxiter': self.steps, 'disp': 0, 'jac_c_constant': 'yes',
                                            'jac_d_constant': 'yes'})
 
             perturbed = ep.from_numpy(x, (res.x).astype(np.float64)).reshape(x.shape)
@@ -183,10 +183,18 @@ class CarliniWagner(fa.L2CarliniWagnerAttack):
                 if found_advs_iter:
                     count += 1
                     pert = perturbed - x
-                    scaled_pert = ep.from_numpy(x, np.linspace(.5, 1, 1000).astype(np.float64)).reshape((-1, 1, 1)) \
+                    n_scales = 1000
+                    batchsize = 100
+                    scaled_pert = ep.from_numpy(x, np.linspace(.5, 1, n_scales).astype(np.float64)).reshape((-1, 1, 1, 1)) \
                                   * pert.reshape(x.shape[1:])
-                    idx = (model((x + scaled_pert.expand_dims(1))).argmax(axis=1) == labels).sum()
+                    md_in = x + scaled_pert
+                    correct_classes = np.zeros(n_scales)
+                    for batch in range(int(n_scales/batchsize)):
+                        correct_classes[batch*batchsize:(batch+1)*batchsize] = \
+                            (model(md_in[batch*batchsize:(batch+1)*batchsize]).argmax(axis=1) == labels).raw
+                    idx = int(correct_classes.sum())
                     perturbed = x + scaled_pert[idx].reshape(x.shape)
+
                 norms = (perturbed - x).flatten().norms.l2(axis=-1)
                 closer = norms < best_advs_norms
                 new_best = ep.logical_and(closer, found_advs_iter)
