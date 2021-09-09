@@ -56,13 +56,18 @@ if __name__ == "__main__":
         model_path = './../models/cifar_nat.pt'
     else:
         model_path = './../models/cifar_l2_0_5.pt'
-        
+
     ds = CIFAR('../data/cifar-10-batches-py')
     classifier_model = ds.get_model('resnet50', False)
     model = md.cifar_pretrained(classifier_model, ds)
 
     checkpoint = torch.load(model_path, pickle_module=dill, map_location=torch.device(dev()))
+    state_dict_path = 'model'
+    sd = checkpoint[state_dict_path]
+    sd = {k[len('module.'):]: v for k, v in sd.items()}
+    model.load_state_dict(sd)
     model.to(dev())
+    model.double()
     model.eval()
 
     # load batched data
