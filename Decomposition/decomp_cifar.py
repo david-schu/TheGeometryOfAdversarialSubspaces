@@ -15,12 +15,13 @@ from models import model as md
 
 if __name__ == "__main__":
     is_natural = int(sys.argv[1])
-    ## user initialization
+    batch_n = int(sys.argv[2])
 
     # set number of images for attack and batchsize (shouldn't be larger than 20)
     n_images = 10
-    pre_data = None
+    batchsize = 10
 
+    ## user initialization
     # set attack parameters
     attack_params = {
             'binary_search_steps': 10,
@@ -71,18 +72,22 @@ if __name__ == "__main__":
         labels = torch.cat((labels, all_labels[all_labels == l][:n_images]), 0)
     del all_images, all_labels
 
+    images = images[(batch_n * batchsize):(batch_n * batchsize + batchsize)]
+    labels = labels[(batch_n * batchsize):(batch_n * batchsize + batchsize)]
+
     images = images.to(dev())
     labels = labels.to(dev())
 
     # initialize data arrays
-    advs = np.zeros((len(images), params['n_adv_dims'], images[0].shape[0] * images[0].shape[-1]**2))
-    dirs = np.zeros((len(images), params['n_adv_dims'], images[0].shape[0] * images[0].shape[-1]**2))
-    pert_lengths = np.zeros((len(images), params['n_adv_dims']))
-    adv_class = np.zeros((len(images), params['n_adv_dims']))
+    advs = np.zeros((batchsize, params['n_adv_dims'], images[0].shape[0] * images[0].shape[-1] ** 2))
+    dirs = np.zeros((batchsize, params['n_adv_dims'], images[0].shape[0] * images[0].shape[-1] ** 2))
+    pert_lengths = np.zeros((batchsize, params['n_adv_dims']))
+    adv_class = np.zeros((batchsize, params['n_adv_dims']))
 
     # run decomposition over batches
     for i in range(len(images)):
-        new_advs, new_dirs, new_classes, new_pert_lengths = run_attack(model, images[i].unsqueeze(0), labels[i].unsqueeze(0),
+        new_advs, new_dirs, new_classes, new_pert_lengths = run_attack(model, images[i].unsqueeze(0),
+                                                                       labels[i].unsqueeze(0),
                                                                        attack_params, **params)
         advs[i] = new_advs.cpu().detach().numpy()
         dirs[i] = new_dirs.cpu().detach().numpy()
@@ -99,7 +104,7 @@ if __name__ == "__main__":
         }
 
         if is_natural:
-            save_path = '../data/cifar_natural.npy'
+            save_path = '../data/cifar_natural_' + str(batch_n) + '.npy'
         else:
-            save_path = '../data/cifar_robust_.npy'
+            save_path = '../data/cifar_robust_' + str(batch_n) + '.npy'
         np.save(save_path, data)
