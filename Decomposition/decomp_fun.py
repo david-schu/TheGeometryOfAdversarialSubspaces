@@ -14,15 +14,13 @@ from run_attack import run_attack
 from models import model as md
 
 if __name__ == "__main__":
-    model_id = int(sys.argv[1])
+    batchsize = int(sys.argv[1])
     is_natural = int(sys.argv[2])
     batch_n = int(sys.argv[3])
     ## user initialization
 
     # set number of images for attack and batchsize (shouldn't be larger than 20)
     n_images = 10
-    batchsize = 5
-    pre_data = None
 
     # set attack parameters
     attack_params = {
