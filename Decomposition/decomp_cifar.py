@@ -16,10 +16,10 @@ from models import model as md
 if __name__ == "__main__":
     is_natural = int(sys.argv[1])
     batch_n = int(sys.argv[2])
-    batchsize = int(sys.argv[3])
 
     # set number of images for attack and batchsize (shouldn't be larger than 20)
     n_images = 10
+    batchsize = 10
 
     ## user initialization
     # set attack parameters
