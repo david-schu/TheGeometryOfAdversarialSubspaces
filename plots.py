@@ -4,9 +4,9 @@ from matplotlib import pyplot as plt
 import numpy as np
 from utils import orth_check, map_to, dev
 from matplotlib.ticker import FormatStrFormatter
-import matplotlib.patches as mpatches
 import torch
 from mpl_toolkits.mplot3d import art3d
+import matplotlib.patches as mpatches
 from matplotlib.colors import ListedColormap
 
 
@@ -234,7 +234,7 @@ def plot_cw_surface(orig, adv1, adv2, model):
     X, Y = np.meshgrid(x, y)
     advs = orig + (dir1*np.reshape(X,(-1,1)) + dir2*np.reshape(Y,(-1,1)))
     advs = np.array(np.reshape(advs, (-1,1,28,28)).astype('float64'), dtype='float32')
-    input = torch.split(torch.tensor(advs),20)
+    input = torch.split(torch.tensor(advs), 20)
 
     preds = np.empty((0,10))
     for batch in input:
@@ -273,21 +273,22 @@ def plot_cw_surface(orig, adv1, adv2, model):
     plt.show()
 
 
-def plot_dec_space(orig, adv1, adv2, model, show_legend=True, show_advs=True, overlay_inbounds=False):
-    orig = np.reshape(orig, (784))
+def plot_dec_space(orig, adv1, adv2, model, offset=0.1, n_grid=100, show_legend=True, show_advs=True, overlay_inbounds=False, ax=None):
+    if ax is None:
+        ax = plt.gca()
+    image_shape = (1, 28, 28)
+    orig = orig.reshape(-1)
     len1 = np.linalg.norm(adv1-orig)
     len2 = np.linalg.norm(adv2-orig)
     dir1 = (adv1 - orig) / len1
     dir2 = (adv2 - orig) / len2
 
-    n_grid = 100
-    len_grid = np.maximum(2.5, np.maximum(len1,len2)+1)
-    offset = 0.1
+    len_grid = np.maximum(2.5, np.maximum(len1, len2)+1)
     x = np.linspace(-offset, len_grid, n_grid)
     y = np.linspace(-offset, len_grid, n_grid)
     X, Y = np.meshgrid(x, y)
     advs = orig + (dir1 * np.reshape(X, (-1, 1)) + dir2 * np.reshape(Y, (-1, 1)))
-    advs = np.array(np.reshape(advs, (-1, 1, 28, 28)).astype('float64'))
+    advs = np.reshape(advs, (-1,)+image_shape).astype('float64')
     input = torch.split(torch.tensor(advs, device=dev()), 20)
 
     preds = np.empty((0, 10))
@@ -296,7 +297,6 @@ def plot_dec_space(orig, adv1, adv2, model, show_legend=True, show_advs=True, ov
 
     classes = np.argmax(preds, axis=-1).reshape((n_grid, n_grid))
 
-    ax = plt.gca()
     colors = ['orange', 'green', 'brown', 'grey', 'blue', 'pink','cyan', 'olive', 'red', 'purple']
     labels = []
     colorList = []
@@ -306,35 +306,34 @@ def plot_dec_space(orig, adv1, adv2, model, show_legend=True, show_advs=True, ov
     # Plot the surface.
     new_cmap = ListedColormap(colors)
 
-    plt.imshow(classes, cmap=new_cmap, origin='lower', vmin=0, vmax=9)
+    ax.imshow(classes, cmap=new_cmap, origin='lower', vmin=0, vmax=9)
     if overlay_inbounds:
         new_cmap2 = ListedColormap(['none', 'k'])
         out_of_bounds = np.logical_or(advs.max(axis=(1,2,3))>1, advs.min(axis=(1,2,3))<0).reshape((n_grid, n_grid))
-        plt.imshow(out_of_bounds, cmap=new_cmap2, origin='lower', alpha=.5)
+        ax.imshow(out_of_bounds, cmap=new_cmap2, origin='lower', alpha=.5)
 
-    plt.axvline(offset*n_grid/(offset+len_grid), c='k', ls='--', alpha=0.5)
-    plt.axhline(offset*n_grid/(offset+len_grid), c='k', ls='--', alpha=0.5)
+    ax.axvline(offset*n_grid/(offset+len_grid), c='k', ls='--', alpha=0.5)
+    ax.axhline(offset*n_grid/(offset+len_grid), c='k', ls='--', alpha=0.5)
 
-    plt.plot(offset*n_grid/(offset+len_grid), offset*n_grid/(offset+len_grid),
+    ax.plot(offset*n_grid/(offset+len_grid), offset*n_grid/(offset+len_grid),
              markeredgecolor='black', markerfacecolor='black', marker='o')
 
     if show_advs:
-        plt.plot((offset+len1)*n_grid/(offset+len_grid), offset*n_grid/(offset+len_grid),
+        ax.plot((offset+len1)*n_grid/(offset+len_grid), offset*n_grid/(offset+len_grid),
                  markeredgecolor='black', markerfacecolor='red', marker='o')
-        plt.plot(offset*n_grid/(offset+len_grid), (offset+len2)*n_grid/(offset+len_grid),
+        ax.plot(offset*n_grid/(offset+len_grid), (offset+len2)*n_grid/(offset+len_grid),
                  markeredgecolor='black', markerfacecolor='red', marker='o')
 
     ax.set_xlabel('dir 1 ($\ell_2$-length)', fontdict={'fontsize': 15})
     ax.set_ylabel('dir 2 ($\ell_2$-length)', fontdict={'fontsize': 15})
 
-    plt.xticks(np.linspace(offset*n_grid/(offset+len_grid), (offset+np.floor(len_grid))*n_grid/(offset+len_grid), 5),
-               [np.round(x, 2).astype(str) for x in np.linspace(0, np.floor(len_grid), 5)])
-    plt.yticks(np.linspace(offset*n_grid/(offset+len_grid), (offset+np.floor(len_grid))*n_grid/(offset+len_grid), 5),
-               [np.round(x, 2).astype(str) for x in np.linspace(0, np.floor(len_grid), 5)])
+    ax.set_xticks(np.linspace(offset*n_grid/(offset+len_grid), (offset+np.floor(len_grid))*n_grid/(offset+len_grid), 5), minor=False)
+    ax.set_xticklabels([np.round(x, 2).astype(str) for x in np.linspace(0, np.floor(len_grid), 5)])
+    ax.set_yticks(np.linspace(offset*n_grid/(offset+len_grid), (offset+np.floor(len_grid))*n_grid/(offset+len_grid), 5), minor=False)
+    ax.set_yticklabels([np.round(x, 2).astype(str) for x in np.linspace(0, np.floor(len_grid), 5)])
 
-    if show_legend:
-        # Add legend with proxy artists
-        plt.legend(handles=labels, title='predicted class')
+    if show_legend: # Add legend with proxy artists
+        ax.legend(handles=labels, title='predicted class')
 
 
 def plot_contrasted_dec_space(orig, adv1, adv2, model, n=4):
