@@ -229,10 +229,10 @@ def plot_dec_space(orig, adv1, adv2, model, offset=0.1, n_grid=100, show_legend=
     ax.set_xlabel('dir 1 ($\ell_2$-length)', fontdict={'fontsize': 15})
     ax.set_ylabel('dir 2 ($\ell_2$-length)', fontdict={'fontsize': 15})
 
-    plt.xticks(np.linspace(offset*n_grid/(offset+len_grid), (offset+np.floor(len_grid))*n_grid/(offset+len_grid), 5),
-               [np.round(x, 2).astype(str) for x in np.linspace(0, np.floor(len_grid), 5)])
-    plt.yticks(np.linspace(offset*n_grid/(offset+len_grid), (offset+np.floor(len_grid))*n_grid/(offset+len_grid), 5),
-               [np.round(x, 2).astype(str) for x in np.linspace(0, np.floor(len_grid), 5)])
+    # plt.xticks(np.linspace(offset*n_grid/(offset+len_grid), (offset+np.floor(len_grid))*n_grid/(offset+len_grid), 5),
+    #            [np.round(x, 2).astype(str) for x in np.linspace(0, np.floor(len_grid), 5)])
+    # plt.yticks(np.linspace(offset*n_grid/(offset+len_grid), (offset+np.floor(len_grid))*n_grid/(offset+len_grid), 5),
+    #            [np.round(x, 2).astype(str) for x in np.linspace(0, np.floor(len_grid), 5)])
 
     if show_legend:
         # Add legend with proxy artists
