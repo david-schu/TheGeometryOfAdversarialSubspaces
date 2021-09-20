@@ -212,7 +212,7 @@ def plot_dec_space(orig, adv1, adv2, model, offset=0.1, n_grid=100, show_legend=
     if overlay_inbounds:
         new_cmap2 = ListedColormap(['none', 'k'])
         out_of_bounds = np.logical_or(advs.max(axis=(1,2,3))>1, advs.min(axis=(1,2,3))<0).reshape((n_grid, n_grid))
-        plt.imshow(out_of_bounds, cmap=new_cmap2, origin='lower', alpha=.5)
+        plt.imshow(out_of_bounds, aspect='auto', cmap=plt.cm.gray, interpolation='nearest', origin='lower', alpha=.5)
 
     plt.axvline(offset*n_grid/(offset+len_grid), c='k', ls='--', alpha=0.5)
     plt.axhline(offset*n_grid/(offset+len_grid), c='k', ls='--', alpha=0.5)
