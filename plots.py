@@ -176,7 +176,7 @@ def plot_cw_surface(orig, adv1, adv2, model):
     plt.show()
 
 
-def plot_dec_space(orig, adv1, adv2, model, show_legend=True, show_advs=True, overlay_inbounds=False):
+def plot_dec_space(orig, adv1, adv2, model, offset=0.1, n_grid=100, show_legend=True, show_advs=True, overlay_inbounds=False):
     shape = orig.shape
     orig = orig.flatten()
     len1 = np.linalg.norm(adv1-orig)
@@ -184,9 +184,7 @@ def plot_dec_space(orig, adv1, adv2, model, show_legend=True, show_advs=True, ov
     dir1 = (adv1 - orig) / len1
     dir2 = (adv2 - orig) / len2
 
-    n_grid = 30
     len_grid = 2*np.maximum(len1,len2)
-    offset = 0.1
     x = np.linspace(-offset, len_grid, n_grid)
     y = np.linspace(-offset, len_grid, n_grid)
     X, Y = np.meshgrid(x, y)
