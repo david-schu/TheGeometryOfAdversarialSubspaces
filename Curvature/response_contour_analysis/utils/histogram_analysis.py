@@ -1,12 +1,46 @@
 """
-Utility funcions for summarizing response contours
+Utility funcions for polynomial curvature analysis of iso-response contours
 
 Authors: Dylan Paiton, Santiago Cadena
 """
 
+import os
+import sys
+
 import numpy as np
 import numpy.polynomial.polynomial as poly
 from skimage import measure
+
+ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__),'..','..'))
+if ROOT_DIR not in sys.path: sys.path.append(ROOT_DIR)
+
+import response_contour_analysis.utils.dataset_generation as data_utils
+import response_contour_analysis.utils.model_handling as model_utils
+
+def remap_coordinate_to_target(num_vals, coordinate):
+    """
+    Map coordinate from [0, num_vals-1] to [-1, 1]
+    Parameters:
+        num_vals [int] number of discrete bins in the original range
+        coordinate [int] bin of interest from original range
+    Outputs:
+        target [float] coordinate remapped to be between [-1, 1]
+    """
+    target = (2 * coordinate) / (num_vals - 1) - 1
+    return target
+
+
+def remap_target_to_coordinate(num_vals, target):
+    """
+    Map target from [-1, 1] to [0, num_vals-1]
+    Parameters:
+        num_vals [int] number of discrete bins in the desired output range
+        target [float] coordinate remapped to bet between [-1, 1]
+    Outputs:
+        coordinate [int] target remapped to be one of the num_vals bins
+    """
+    coordinate = int(np.around((num_vals - 1) * ((target + 1) / 2)))
+    return coordinate
 
 
 def iso_response_curvature_poly_fits(activations, target, target_is_act=True, yx_scale=[1, 1]):
@@ -14,6 +48,7 @@ def iso_response_curvature_poly_fits(activations, target, target_is_act=True, yx
     Parameters:
         activations [np.ndarray] first index is the target neuron, second index is the data plane
         target [float] target activity for finding iso-response contours OR target position along x axis for finding the target activity
+            if target_is_act is true, then target refers to normalized activity for the given feature map, i.e. it should be between 0 (minimum activity) and 1 (maximum activity)
             if target_is_act is false, then target refers to a position on the x axis from -1 (left most point) to 1 (right most point)
         target_is_act [bool] if True, then the 'target' parameter is an activation value, else the 'target' parameter is the x axis position
         yx_scale [list of ints] y and x (respectively) scale factors for remapping activations to the data domain
@@ -31,16 +66,10 @@ def iso_response_curvature_poly_fits(activations, target, target_is_act=True, yx
             activity = activations[neuron_id, plane_id, ...]
             if activity.max() > 0.0:
                 num_y, num_x = activity.shape
-                if target_is_act:
-                    target_act = target
-                else:
-                    # map [-1, 1] to [0, num_x-1]
-                    target_pos = int((num_x - 1) * ((target + 1) / 2)) 
-                    target_act = activity[(num_y//2)-1, target_pos]
                 #activity[:, :(num_x//2-1)] = 0 # remove data for x<0
                 if np.abs(activity.max()) <= 1e-10:
                     print(
-                        f'WARNING: iso_response_curvature_poly_fits: After isolating the right half,' 
+                        f'WARNING: iso_response_curvature_poly_fits: '
                         +'maximum value of activations for '
                         +f'neuron_index={neuron_id}, comparison_index={plane_id}, is {activity.max}'
                     )
@@ -50,6 +79,12 @@ def iso_response_curvature_poly_fits(activations, target, target_is_act=True, yx
                     continue
                 activity = activity - activity.min() # renormalize to be between 0 and 1
                 activity = activity / activity.max()
+                if target_is_act:
+                    assert (0 <= target <= 1), (f'utils/histogram_analysis: ERROR: target={target} must in the inclusive range [0, 1]')
+                    target_act = target
+                else: # target is x axis position
+                    target_pos = remap_target_to_coordinate(num_x, target)
+                    target_act = activity[(num_y//2)-1, target_pos]
                 try: # compute curvature
                     contours = measure.find_contours(activity, target_act)
                     contours = np.concatenate(contours, axis=0) # Grab all of them together
@@ -96,7 +131,7 @@ def iso_response_curvature_poly_fits(activations, target, target_is_act=True, yx
 def response_attenuation_curvature_poly_fits(activations, target, target_is_act, x_pts, y_pts):
     """
     Parameters:
-        activations [tuple] first element is the comp activations returned from get_normalized_activations and the secdond element is rand activations
+        activations [tuple] first element is the comp activations returned from utils/model_handling.get_contour_dataset_activations() and the secdond element is rand activations
         x_pts [np.ndarray] of size (num_images,) that were the x points used for the contour dataset
         y_pts [np.ndarray] of size (num_images,) that were the y points used for the contour dataset
         target [float] target activity for finding iso-response contours OR target position along x axis for finding the target activity
@@ -145,23 +180,21 @@ def response_attenuation_curvature_poly_fits(activations, target, target_is_act,
     return (curvatures, fits, sliced_activity)
 
 
-def compute_curvature_poly_fits(activations, contour_dataset, target, target_is_act=True, bounds=None):
+def get_scale_factors(yx_pts, num_y, num_x, bounds=None):
     """
+    returns new scale factor and limits for curvature analysis on cropped activity maps
+    outputs are intended to be used to rescale target activations and crop activity maps
+    the function assumes input is square, centered around origin, and the bounds are also centered
     Parameters:
-        activations [np.ndarray] returned from get_normalized_activations
-        contour_dataset [dict] that must contain keys "x_pts" and "y_pts" from utils/dataset_generation.get_contour_dataset()
-          x_pts [np.ndarray] of size (num_images,) that were the points used for the contour dataset
-          proj_datapoints [np.ndarray] of stacked vectorized datapoint locations (from a mesh grid) for the 2D contour dataset
-        target [float] target activity for finding iso-response contours OR target position along x axis for finding the target activity
-            if target_is_act is false, then target refers to a position on the x axis from -1 (left most point) to 1 (right most point)
-        target_is_act [bool] if True, then the 'target' parameter is an activation value, else the 'target' parameter is the x axis position
-        bounds [nested tuple] containing ((y_min, y_max), (x_min, x_max)) for the window within which curvature should be measured
-    outputs:
-        iso_curvatures [list of lists] of lengths [num_neurons, num_planes] which contain the estimated iso-response curvature coefficient for the given neuron and plane
-        attn_curvatures [list of lists] of lengths [num_neurons, num_planes] which contain the estimated response attenuation curvature coefficient for the given neuron and plane
+        yx_pts [tuple of tuple of int] containing (y_pts, x_pts), which are each returned by data_utils.get_contour_dataset
+        num_y [int] number of images used in the vertical direction
+        num_x [int] number of images used in the horizontal direction
+        activations_shape [list of int] original shape of a single activity map of shape [num_y, num_x]
+        bounds [tuple of tuple of ints] containing (y_bounds, x_bounds), which are each a tuple of (bounds_min, bounds_max)
+    Returns:
+        yx_scale_factors [tuple of int] containing (y_scale_factor, x_scale_factor)
+        yx_lims [tuple of tuple of int] containing ((start_y, end_y), (start_x, end_x))
     """
-    num_target, num_planes, num_y, num_x = activations.shape 
-    yx_pts = (contour_dataset['y_pts'].copy(), contour_dataset['x_pts'].copy())
     y_pts, x_pts = yx_pts
     y_range = max(y_pts) - min(y_pts)
     x_range = max(x_pts) - min(x_pts)
@@ -177,10 +210,10 @@ def compute_curvature_poly_fits(activations, contour_dataset, target, target_is_
         x_bound_range = max(x_bounds) - min(x_bounds)
         y_trim = 0.5 * y_bound_range / y_range
         x_trim = 0.5 * x_bound_range / x_range
-        start_y = int(np.floor(y_trim*num_y))
-        end_y = int(np.ceil(3*y_trim*num_y))
-        start_x = int(np.floor(x_trim*num_x))
-        end_x = int(np.ceil(3*x_trim*num_x))
+        start_y = int(np.floor(y_trim * num_y))
+        end_y = int(np.ceil(3 * y_trim * num_y))
+        start_x = int(np.floor(x_trim * num_x))
+        end_x = int(np.ceil(3 * x_trim * num_x))
         new_num_y = end_y - start_y
         new_num_x = end_x - start_x
         y_pts_trim = y_pts[start_y:end_y]
@@ -189,17 +222,40 @@ def compute_curvature_poly_fits(activations, contour_dataset, target, target_is_
         new_x_range = max(x_pts_trim) - min(x_pts_trim)
         y_scale_factor =  new_y_range / new_num_y
         x_scale_factor =  new_x_range / new_num_x
+    yx_scale_factors = (y_scale_factor, x_scale_factor)
+    yx_lims = ((start_y, end_y), (start_x, end_x))
+    return yx_scale_factors, yx_lims
+
+
+def compute_curvature_poly_fits(activations, contour_dataset, target, target_is_act=True, bounds=None):
+    """
+    Parameters:
+        activations [np.ndarray] returned from utils/model_handling.get_contour_dataset_activations()
+        contour_dataset [dict] that must contain keys "x_pts" and "y_pts" from utils/dataset_generation.get_contour_dataset()
+          x_pts [np.ndarray] of size (num_images,) that were the points used for the contour dataset
+          proj_datapoints [np.ndarray] of stacked vectorized datapoint locations (from a mesh grid) for the 2D contour dataset
+        target [float] target activity for finding iso-response contours OR target position along x axis for finding the target activity
+            if target_is_act is false, then target refers to a position on the x axis from -1 (left most point) to 1 (right most point)
+        target_is_act [bool] if True, then the 'target' parameter is an activation value, else the 'target' parameter is the x axis position
+        bounds [nested tuple] containing ((y_min, y_max), (x_min, x_max)) for the window within which curvature should be measured
+    outputs:
+        iso_curvatures [list of lists] of lengths [num_neurons, num_planes] which contain the estimated iso-response curvature coefficient for the given neuron and plane
+        attn_curvatures [list of lists] of lengths [num_neurons, num_planes] which contain the estimated response attenuation curvature coefficient for the given neuron and plane
+    """
+    yx_pts = (contour_dataset['y_pts'].copy(), contour_dataset['x_pts'].copy())
+    yx_scale_factors, yx_lims = get_scale_factors(yx_pts, activations.shape, bounds)
+    ((start_y, end_y), (start_x, end_x)) = yx_lims
     iso_curvatures, iso_fits, iso_contours = iso_response_curvature_poly_fits(
         activations[:, :, start_y:end_y, start_x:end_x],
         target,
         target_is_act,
-        [y_scale_factor, x_scale_factor])
+        yx_scale_factors)
     attn_curvatures, attn_fits, attn_sliced_activity = response_attenuation_curvature_poly_fits(
         activations[:, :, start_y:end_y, start_x:end_x],
         target,
         target_is_act,
-        x_pts,
-        y_pts)
+        yx_pts[1],
+        yx_pts[0])
     return (iso_curvatures, attn_curvatures)
 
 
@@ -344,3 +400,98 @@ def compute_curvature_fits(curvatures, dist_name='gennorm'):
             type_sub_fits.append(dataset_sub_fits)
         all_fits.append(type_sub_fits)
     return all_fits, dist
+
+
+def crop_and_mask_activity_map(activations, yx_lims, contour_dataset, mask=False):
+    """
+    Parameters:
+        activations [np.ndarray] returned from utils/model_handling.get_contour_dataset_activations()
+        yx_lims [tuple of tuple of int] containing ((start_y, end_y), (start_x, end_x))
+        contour_dataset [dictionary] returned from utils/dataset_generation.get_contour_dataset()
+        mask [bool] if True, then mask the activity map with a right triangle using utils/dataset_generation.triangle_mask_image
+    Outputs:
+        preproc_map [np.ndarray] same shape as activatiions, but with the last two axes cropped
+            if mask is true then all values outside the triangle defined by the target & comparison vectors are set to zero
+    """
+    num_target_neurons, num_target_planes, num_comp_planes, num_y, num_x = activations.shape
+    ((start_y, end_y), (start_x, end_x)) = yx_lims
+    if mask:
+        preproc_map = np.zeros((num_target_neurons, num_target_planes, num_comp_planes, end_y-start_y, end_x-start_x))
+        for target_neuron_id in range(num_target_neurons):
+            for target_plane_id in range(num_target_planes):
+                for comp_plane_id in range(num_comp_planes):
+                    proj_vects = (
+                        contour_dataset['proj_target_vect'][target_plane_id][comp_plane_id],
+                        contour_dataset['proj_comparison_vect'][target_plane_id][comp_plane_id],
+                        contour_dataset['proj_orth_vect'][target_plane_id][comp_plane_id],
+                    )
+                    image = activations[target_neuron_id, target_plane_id, comp_plane_id, start_y:end_y, start_x:end_x].copy()
+                    cv = contour_dataset['proj_comparison_vect'][target_plane_id][comp_plane_id]
+                    cv_slope = cv[1] / cv[0]
+                    preproc_map[target_plane_id, comp_plane_id, ...] = data_utils.triangle_mask_image(image, yx_range, cv_slope, num_images_per_edge)
+    else:
+        preproc_map = activations[:, :, :, start_y:end_y, start_x:end_x].copy()
+    return preproc_map
+
+def polynomial_iso_response_curvature(model, plane_abscissae, plane_ordinates, experiment_params):
+    """
+    experiment_params (dict) with keys:
+        yx_range
+        num_images
+        image_scale
+        data_shape
+        normalize_activity_map
+        target_model_id
+        bounds
+        target
+        target_is_act
+    """
+    contour_dataset = data_utils.get_contour_dataset(
+        plane_abscissae,
+        plane_ordinates,
+        yx_range=experiment_params['yx_range'],
+        num_images=experiment_params['num_images'],
+        image_scale=experiment_params['image_scale'],
+        data_shape=experiment_params['data_shape'],
+        return_datapoints=True
+    )
+    all_datapoints = contour_dataset.pop('all_datapoints')
+    num_neurons_per_plane = 1
+    num_edge_images = int(np.sqrt(experiment_params['num_images']))
+    num_target_planes = len(contour_dataset['proj_matrix'])
+    num_comp_planes = len(contour_dataset['proj_matrix'][0])
+    out_shape = (num_neurons_per_plane, num_target_planes, num_comp_planes, num_edge_images, num_edge_images)
+    response_images = np.zeros(out_shape)
+    for neuron_id in range(num_neurons_per_plane):
+        for target_plane_id in range(num_target_planes):
+            for comp_plane_id in range(num_comp_planes):
+                datapoints = all_datapoints[target_plane_id][comp_plane_id]
+                if type(experiment_params['target_model_id']) is list:
+                    target_model_ids = experiment_params['target_model_id']
+                else:
+                    target_model_ids = [experiment_params['target_model_id']]
+                response_images[neuron_id, target_plane_id, comp_plane_id, ...] = np.squeeze(
+                    model_utils.get_contour_dataset_activations(
+                        model,
+                        contour_dataset=[[datapoints]],
+                        target_model_ids=target_model_ids,
+                        get_activation_function=model_utils.unit_activation,
+                        normalize=experiment_params['normalize_activity_map'],
+                        activation_function_kwargs={'compute_grad':False}))
+    num_y, num_x = response_images.shape[3:]
+    yx_pts = (contour_dataset['y_pts'].copy(), contour_dataset['x_pts'].copy())
+    yx_scale_factors, yx_lims = get_scale_factors(yx_pts, num_y, num_x, experiment_params['bounds'])
+    (y_scale_factor, x_scale_factor) = yx_scale_factors
+    ((start_y, end_y), (start_x, end_x)) = yx_lims
+    if experiment_params['normalize_activity_map']: # already normalized
+        preproc_resp_images = response_images[0, :, :, start_y:end_y, start_x:end_x].copy()
+    else: # need to normalize anyway for poly fit
+        preproc_resp_images = response_images[0, ...].copy()
+        preproc_resp_images = model_utils.normalize_single_neuron_activations(preproc_resp_images)
+        preproc_resp_images = preproc_resp_images[:, :, start_y:end_y, start_x:end_x].copy()
+    iso_curvatures, iso_fits, iso_contours = iso_response_curvature_poly_fits(
+        preproc_resp_images,
+        target=experiment_params['target'],
+        target_is_act=experiment_params['target_is_act'],
+        yx_scale=[y_scale_factor, x_scale_factor])
+    return contour_dataset, response_images, iso_curvatures, iso_fits, iso_contours
