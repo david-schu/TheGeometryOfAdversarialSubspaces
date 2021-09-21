@@ -176,7 +176,9 @@ def plot_cw_surface(orig, adv1, adv2, model):
     plt.show()
 
 
-def plot_dec_space(orig, adv1, adv2, model, offset=0.1, n_grid=100, show_legend=True, show_advs=True, overlay_inbounds=False):
+def plot_dec_space(orig, adv1, adv2, model, offset=0.1, n_grid=100, show_legend=True, show_advs=True,
+                   overlay_inbounds=False, origin_centered=False):
+
     shape = orig.shape
     orig = orig.flatten()
     len1 = np.linalg.norm(adv1-orig)
@@ -185,6 +187,9 @@ def plot_dec_space(orig, adv1, adv2, model, offset=0.1, n_grid=100, show_legend=
     dir2 = (adv2 - orig) / len2
 
     len_grid = 2*np.maximum(len1,len2)
+    if origin_centered:
+        offset=len_grid
+
     x = np.linspace(-offset, len_grid, n_grid)
     y = np.linspace(-offset, len_grid, n_grid)
     X, Y = np.meshgrid(x, y)
@@ -229,10 +234,22 @@ def plot_dec_space(orig, adv1, adv2, model, offset=0.1, n_grid=100, show_legend=
     ax.set_xlabel('dir 1 ($\ell_2$-length)', fontdict={'fontsize': 15})
     ax.set_ylabel('dir 2 ($\ell_2$-length)', fontdict={'fontsize': 15})
 
-    # plt.xticks(np.linspace(offset*n_grid/(offset+len_grid), (offset+np.floor(len_grid))*n_grid/(offset+len_grid), 5),
-    #            [np.round(x, 2).astype(str) for x in np.linspace(0, np.floor(len_grid), 5)])
-    # plt.yticks(np.linspace(offset*n_grid/(offset+len_grid), (offset+np.floor(len_grid))*n_grid/(offset+len_grid), 5),
-    #            [np.round(x, 2).astype(str) for x in np.linspace(0, np.floor(len_grid), 5)])
+    x_ticks = np.arange(len1, np.maximum(len_grid,offset), len1)
+    x_ticks = np.r_[-x_ticks[::-1], 0, x_ticks]
+    x_ticks = x_ticks[x_ticks>=-offset]
+    x_ticks = x_ticks[x_ticks<=len_grid]
+    x_tick_locs = (x_ticks+offset)/(len_grid+offset)*n_grid
+    
+    y_ticks = np.arange(len2, np.maximum(len_grid,offset), len2)
+    y_ticks = np.r_[-y_ticks[::-1], 0, y_ticks]
+    y_ticks = y_ticks[y_ticks>=-offset]
+    y_ticks = y_ticks[y_ticks<=len_grid]
+    y_tick_locs = (y_ticks+offset)/(len_grid+offset)*n_grid
+
+    plt.xticks(x_tick_locs,
+               [np.round(x, 2).astype(str) for x in x_ticks])
+    plt.yticks(y_tick_locs,
+               [np.round(x, 2).astype(str) for x in y_ticks])
 
     if show_legend:
         # Add legend with proxy artists
