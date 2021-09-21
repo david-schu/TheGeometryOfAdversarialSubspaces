@@ -28,7 +28,7 @@ def get_dist_dec(orig, label, dirs, model, n_samples=1000):
 
     for i in range(n_steps):
         input_dirs = scales * sample_dirs
-        input = (input_dirs + orig.flatten()[None])
+        input_ = (input_dirs + orig.flatten()[None])
         input = torch.split(torch.tensor(input.reshape((-1,) + shape), device=dev()), 100)
 
         preds = np.empty((0, 10))
@@ -44,7 +44,7 @@ def get_dist_dec(orig, label, dirs, model, n_samples=1000):
         scales[is_adv] = upper[is_adv] / 2
         scales[~is_adv] = (upper[~is_adv] + lower[~is_adv]) / 2
 
-    in_bounds = np.logical_or(input.max(-1) <= 1, input.min(-1) >= 0)
+    in_bounds = np.logical_or(input_.max(-1) <= 1, input_.min(-1) >= 0)
     dists[~in_bounds] = np.nan
     return dists
 
