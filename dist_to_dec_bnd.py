@@ -29,7 +29,7 @@ def get_dist_dec(orig, label, dirs, model, n_samples=1000):
     for i in range(n_steps):
         input_dirs = scales * sample_dirs
         input_ = (input_dirs + orig.flatten()[None])
-        input = torch.split(torch.tensor(input.reshape((-1,) + shape), device=dev()), 100)
+        input = torch.split(torch.tensor(input_.reshape((-1,) + shape), device=dev()), 100)
 
         preds = np.empty((0, 10))
         for batch in input:
@@ -100,7 +100,7 @@ pert_lengths_madry = data_madry['pert_lengths']
 classes_madry = data_madry['adv_class']
 dirs_madry = data_madry['dirs']
 
-n_samples = 10000
+n_samples = 5000
 n_dims = 50
 n_images = 5
 
