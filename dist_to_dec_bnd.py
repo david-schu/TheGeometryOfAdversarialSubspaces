@@ -9,7 +9,7 @@ from utils import dev
 import tqdm
 
 
-def get_dist_dec2(orig, label, dirs, model, n_samples=1000):
+def get_dist_dec(orig, label, dirs, model, n_samples=1000):
     shape = orig.shape
     n_steps = 20
     n_dirs = len(dirs)
@@ -29,8 +29,12 @@ def get_dist_dec2(orig, label, dirs, model, n_samples=1000):
     for i in range(n_steps):
         input_dirs = scales * sample_dirs
         input = (input_dirs + orig.flatten()[None])
-        pred = model(torch.tensor(input.reshape((-1,) + shape), device=dev())).detach().cpu().numpy()
-        pred_classes = np.argmax(pred, axis=-1)
+        input = torch.split(torch.tensor(input.reshape((-1,) + shape), device=dev()), 100)
+
+        preds = np.empty((0, 10))
+        for batch in input:
+            preds = np.concatenate((preds, model(batch).detach().cpu().numpy()), axis=0)
+        pred_classes = np.argmax(preds, axis=-1)
 
         is_adv = np.invert(pred_classes == label)
         dists[is_adv] = scales[is_adv, 0]
@@ -96,32 +100,35 @@ pert_lengths_madry = data_madry['pert_lengths']
 classes_madry = data_madry['adv_class']
 dirs_madry = data_madry['dirs']
 
-n_samples = 100
+n_samples = 10000
 n_dims = 50
+n_images = 5
 
-# natural
-images_ = images[np.invert(np.isnan(pert_lengths)).sum(-1) > 8]
-labels_ = labels[np.invert(np.isnan(pert_lengths)).sum(-1) > 8]
-dirs_ = dirs[np.invert(np.isnan(pert_lengths)).sum(-1) > 8]
-dists_natural = np.zeros((len(images_), n_dims, n_samples))
+# img_indices = np.random.choice(np.arange(100), size=n_images, replace=False)
+img_indices = np.array([18, 36, 67, 88, 92])
+
+#natural
+images_ = images[img_indices]
+labels_ = labels[img_indices]
+dirs_ = dirs[img_indices]
+dists_natural = np.zeros((len(images_),n_dims,n_samples))
 
 for i, img in enumerate(tqdm.tqdm(images_)):
-    for n in np.arange(1, n_dims + 1):
-        dists_natural[i, n - 1] = get_dist_dec2(img, labels_[i], dirs_[i, :n], model_natural, n_samples=n_samples)
+    for n in np.arange(1,n_dims+1):
+        dists_natural[i, n-1] = get_dist_dec(img, labels_[i], dirs_[i,:n], model_natural, n_samples=n_samples)
 
-images_ = images[np.invert(np.isnan(pert_lengths_madry)).sum(-1) > 8]
-labels_ = labels[np.invert(np.isnan(pert_lengths_madry)).sum(-1) > 8]
-dirs_ = dirs_madry[np.invert(np.isnan(pert_lengths_madry)).sum(-1) > 8]
+#robust
+dirs_ = dirs_madry[img_indices]
 dists_robust = np.zeros((len(images_), n_dims, n_samples))
 
 for i, img in enumerate(tqdm.tqdm(images_)):
     for n in np.arange(1, n_dims + 1):
-        dists_robust[i, n - 1] = get_dist_dec2(img, labels_[i], dirs_[i, :n], model_robust, n_samples=n_samples)
+        dists_robust[i, n - 1] = get_dist_dec(img, labels_[i], dirs_[i, :n], model_robust, n_samples=n_samples)
 
 data = {
     'dists_natural': dists_natural,
     'dists_robust': dists_robust
 }
 
-save_path = './data/dists_to_bnd.npy'
+save_path = './data/dists_to_bnd_many_samples.npy'
 np.save(save_path, data)
