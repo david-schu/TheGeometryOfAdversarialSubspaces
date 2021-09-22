@@ -252,8 +252,10 @@ def plot_dec_space(orig, adv1, adv2, model, offset=0.1, n_grid=100, show_legend=
                [np.round(x, 2).astype(str) for x in y_ticks])
 
     if show_legend:
-        # Add legend with proxy artists
-        plt.legend(handles=labels, title='predicted class')
+        if origin_centered:
+            plt.legend(handles=labels, title='predicted class', loc='lower left')
+        else:
+            plt.legend(handles=labels, title='predicted class')
     return fig, ax
 
 
