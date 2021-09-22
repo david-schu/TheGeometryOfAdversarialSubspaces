@@ -214,22 +214,22 @@ def plot_dec_space(orig, adv1, adv2, model, offset=0.1, n_grid=100, show_legend=
     # Plot the surface.
     new_cmap = ListedColormap(colors)
 
-    plt.imshow(classes, cmap=new_cmap, origin='lower', vmin=0, vmax=9)
+    ax.imshow(classes, cmap=new_cmap, origin='lower', vmin=0, vmax=9)
     if overlay_inbounds:
         new_cmap2 = ListedColormap(['none', 'k'])
         out_of_bounds = np.logical_or(advs.max(axis=(1,2,3))>1, advs.min(axis=(1,2,3))<0).reshape((n_grid, n_grid))
         plt.imshow(out_of_bounds, cmap=new_cmap2, origin='lower', alpha=.5, vmin=0, vmax=1)
 
-    plt.axvline(offset*n_grid/(offset+len_grid), c='k', ls='--', alpha=0.5)
-    plt.axhline(offset*n_grid/(offset+len_grid), c='k', ls='--', alpha=0.5)
+    ax.axvline(offset*n_grid/(offset+len_grid), c='k', ls='--', alpha=0.5)
+    ax.axhline(offset*n_grid/(offset+len_grid), c='k', ls='--', alpha=0.5)
 
-    plt.plot(offset*n_grid/(offset+len_grid), offset*n_grid/(offset+len_grid),
+    ax.plot(offset*n_grid/(offset+len_grid), offset*n_grid/(offset+len_grid),
              markeredgecolor='black', markerfacecolor='black', marker='o')
 
     if show_advs:
-        plt.plot((offset+len1)*n_grid/(offset+len_grid), offset*n_grid/(offset+len_grid),
+        ax.plot((offset+len1)*n_grid/(offset+len_grid), offset*n_grid/(offset+len_grid),
                  markeredgecolor='black', markerfacecolor='red', marker='o')
-        plt.plot(offset*n_grid/(offset+len_grid), (offset+len2)*n_grid/(offset+len_grid),
+        ax.plot(offset*n_grid/(offset+len_grid), (offset+len2)*n_grid/(offset+len_grid),
                  markeredgecolor='black', markerfacecolor='red', marker='o')
 
     ax.set_xlabel('dir 1 ($\ell_2$-length)', fontdict={'fontsize': 15})
@@ -247,9 +247,9 @@ def plot_dec_space(orig, adv1, adv2, model, offset=0.1, n_grid=100, show_legend=
     y_ticks = y_ticks[y_ticks<=len_grid]
     y_tick_locs = (y_ticks+offset)/(len_grid+offset)*n_grid
 
-    plt.xticks(x_tick_locs,
+    ax.set_xticks(x_tick_locs,
                [np.round(x, 2).astype(str) for x in x_ticks])
-    plt.yticks(y_tick_locs,
+    ax.set_yticks(y_tick_locs,
                [np.round(x, 2).astype(str) for x in y_ticks])
 
     if show_legend:
