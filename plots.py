@@ -177,7 +177,7 @@ def plot_cw_surface(orig, adv1, adv2, model):
 
 
 def plot_dec_space(orig, adv1, adv2, model, offset=0.1, n_grid=100, show_legend=True, show_advs=True,
-                   overlay_inbounds=False, origin_centered=False):
+                   overlay_inbounds=False, origin_centered=False, ax=None):
 
     shape = orig.shape
     orig = orig.flatten()
@@ -203,7 +203,8 @@ def plot_dec_space(orig, adv1, adv2, model, offset=0.1, n_grid=100, show_legend=
 
     classes = np.argmax(preds, axis=-1).reshape((n_grid, n_grid))
 
-    fig, ax = plt.subplots()
+    if ax is None:
+        fig, ax = plt.subplots()
     colors = ['orange', 'green', 'brown', 'grey', 'blue', 'pink','cyan', 'olive', 'red', 'purple']
     labels = []
     colorList = []
@@ -256,7 +257,10 @@ def plot_dec_space(orig, adv1, adv2, model, offset=0.1, n_grid=100, show_legend=
             plt.legend(handles=labels, title='predicted class', loc='lower left')
         else:
             plt.legend(handles=labels, title='predicted class')
-    return fig, ax
+    if ax is None:
+        return fig, ax
+    else:
+        return ax
 
 
 def plot_contrasted_dec_space(orig, adv1, adv2, model, n=4):
