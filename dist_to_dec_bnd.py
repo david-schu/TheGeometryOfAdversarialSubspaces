@@ -9,16 +9,16 @@ from utils import dev
 import tqdm
 
 
-def get_dist_dec(orig, label, dirs, model, n_samples=1000):
+def get_dist_dec(orig, label, dirs, model, max_dist=10, n_samples=1000):
     shape = orig.shape
     n_steps = 20
     n_dirs = len(dirs)
     dirs = dirs.reshape((n_dirs, -1))
 
-    upper = np.ones((n_samples, 1)) * 10
+    upper = np.ones((n_samples, 1)) * max_dist
     lower = np.zeros((n_samples, 1))
 
-    scales = np.ones((n_samples, 1)) * 10
+    scales = np.ones((n_samples, 1)) * max_dist
 
     coeffs = abs(np.random.normal(size=[n_samples, n_dirs]))
     sample_dirs = (coeffs @ dirs)
@@ -110,25 +110,21 @@ img_indices = np.array([18, 36, 67, 88, 92])
 #natural
 images_ = images[img_indices]
 labels_ = labels[img_indices]
-dirs_ = dirs[img_indices]
+dirs_nat = dirs[img_indices]
+dirs_rob = dirs_madry[img_indices]
+
 dists_natural = np.zeros((len(images_),n_dims,n_samples))
-
-for i, img in enumerate(tqdm.tqdm(images_)):
-    for n in np.arange(1,n_dims+1):
-        dists_natural[i, n-1] = get_dist_dec(img, labels_[i], dirs_[i,:n], model_natural, n_samples=n_samples)
-
-#robust
-dirs_ = dirs_madry[img_indices]
 dists_robust = np.zeros((len(images_), n_dims, n_samples))
 
 for i, img in enumerate(tqdm.tqdm(images_)):
-    for n in np.arange(1, n_dims + 1):
-        dists_robust[i, n - 1] = get_dist_dec(img, labels_[i], dirs_[i, :n], model_robust, n_samples=n_samples)
-
-data = {
-    'dists_natural': dists_natural,
-    'dists_robust': dists_robust
-}
-
-save_path = './data/dists_to_bnd_many_samples.npy'
-np.save(save_path, data)
+    for n in np.arange(1,n_dims+1):
+        dists_natural[i, n-1] = get_dist_dec(img, labels_[i], dirs_nat[i,:n], model_natural,
+                                             n_samples=n_samples, max_dist=5)
+        dists_robust[i, n - 1] = get_dist_dec(img, labels_[i], dirs_rob[i, :n], model_robust,
+                                              n_samples=n_samples, max_dist=7)
+        data = {
+            'dists_natural': dists_natural,
+            'dists_robust': dists_robust
+        }
+        save_path = './data/dists_to_bnd_many_samples.npy'
+        np.save(save_path, data)
