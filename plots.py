@@ -247,16 +247,16 @@ def plot_dec_space(orig, adv1, adv2, model, offset=0.1, n_grid=100, show_legend=
     y_ticks = y_ticks[y_ticks<=len_grid]
     y_tick_locs = (y_ticks+offset)/(len_grid+offset)*n_grid
 
-    ax.set_xticks(x_tick_locs,
-               [np.round(x, 2).astype(str) for x in x_ticks])
-    ax.set_yticks(y_tick_locs,
-               [np.round(x, 2).astype(str) for x in y_ticks])
+    ax.set_xticks(x_tick_locs)
+    ax.set_xticklabels([np.round(x, 2).astype(str) for x in x_ticks])
+    ax.set_yticks(y_tick_locs)
+    ax.set_yticklabels([np.round(x, 2).astype(str) for x in y_ticks])
 
     if show_legend:
         if origin_centered:
-            plt.legend(handles=labels, title='predicted class', loc='lower left')
+            ax.legend(handles=labels, title='predicted class', loc='lower left')
         else:
-            plt.legend(handles=labels, title='predicted class')
+            ax.legend(handles=labels, title='predicted class')
     if ax is None:
         return fig, ax
     else:
