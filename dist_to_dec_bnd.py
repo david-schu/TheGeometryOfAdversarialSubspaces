@@ -10,7 +10,7 @@ from utils import dev
 import tqdm
 
 
-def get_dist_dec(orig, label, dirs, model, max_dist=10, n_samples=1000, return_dirs=False):
+def get_dist_dec(orig, label, dirs, model, max_dist=10, n_samples=1000, return_angles=False):
     shape = orig.shape
     n_steps = 20
     n_dirs = len(dirs)
@@ -48,8 +48,12 @@ def get_dist_dec(orig, label, dirs, model, max_dist=10, n_samples=1000, return_d
     in_bounds = np.logical_or(input_.max(-1) <= 1, input_.min(-1) >= 0)
     dists[~in_bounds] = np.nan
 
-    if return_dirs:
-        return dists, sample_dirs
+    if return_angles:
+        angles = np.zeros(n_samples)
+        for i, sample in enumerate(sample_dirs):
+            angles[i] = np.arccos((sample*dirs).sum(-1).clip(-1,1)).min()
+        angles[np.isnan(dists)] = np.nan
+        return dists, angles
     return dists
 
 
@@ -118,21 +122,20 @@ dirs_rob = dirs_madry#[img_indices]
 
 dists_natural = np.zeros((len(images_), n_dims, n_samples))
 dists_robust = np.zeros((len(images_), n_dims, n_samples))
-dirs_natural = np.zeros((len(images_), n_dims, n_samples, dirs.shape[-1]))
-dirs_robust = np.zeros((len(images_), n_dims, n_samples, dirs.shape[-1]))
+angles_natural = np.zeros((len(images_), n_dims, n_samples))
+angles_robust = np.zeros((len(images_), n_dims, n_samples))
 
 for i, img in enumerate(tqdm.tqdm(images_)):
     for n in np.arange(1, n_dims+1):
-        dists_natural[i, n-1], dirs_natural[i, n-1] = get_dist_dec(img, labels_[i], dirs_nat[i, :n], model_natural,
-                                             n_samples=n_samples, max_dist=5, return_dirs=True)
-        dists_robust[i, n - 1], dirs_robust[i, n-1] = get_dist_dec(img, labels_[i], dirs_rob[i, :n], model_robust,
-                                              n_samples=n_samples, max_dist=7,  return_dirs=True)
+        dists_natural[i, n-1], angles_natural[i, n-1] = get_dist_dec(img, labels_[i], dirs_nat[i, :n], model_natural,
+                                             n_samples=n_samples, max_dist=5, return_angles=True)
+        dists_robust[i, n - 1], angles_robust[i, n-1] = get_dist_dec(img, labels_[i], dirs_rob[i, :n], model_robust,
+                                              n_samples=n_samples, max_dist=7,  return_angles=True)
         data = {
             'dists_natural': dists_natural,
             'dists_robust': dists_robust,
-            'dirs_natural': dirs_natural,
-            'dirs_robust': dirs_robust
+            'angles_natural': angles_natural,
+            'angles_robust': angles_robust
         }
         save_path = './data/dists_to_bnd.npy'
-        with open(save_path, 'wb') as outfile:
-            pickle.dump(data, outfile, pickle.HIGHEST_PROTOCOL)
+        np.save(save_path, data)
