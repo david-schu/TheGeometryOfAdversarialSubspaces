@@ -9,7 +9,7 @@ from utils import dev
 import tqdm
 
 
-def get_dist_dec(orig, label, dirs, model, max_dist=10, n_samples=1000):
+def get_dist_dec(orig, label, dirs, model, max_dist=10, n_samples=1000, return_dirs=False):
     shape = orig.shape
     n_steps = 20
     n_dirs = len(dirs)
@@ -46,6 +46,9 @@ def get_dist_dec(orig, label, dirs, model, max_dist=10, n_samples=1000):
 
     in_bounds = np.logical_or(input_.max(-1) <= 1, input_.min(-1) >= 0)
     dists[~in_bounds] = np.nan
+
+    if return_dirs:
+        return dists, sample_dirs
     return dists
 
 
@@ -100,31 +103,34 @@ pert_lengths_madry = data_madry['pert_lengths']
 classes_madry = data_madry['adv_class']
 dirs_madry = data_madry['dirs']
 
-n_samples = 5000
+n_samples = 100
 n_dims = 50
-n_images = 5
 
 # img_indices = np.random.choice(np.arange(100), size=n_images, replace=False)
 img_indices = np.array([18, 36, 67, 88, 92])
 
 #natural
-images_ = images[img_indices]
-labels_ = labels[img_indices]
-dirs_nat = dirs[img_indices]
-dirs_rob = dirs_madry[img_indices]
+images_ = images#[img_indices]
+labels_ = labels#[img_indices]
+dirs_nat = dirs#[img_indices]
+dirs_rob = dirs_madry#[img_indices]
 
-dists_natural = np.zeros((len(images_),n_dims,n_samples))
+dists_natural = np.zeros((len(images_), n_dims, n_samples))
 dists_robust = np.zeros((len(images_), n_dims, n_samples))
+dirs_natural = np.zeros((len(images_), n_dims, n_samples, dirs.shape[-1]))
+dirs_robust = np.zeros((len(images_), n_dims, n_samples, dirs.shape[-1]))
 
 for i, img in enumerate(tqdm.tqdm(images_)):
-    for n in np.arange(1,n_dims+1):
-        dists_natural[i, n-1] = get_dist_dec(img, labels_[i], dirs_nat[i,:n], model_natural,
-                                             n_samples=n_samples, max_dist=5)
-        dists_robust[i, n - 1] = get_dist_dec(img, labels_[i], dirs_rob[i, :n], model_robust,
-                                              n_samples=n_samples, max_dist=7)
+    for n in np.arange(1, n_dims+1):
+        dists_natural[i, n-1], dirs_natural[i, n-1] = get_dist_dec(img, labels_[i], dirs_nat[i, :n], model_natural,
+                                             n_samples=n_samples, max_dist=5, return_dirs=True)
+        dists_robust[i, n - 1], dirs_robust[i, n-1] = get_dist_dec(img, labels_[i], dirs_rob[i, :n], model_robust,
+                                              n_samples=n_samples, max_dist=7,  return_dirs=True)
         data = {
             'dists_natural': dists_natural,
-            'dists_robust': dists_robust
+            'dists_robust': dists_robust,
+            'dirs_natural': dirs_natural,
+            'dirs_robust': dirs_robust
         }
-        save_path = './data/dists_to_bnd_many_samples.npy'
+        save_path = './data/dists_to_bnd.npy'
         np.save(save_path, data)
