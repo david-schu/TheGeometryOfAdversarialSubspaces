@@ -3,6 +3,7 @@ from models import model
 import torch
 from robustness.datasets import CIFAR
 import dill
+import pickle
 
 from utils import dev
 
@@ -133,4 +134,5 @@ for i, img in enumerate(tqdm.tqdm(images_)):
             'dirs_robust': dirs_robust
         }
         save_path = './data/dists_to_bnd.npy'
-        np.save(save_path, data)
+        with open(save_path, 'wb') as outfile:
+            pickle.dump(data, outfile, pickle.HIGHEST_PROTOCOL)
