@@ -277,17 +277,19 @@ def plot_dec_space(orig, adv1, adv2, model, offset=0.1, n_grid=100, show_legend=
     if ax is None:
         ax = plt.gca()
     image_shape = (1, 28, 28)
-    orig = orig.reshape(-1)
-    len1 = np.linalg.norm(adv1-orig)
-    len2 = np.linalg.norm(adv2-orig)
-    dir1 = (adv1 - orig) / len1
-    dir2 = (adv2 - orig) / len2
+    #orig = orig.reshape(-1)
+    pert1 = adv1 - orig.reshape(-1)
+    pert2 = adv2 - orig.reshape(-1)
+    len1 = np.linalg.norm(pert1)
+    len2 = np.linalg.norm(pert2)
+    dir1 = pert1 / len1
+    dir2 = pert2 / len2
 
-    len_grid = np.maximum(2.5, np.maximum(len1, len2)+1)
+    len_grid = np.maximum(2.5, np.maximum(len1, len2) + 1)
     x = np.linspace(-offset, len_grid, n_grid)
     y = np.linspace(-offset, len_grid, n_grid)
     X, Y = np.meshgrid(x, y)
-    advs = orig + (dir1 * np.reshape(X, (-1, 1)) + dir2 * np.reshape(Y, (-1, 1)))
+    advs = orig.reshape(-1) + (dir1[None, :] * np.reshape(X, (-1, 1)) + dir2[None, :] * np.reshape(Y, (-1, 1)))
     advs = np.reshape(advs, (-1,)+image_shape).astype('float64')
     input = torch.split(torch.tensor(advs, device=dev()), 20)
 
@@ -324,8 +326,8 @@ def plot_dec_space(orig, adv1, adv2, model, offset=0.1, n_grid=100, show_legend=
         ax.plot(offset*n_grid/(offset+len_grid), (offset+len2)*n_grid/(offset+len_grid),
                  markeredgecolor='black', markerfacecolor='red', marker='o')
 
-    ax.set_xlabel('dir 1 ($\ell_2$-length)', fontdict={'fontsize': 15})
-    ax.set_ylabel('dir 2 ($\ell_2$-length)', fontdict={'fontsize': 15})
+    #ax.set_xlabel('dir 1 ($\ell_2$-length)', fontdict={'fontsize': 15})
+    #ax.set_ylabel('dir 2 ($\ell_2$-length)', fontdict={'fontsize': 15})
 
     ax.set_xticks(np.linspace(offset*n_grid/(offset+len_grid), (offset+np.floor(len_grid))*n_grid/(offset+len_grid), 5), minor=False)
     ax.set_xticklabels([np.round(x, 2).astype(str) for x in np.linspace(0, np.floor(len_grid), 5)])
@@ -334,7 +336,6 @@ def plot_dec_space(orig, adv1, adv2, model, offset=0.1, n_grid=100, show_legend=
 
     if show_legend: # Add legend with proxy artists
         ax.legend(handles=labels, title='predicted class')
-
 
 def plot_contrasted_dec_space(orig, adv1, adv2, model, n=4):
     epsilon = np.linspace(0, 0.5, n+2)
