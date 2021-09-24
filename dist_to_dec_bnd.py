@@ -49,9 +49,7 @@ def get_dist_dec(orig, label, dirs, model, max_dist=10, n_samples=1000, return_a
     dists[~in_bounds] = np.nan
 
     if return_angles:
-        angles = np.zeros(n_samples)
-        for i, sample in enumerate(sample_dirs):
-            angles[i] = np.arccos((sample*dirs).sum(-1).clip(-1,1)).min()
+        angles = np.arccos((sample_dirs@dirs.T).clip(-1,1))
         angles[np.isnan(dists)] = np.nan
         return dists, angles
     return dists
@@ -137,5 +135,5 @@ for i, img in enumerate(tqdm.tqdm(images_)):
             'angles_natural': angles_natural,
             'angles_robust': angles_robust
         }
-        save_path = './data/dists_to_bnd.npy'
+        save_path = './data/dists_to_bnd2.npy'
         np.save(save_path, data)
