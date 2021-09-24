@@ -49,7 +49,7 @@ def get_dist_dec(orig, label, dirs, model, max_dist=10, n_samples=1000, return_a
     dists[~in_bounds] = np.nan
 
     if return_angles:
-        angles = np.arccos((sample_dirs@dirs.T).clip(-1,1))
+        angles = np.arccos((sample_dirs@dirs.T).clip(-1,1)).min(-1)
         angles[np.isnan(dists)] = np.nan
         return dists, angles
     return dists
