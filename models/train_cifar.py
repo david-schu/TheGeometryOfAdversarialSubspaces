@@ -1,5 +1,5 @@
-from robustness import model_utils, datasets, train, defaults
-from robustness.datasets import CIFAR
+from robustness1 import model_utils, datasets, train, defaults
+from robustness1.datasets import CIFAR
 
 # We use cox (http://github.com/MadryLab/cox) to log, store and analyze
 # results. Read more at https//cox.readthedocs.io.
