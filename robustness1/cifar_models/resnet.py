@@ -13,7 +13,6 @@ class BasicBlock(nn.Module):
     expansion = 1
 
     def __init__(self, in_planes, planes, stride=1):
-        print('Custom model')
         super(BasicBlock, self).__init__()
         self.conv1 = nn.Conv2d(in_planes, planes, kernel_size=3, stride=stride,
                                padding=1, bias=False)
@@ -122,6 +121,7 @@ def ResNet34(**kwargs):
     return ResNet(BasicBlock, [3,4,6,3], **kwargs)
 
 def ResNet50(**kwargs):
+    print('Custom model')
     return ResNet(Bottleneck, [3,4,6,3], **kwargs)
 
 def ResNet101(**kwargs):
