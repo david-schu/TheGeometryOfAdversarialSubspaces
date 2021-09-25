@@ -1,3 +1,6 @@
+import sys
+sys.path.insert(0, './..')
+sys.path.insert(0, '../data')
 from robustness1 import model_utils, datasets, train, defaults
 from robustness1.datasets import CIFAR
 
