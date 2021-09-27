@@ -4,11 +4,11 @@ sys.path.insert(0, '../data')
 
 import numpy as np
 import torch
+import dill
 from robustness1.datasets import CIFAR
-from robustness1 import model_utils
 
 # own modules
-from utils import  dev
+from utils import load_data, dev
 from attacks import CarliniWagner
 from run_attack import run_attack
 from models import model as md
@@ -56,7 +56,16 @@ if __name__ == "__main__":
         model_path = './../models/cifar_models/rob_diff.pt'
 
     ds = CIFAR('../data/cifar-10-batches-py')
-    model, _ = model_utils.make_and_restore_model(arch='resnet50', dataset=ds, resume_path=model_path)
+    classifier_model = ds.get_model('resnet50', False)
+    model = md.cifar_pretrained(classifier_model, ds)
+
+    checkpoint = torch.load(model_path, pickle_module=dill, map_location=torch.device(dev()))
+    state_dict_path = 'model'
+    if not ('model' in checkpoint):
+        state_dict_path = 'state_dict'
+    sd = checkpoint[state_dict_path]
+    sd = {k[len('module.'):]: v for k, v in sd.items()}
+    model.load_state_dict(sd)
     model.to(dev())
     model.double()
     model.eval()
