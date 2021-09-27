@@ -56,7 +56,7 @@ if __name__ == "__main__":
         model_path = './../models/cifar_models/rob_diff.pt'
 
     ds = CIFAR('../data/cifar-10-batches-py')
-    model = model_utils.make_and_restore_model(arch='resnet50', dataset=ds, resume_path=model_path)
+    model, _ = model_utils.make_and_restore_model(arch='resnet50', dataset=ds, resume_path=model_path)
     model.to(dev())
     model.double()
     model.eval()
