@@ -83,8 +83,8 @@ def plot_pert_lengths(pert_lengths, n=10, labels=None, ord=2):
         boxprops = dict(color=colors[i], linewidth=1.5, alpha=0.7)
         whiskerprops = dict(color=colors[i], alpha=0.7)
         capprops = dict(color=colors[i], alpha=0.7)
-        medianprops = dict(linestyle='--', linewidth=0.5, color=colors[i])
-        meanprops = dict(linestyle='-', linewidth=0.5, color=colors[i])
+        medianprops = dict(linestyle='--', linewidth=1, color=colors[i])
+        meanprops = dict(linestyle='-', linewidth=1, color=colors[i])
 
 
         if not labels is None:
@@ -93,7 +93,7 @@ def plot_pert_lengths(pert_lengths, n=10, labels=None, ord=2):
         pl[pl==0] = np.nan
         mask = ~np.isnan(pl)
         filtered_data = [d[m] for d, m in zip(pl.T, mask.T)]
-        ax.boxplot(filtered_data, whis=[10,90], showfliers=False, meanline=True, boxprops=boxprops,
+        ax.boxplot(filtered_data, whis=[10,90], showfliers=False, meanline=True, showmeans=True boxprops=boxprops,
                     whiskerprops=whiskerprops, capprops=capprops, meanprops=meanprops,  medianprops=medianprops)
     plt.title('Perturbation length of first ' + str(n) + ' adversarial directions')
     plt.xlabel('d')
