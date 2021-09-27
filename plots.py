@@ -93,7 +93,7 @@ def plot_pert_lengths(pert_lengths, n=10, labels=None, ord=2):
         pl[pl==0] = np.nan
         mask = ~np.isnan(pl)
         filtered_data = [d[m] for d, m in zip(pl.T, mask.T)]
-        ax.boxplot(filtered_data, whis=[10,90], showfliers=False, menaline=True, boxprops=boxprops,
+        ax.boxplot(filtered_data, whis=[10,90], showfliers=False, meanline=True, boxprops=boxprops,
                     whiskerprops=whiskerprops, capprops=capprops, meanprops=meanprops,  medianprops=medianprops)
     plt.title('Perturbation length of first ' + str(n) + ' adversarial directions')
     plt.xlabel('d')
