@@ -4,11 +4,11 @@ sys.path.insert(0, '../data')
 
 import numpy as np
 import torch
-import dill
-from robustness.datasets import CIFAR
+from robustness1.datasets import CIFAR
+from robustness1 import model_utils
 
 # own modules
-from utils import load_data, dev
+from utils import  dev
 from attacks import CarliniWagner
 from run_attack import run_attack
 from models import model as md
@@ -19,7 +19,7 @@ if __name__ == "__main__":
     batch_n = int(sys.argv[3])
     ## user initialization
 
-    # set number of images for attack and batchsize (shouldn't be larger than 20)
+    # set number of images per class for attack
     n_images = 10
 
     # set attack parameters
@@ -51,27 +51,18 @@ if __name__ == "__main__":
     # model.load_state_dict(torch.load(model_path, map_location=torch.device(dev())))      # natural cnn - same architecture as madry robust model but nmot adversarially trained
 
     if is_natural:
-        model_path = './../models/cifar_nat.pt'
+        model_path = './../models/cifar_models/nat_diff.pt'
     else:
-        model_path = './../models/cifar_l2_0_5.pt'
+        model_path = './../models/cifar_models/rob_diff.pt'
 
     ds = CIFAR('../data/cifar-10-batches-py')
-    classifier_model = ds.get_model('resnet50', False)
-    model = md.cifar_pretrained(classifier_model, ds)
-
-    checkpoint = torch.load(model_path, pickle_module=dill, map_location=torch.device(dev()))
-    state_dict_path = 'model'
-    if not ('model' in checkpoint):
-        state_dict_path = 'state_dict'
-    sd = checkpoint[state_dict_path]
-    sd = {k[len('module.'):]: v for k, v in sd.items()}
-    model.load_state_dict(sd)
+    model = model_utils.make_and_restore_model(arch='resnet50', dataset=ds, resume_path=model_path)
     model.to(dev())
     model.double()
     model.eval()
 
     # load batched data
-    data = np.load('../data/CIFAR/stable_data.npy', allow_pickle=True).item()
+    data = np.load('../data/CIFAR/stable_data_diff.npy', allow_pickle=True).item()
     all_images, all_labels = data['images'], data['labels']
     images = all_images[all_labels == 0][:n_images]
     labels = all_labels[all_labels == 0][:n_images]
