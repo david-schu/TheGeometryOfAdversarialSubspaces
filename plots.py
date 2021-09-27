@@ -72,7 +72,7 @@ def plot_mean_advs(advs, images, classes, labels, pert_lengths, n=10, vmin=0, vm
     return plot_advs(advs[min_idx], images[min_idx], classes[min_idx], labels[min_idx], n=n, vmin=vmin, vmax=vmax)
 
 
-def plot_pert_lengths(pert_lengths, n=10, labels=None, ord=2):
+def plot_pert_lengths(pert_lengths, n=10, labels=None, ord=2, showmeans=False):
     n = np.minimum(n, pert_lengths[0].shape[1])
     pert_lengths = [p[:,:n] for p in pert_lengths]
     colors = ['blue', 'orange', 'green']
@@ -93,7 +93,7 @@ def plot_pert_lengths(pert_lengths, n=10, labels=None, ord=2):
         pl[pl==0] = np.nan
         mask = ~np.isnan(pl)
         filtered_data = [d[m] for d, m in zip(pl.T, mask.T)]
-        ax.boxplot(filtered_data, whis=[10,90], showfliers=False, meanline=True, showmeans=True, boxprops=boxprops,
+        ax.boxplot(filtered_data, whis=[10,90], showfliers=False, meanline=showmeans, showmeans=showmeans, boxprops=boxprops,
                     whiskerprops=whiskerprops, capprops=capprops, meanprops=meanprops,  medianprops=medianprops)
     plt.title('Perturbation length of first ' + str(n) + ' adversarial directions')
     plt.xlabel('d')
