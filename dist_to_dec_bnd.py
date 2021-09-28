@@ -3,23 +3,22 @@ from models import model
 import torch
 from robustness.datasets import CIFAR
 import dill
-import pickle
 
 from utils import dev
 
 import tqdm
 
 
-def get_dist_dec(orig, label, dirs, model, max_dist=10, n_samples=1000, return_angles=False):
+def get_dist_dec(orig, label, dirs, model, min_dist=.1, n_samples=1000, return_angles=False):
     shape = orig.shape
     n_steps = 20
     n_dirs = len(dirs)
     dirs = dirs.reshape((n_dirs, -1))
 
-    upper = np.ones((n_samples, 1)) * max_dist
-    lower = np.zeros((n_samples, 1))
+    upper = np.full((n_samples, 1), np.inf)
+    lower = np.ones((n_samples, 1)) * min_dist
 
-    scales = np.ones((n_samples, 1)) * max_dist
+    scales = np.ones((n_samples, 1)) * min_dist
 
     coeffs = abs(np.random.normal(size=[n_samples, n_dirs]))
     sample_dirs = (coeffs @ dirs)
@@ -32,21 +31,20 @@ def get_dist_dec(orig, label, dirs, model, max_dist=10, n_samples=1000, return_a
         input_ = (input_dirs + orig.flatten()[None])
         input = torch.split(torch.tensor(input_.reshape((-1,) + shape), device=dev()), 100)
 
-        preds = np.empty((0, 10))
+        preds = np.empty(0)
         for batch in input:
-            preds = np.concatenate((preds, model(batch).detach().cpu().numpy()), axis=0)
-        pred_classes = np.argmax(preds, axis=-1)
+            preds = np.concatenate((preds, model(batch).argmax(-1).cpu().numpy()), axis=0)
 
-        is_adv = np.invert(pred_classes == label)
+        is_adv = np.invert(preds == label)
         dists[is_adv] = scales[is_adv, 0]
 
         upper[is_adv] = scales[is_adv]
         lower[~is_adv] = scales[~is_adv]
-        scales[is_adv] = upper[is_adv] / 2
-        scales[~is_adv] = (upper[~is_adv] + lower[~is_adv]) / 2
+        scales[is_adv] = (upper[is_adv] + lower[is_adv]) / 2
+        scales[~is_adv] = lower[~is_adv] * 2
 
-    in_bounds = np.logical_or(input_.max(-1) <= 1, input_.min(-1) >= 0)
-    dists[~in_bounds] = np.nan
+        in_bounds = np.logical_or(input_.max(-1) <= 1, input_.min(-1) >= 0)
+        dists[~in_bounds] = np.nan
 
     if return_angles:
         angles = np.arccos((sample_dirs@dirs.T).clip(-1,1)).min(-1)
@@ -61,7 +59,7 @@ ds = CIFAR('./data/cifar-10-batches-py')
 classifier_model = ds.get_model('resnet50', False)
 model_natural = model.cifar_pretrained(classifier_model, ds)
 
-resume_path = './models/cifar_nat.pt'
+resume_path = './models/cifar_models/cifar_nat.pt'
 checkpoint = torch.load(resume_path, pickle_module=dill, map_location=torch.device(dev()))
 
 state_dict_path = 'model'
@@ -77,7 +75,7 @@ model_natural.eval()
 classifier_model = ds.get_model('resnet50', False)
 model_robust = model.cifar_pretrained(classifier_model, ds)
 
-resume_path = './models/cifar_l2_0_5.pt'
+resume_path = './models/cifar_models/cifar_l2_0_5.pt'
 checkpoint = torch.load(resume_path, pickle_module=dill, map_location=torch.device(dev()))
 
 state_dict_path = 'model'
@@ -117,6 +115,8 @@ images_ = images#[img_indices]
 labels_ = labels#[img_indices]
 dirs_nat = dirs#[img_indices]
 dirs_rob = dirs_madry#[img_indices]
+min_dist_nat=pert_lengths[:, 0]
+min_dist_rob=pert_lengths_madry[:, 0]
 
 dists_natural = np.zeros((len(images_), n_dims, n_samples))
 dists_robust = np.zeros((len(images_), n_dims, n_samples))
@@ -126,14 +126,15 @@ angles_robust = np.zeros((len(images_), n_dims, n_samples))
 for i, img in enumerate(tqdm.tqdm(images_)):
     for n in np.arange(1, n_dims+1):
         dists_natural[i, n-1], angles_natural[i, n-1] = get_dist_dec(img, labels_[i], dirs_nat[i, :n], model_natural,
-                                             n_samples=n_samples, max_dist=5, return_angles=True)
+                                            min_dist=0.5 * min_dist_nat[i], n_samples=n_samples, return_angles=True)
+
         dists_robust[i, n - 1], angles_robust[i, n-1] = get_dist_dec(img, labels_[i], dirs_rob[i, :n], model_robust,
-                                              n_samples=n_samples, max_dist=7,  return_angles=True)
+                                            min_dist=0.5 * min_dist_rob[i], n_samples=n_samples, return_angles=True)
         data = {
             'dists_natural': dists_natural,
             'dists_robust': dists_robust,
             'angles_natural': angles_natural,
             'angles_robust': angles_robust
         }
-        save_path = './data/dists_to_bnd2.npy'
+        save_path = './data/dists_to_bnd.npy'
         np.save(save_path, data)
