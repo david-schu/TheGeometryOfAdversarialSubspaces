@@ -175,7 +175,7 @@ def plot_cw_surface(orig, adv1, adv2, model):
     plt.show()
 
 
-def plot_dec_space(orig, adv1, adv2, model, offset=0.1, n_grid=100, show_legend=True, show_advs=True,
+def plot_dec_space(orig, adv1, adv2, model, offset=0.1, len_grid=2, n_grid=100, show_legend=True, show_advs=True,
                    overlay_inbounds=False, origin_centered=False, ax=None):
 
     shape = orig.shape
@@ -185,7 +185,7 @@ def plot_dec_space(orig, adv1, adv2, model, offset=0.1, n_grid=100, show_legend=
     dir1 = (adv1 - orig) / len1
     dir2 = (adv2 - orig) / len2
 
-    len_grid = 2*np.maximum(len1,len2)
+    len_grid = len_grid*np.maximum(len1,len2)
     if origin_centered:
         offset=len_grid
 
