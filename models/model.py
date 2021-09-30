@@ -158,7 +158,7 @@ class madry_diff(model_trainable):
 
 
     def forward(self, x):
-        x = x.clip(0, 1)
+        # x = x.clip(0, 1)
         x = self.elu(self.conv1(x))
         x = self.maxPool1(x)
         x = self.elu(self.conv2(x))
