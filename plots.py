@@ -43,7 +43,8 @@ def plot_advs(advs, orig=None, classes=None, orig_class=None, n=10,vmin=0,vmax=1
     for i, (a, d) in enumerate(zip(advs[:n], dirs[:n])):
         ax[0, i + j].set_title('Adversarial ' + str(i + 1))
         if with_classes:
-            ax[0, i + j].set_xlabel('\u279E ' + str(int(classes[i])), fontdict={'fontsize': 15})
+            #ax[0, i + j].set_xlabel('\u279E ' + str(int(classes[i])), fontdict={'fontsize': 15})
+            ax[0, i + j].set_xlabel(r'$\rightarrow$ ' + str(int(classes[i])))
         im_adv = ax[0, i + j].imshow(a.reshape([28, 28]), cmap='gray', vmin=vmin, vmax=vmax)
         ax[0, i + j].set_xticks([])
         ax[0, i + j].set_yticks([])
@@ -273,19 +274,19 @@ def plot_cw_surface(orig, adv1, adv2, model):
     plt.show()
 
 
-def plot_dec_space(orig, adv1, adv2, model, offset=0.1, n_grid=100, show_legend=True, show_advs=True, overlay_inbounds=False, ax=None):
+def plot_dec_space(orig, adv1, adv2, model, offset=0.1, n_grid=100, len_grid=None, show_legend=True, show_advs=True, overlay_inbounds=False, ax=None):
     if ax is None:
         ax = plt.gca()
     image_shape = (1, 28, 28)
-    #orig = orig.reshape(-1)
     pert1 = adv1 - orig.reshape(-1)
     pert2 = adv2 - orig.reshape(-1)
     len1 = np.linalg.norm(pert1)
     len2 = np.linalg.norm(pert2)
     dir1 = pert1 / len1
     dir2 = pert2 / len2
-
-    len_grid = np.maximum(2.5, np.maximum(len1, len2) + 1)
+    
+    if len_grid is None:
+        len_grid = np.maximum(2.5, np.maximum(len1, len2) + 1)
     x = np.linspace(-offset, len_grid, n_grid)
     y = np.linspace(-offset, len_grid, n_grid)
     X, Y = np.meshgrid(x, y)
@@ -321,21 +322,34 @@ def plot_dec_space(orig, adv1, adv2, model, offset=0.1, n_grid=100, show_legend=
              markeredgecolor='black', markerfacecolor='black', marker='o')
 
     if show_advs:
-        ax.plot((offset+len1)*n_grid/(offset+len_grid), offset*n_grid/(offset+len_grid),
+        adv_locs = [# [[adv1_y, adv1_x], [adv2_y, adv2_x]]
+            [
+                offset * n_grid / (offset + len_grid),
+                (offset + len1) * n_grid / (offset + len_grid)
+            ],[
+                (offset + len2) * n_grid / (offset + len_grid),
+                offset * n_grid / (offset + len_grid)
+            ]
+        ]
+        ax.plot(adv_locs[0][1], adv_locs[0][0],
                  markeredgecolor='black', markerfacecolor='red', marker='o')
-        ax.plot(offset*n_grid/(offset+len_grid), (offset+len2)*n_grid/(offset+len_grid),
+        ax.plot(adv_locs[1][1], adv_locs[1][0],
                  markeredgecolor='black', markerfacecolor='red', marker='o')
 
     #ax.set_xlabel('dir 1 ($\ell_2$-length)', fontdict={'fontsize': 15})
     #ax.set_ylabel('dir 2 ($\ell_2$-length)', fontdict={'fontsize': 15})
 
-    ax.set_xticks(np.linspace(offset*n_grid/(offset+len_grid), (offset+np.floor(len_grid))*n_grid/(offset+len_grid), 5), minor=False)
-    ax.set_xticklabels([np.round(x, 2).astype(str) for x in np.linspace(0, np.floor(len_grid), 5)])
-    ax.set_yticks(np.linspace(offset*n_grid/(offset+len_grid), (offset+np.floor(len_grid))*n_grid/(offset+len_grid), 5), minor=False)
-    ax.set_yticklabels([np.round(x, 2).astype(str) for x in np.linspace(0, np.floor(len_grid), 5)])
+    data_ticks = np.linspace(offset*n_grid/(offset+len_grid), (offset+np.floor(len_grid))*n_grid/(offset+len_grid), 5)
+    plot_ticks = [np.round(x, 2).astype(str) for x in np.linspace(0, np.floor(len_grid), 5)]
+    ax.set_xticks(data_ticks, minor=False)
+    ax.set_xticklabels(plot_ticks)
+    ax.set_yticks(data_ticks, minor=False)
+    ax.set_yticklabels(plot_ticks)
 
     if show_legend: # Add legend with proxy artists
         ax.legend(handles=labels, title='predicted class')
+    
+    return advs, labels
 
 def plot_contrasted_dec_space(orig, adv1, adv2, model, n=4):
     epsilon = np.linspace(0, 0.5, n+2)
