@@ -4,10 +4,12 @@
 *.npy
 .idea/*
 
-data/png_to_gif.txt
+data/*
 *.mp4
 *.gif
-.ipynb_checkpoints/Adversarial Decomposition-checkpoint.ipynb
+.ipynb_checkpoints/*
+Curvature/.ipynb*
+Decomposition/.ipynb_checkpoints*
 Curvature/.ipynb_checkpoints/curvature_analysis-checkpoint.ipynb
 Curvature/.ipynb_checkpoints/mouse_principal_curvatures-checkpoint.ipynb
 Curvature/mouse_principal_curvatures.ipynb
