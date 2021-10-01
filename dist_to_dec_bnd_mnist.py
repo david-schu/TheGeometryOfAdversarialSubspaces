@@ -53,7 +53,7 @@ if __name__ == "__main__":
     for i, img in enumerate(tqdm.tqdm(images)):
         for n in np.arange(0, n_dims):
             dists[i, n], angles[i, n], largest_vecs[i, n] = get_dist_dec(img, labels[i], dirs[i, :n+1], model,
-                                                min_dist=0.5 * min_dists[i], n_samples=n_samples, return_angles=True)
+                                                min_dist=0.5 * min_dists[i], n_samples=n_samples)
 
         data = {
             'dists': dists,
