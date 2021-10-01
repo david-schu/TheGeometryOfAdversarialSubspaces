@@ -54,7 +54,7 @@ if __name__ == "__main__":
 
     dists = np.zeros((len(images), n_dims, n_samples))
     angles= np.zeros((len(images), n_dims, n_samples))
-    largest_vecs = np.zeros((len(images, n_dims, dirs.shape[-1])))
+    largest_vecs = np.zeros((len(images), n_dims, dirs.shape[-1]))
     for i, img in enumerate(tqdm.tqdm(images)):
         for n in np.arange(0, n_dims):
             dists[i, n], angles[i, n], largest_vecs[i, n] = get_dist_dec(img, labels[i], dirs[i, :n + 1], model,
