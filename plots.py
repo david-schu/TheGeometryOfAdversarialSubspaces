@@ -1,9 +1,11 @@
 from matplotlib import pyplot as plt
 import numpy as np
 from utils import orth_check, map_to, dev
+from matplotlib.ticker import FormatStrFormatter
 import matplotlib.patches as mpatches
 import torch
 from mpl_toolkits.mplot3d import art3d
+import matplotlib.patches as mpatches
 from matplotlib.colors import ListedColormap
 
 
@@ -47,7 +49,11 @@ def plot_advs(advs, shape, orig=None, classes=None, orig_class=None, n=10, vmin=
     for i, (a, d) in enumerate(zip(advs[:n], dirs[:n])):
         ax[0, i + j].set_title('Adversarial ' + str(i + 1))
         if with_classes:
-            ax[0, i + j].set_xlabel('\u279E ' + str(int(classes[i])), fontdict={'fontsize': 15})
+            #ax[0, i + j].set_xlabel('\u279E ' + str(int(classes[i])), fontdict={'fontsize': 15})
+            ax[0, i + j].set_xlabel(r'$\rightarrow$ ' + str(int(classes[i])))
+        if a.ndim == 1:
+            a_side = int(np.sqrt(a.size))
+            a = a.reshape((a_side, a_side))
         im_adv = ax[0, i + j].imshow(a, cmap='gray', vmin=vmin, vmax=vmax)
         ax[0, i + j].set_xticks([])
         ax[0, i + j].set_yticks([])
@@ -70,6 +76,36 @@ def plot_mean_advs(advs, images, classes, labels, pert_lengths, n=10, vmin=0, vm
     dist_to_mean = np.sum(np.abs(pert_lengths - mean_pert_length), axis=-1)
     min_idx = np.argmin(dist_to_mean)
     return plot_advs(advs[min_idx], images[min_idx], classes[min_idx], labels[min_idx], n=n, vmin=vmin, vmax=vmax)
+
+
+def plot_pert_len_difs(advs_natural, advs_robust, images, n=10, ord=2):
+    n = np.minimum(n, advs_natural[0].shape[-2])
+    pert_len_natural = np.linalg.norm(advs_natural - images.reshape((-1, 1, 784)), ord=ord, axis=-1)
+    pert_len_robust = np.linalg.norm(advs_robust - images.reshape((-1, 1, 784)), ord=ord, axis=-1)
+    pert_len_natural[np.all(advs_natural == 0, axis=-1)] = np.nan
+    pert_len_robust[np.all(advs_robust == 0, axis=-1)] = np.nan
+
+    pert_len_difs = pert_len_robust - pert_len_natural
+    pert_len_difs = pert_len_difs[:, :n]
+    mask = ~np.isnan(pert_len_difs)
+    filtered_data = [d[m] for d, m in zip(pert_len_difs.T, mask.T)]
+
+    boxprops = dict(color='blue', linewidth=1.5, alpha=0.7)
+    whiskerprops = dict(color='blue', alpha=0.7)
+    capprops = dict(color='blue', alpha=0.7)
+    medianprops = dict(linestyle=None, linewidth=0)
+    meanpointprops = dict(marker='o', markeredgecolor='black',
+                          markerfacecolor='orange')
+    plt.boxplot(filtered_data, whis=[10, 90], showfliers=False, showmeans=True, boxprops=boxprops,
+                whiskerprops=whiskerprops, capprops=capprops, meanprops=meanpointprops, medianprops=medianprops)
+    plt.title('Difference of perturbation lengths between robust and natural model')
+    plt.xlabel('d')
+    if ord == np.inf:
+        plt.ylabel('adversarial vector length ($\ell_\infty-norm$)')
+    else:
+        plt.ylabel('adversarial vector length ($\ell_%d-norm$)' % (ord))
+
+    return fig, ax
 
 
 def plot_pert_lengths(pert_lengths, n=10, labels=None, ord=2, showmeans=False):
@@ -136,7 +172,7 @@ def plot_cw_surface(orig, adv1, adv2, model):
     X, Y = np.meshgrid(x, y)
     advs = orig + (dir1*np.reshape(X,(-1,1)) + dir2*np.reshape(Y,(-1,1)))
     advs = np.array(np.reshape(advs, (-1,1,28,28)).astype('float64'), dtype='float32')
-    input = torch.split(torch.tensor(advs),20)
+    input = torch.split(torch.tensor(advs), 20)
 
     preds = np.empty((0,10))
     for batch in input:
@@ -175,24 +211,27 @@ def plot_cw_surface(orig, adv1, adv2, model):
     plt.show()
 
 
-def plot_dec_space(orig, adv1, adv2, model, offset=0.1, len_grid=2, n_grid=100, show_legend=True, show_advs=True,
+def plot_dec_space(orig, adv1, adv2, model, offset=0.1, len_grid_scale=2, n_grid=100, show_legend=True, show_advs=True, align_ticks=False,
                    overlay_inbounds=False, origin_centered=False, ax=None):
-
+    if ax is None:
+        fig, ax = plt.subplots()
     shape = orig.shape
     orig = orig.flatten()
-    len1 = np.linalg.norm(adv1-orig)
-    len2 = np.linalg.norm(adv2-orig)
-    dir1 = (adv1 - orig) / len1
-    dir2 = (adv2 - orig) / len2
+    pert1 = adv1 - orig
+    pert2 = adv2 - orig
+    len1 = np.linalg.norm(pert1)
+    len2 = np.linalg.norm(pert2)
+    dir1 = pert1 / len1
+    dir2 = pert2 / len2
 
-    len_grid = len_grid*np.maximum(len1,len2)
+    len_grid = len_grid_scale * np.maximum(len1,len2)
     if origin_centered:
         offset=len_grid
 
     x = np.linspace(-offset, len_grid, n_grid)
     y = np.linspace(-offset, len_grid, n_grid)
     X, Y = np.meshgrid(x, y)
-    advs = orig + (dir1 * np.reshape(X, (-1, 1)) + dir2 * np.reshape(Y, (-1, 1)))
+    advs = orig + (dir1[None, :] * np.reshape(X, (-1, 1)) + dir2[None, :] * np.reshape(Y, (-1, 1)))
     advs = np.array(np.reshape(advs, ((-1,) + shape)).astype('float64'))
     input = torch.split(torch.tensor(advs, device=dev()), 20)
 
@@ -201,9 +240,6 @@ def plot_dec_space(orig, adv1, adv2, model, offset=0.1, len_grid=2, n_grid=100, 
         preds = np.concatenate((preds, model(batch).detach().cpu().numpy()), axis=0)
 
     classes = np.argmax(preds, axis=-1).reshape((n_grid, n_grid))
-
-    if ax is None:
-        fig, ax = plt.subplots()
     colors = ['orange', 'green', 'brown', 'grey', 'blue', 'pink','cyan', 'olive', 'red', 'purple']
     labels = []
     colorList = []
@@ -226,40 +262,57 @@ def plot_dec_space(orig, adv1, adv2, model, offset=0.1, len_grid=2, n_grid=100, 
              markeredgecolor='black', markerfacecolor='black', marker='o')
 
     if show_advs:
-        ax.plot((offset+len1)*n_grid/(offset+len_grid), offset*n_grid/(offset+len_grid),
+        adv_locs = [# [[adv1_y, adv1_x], [adv2_y, adv2_x]]
+            [
+                offset * n_grid / (offset + len_grid),
+                (offset + len1) * n_grid / (offset + len_grid)
+            ],[
+                (offset + len2) * n_grid / (offset + len_grid),
+                offset * n_grid / (offset + len_grid)
+            ]
+        ]
+        ax.plot(adv_locs[0][1], adv_locs[0][0],
                  markeredgecolor='black', markerfacecolor='red', marker='o')
-        ax.plot(offset*n_grid/(offset+len_grid), (offset+len2)*n_grid/(offset+len_grid),
+        ax.plot(adv_locs[1][1], adv_locs[1][0],
                  markeredgecolor='black', markerfacecolor='red', marker='o')
 
-    ax.set_xlabel('dir 1 ($\ell_2$-length)', fontdict={'fontsize': 15})
-    ax.set_ylabel('dir 2 ($\ell_2$-length)', fontdict={'fontsize': 15})
+    #ax.set_xlabel('dir 1 ($\ell_2$-length)', fontdict={'fontsize': 15})
+    #ax.set_ylabel('dir 2 ($\ell_2$-length)', fontdict={'fontsize': 15})
 
-    x_ticks = np.arange(len1, np.maximum(len_grid,offset), len1)
-    x_ticks = np.r_[-x_ticks[::-1], 0, x_ticks]
-    x_ticks = x_ticks[x_ticks>=-offset]
-    x_ticks = x_ticks[x_ticks<=len_grid]
-    x_tick_locs = (x_ticks+offset)/(len_grid+offset)*n_grid
-    
-    y_ticks = np.arange(len2, np.maximum(len_grid,offset), len2)
-    y_ticks = np.r_[-y_ticks[::-1], 0, y_ticks]
-    y_ticks = y_ticks[y_ticks>=-offset]
-    y_ticks = y_ticks[y_ticks<=len_grid]
-    y_tick_locs = (y_ticks+offset)/(len_grid+offset)*n_grid
+    if align_ticks:
+        x_ticks = np.arange(len1, np.maximum(len_grid,offset), len1)
+        x_ticks = np.r_[-x_ticks[::-1], 0, x_ticks]
+        x_ticks = x_ticks[x_ticks>=-offset]
+        x_ticks = x_ticks[x_ticks<=len_grid]
+        x_tick_locs = (x_ticks+offset)/(len_grid+offset)*n_grid
+        ax.set_xticks(x_tick_locs)
+        ax.set_xticklabels([np.round(x, 2).astype(str) for x in x_ticks])
+        
+        y_ticks = np.arange(len2, np.maximum(len_grid,offset), len2)
+        y_ticks = np.r_[-y_ticks[::-1], 0, y_ticks]
+        y_ticks = y_ticks[y_ticks>=-offset]
+        y_ticks = y_ticks[y_ticks<=len_grid]
+        y_tick_locs = (y_ticks+offset)/(len_grid+offset)*n_grid
+        ax.set_yticks(y_tick_locs)
+        ax.set_yticklabels([np.round(x, 2).astype(str) for x in y_ticks])
+    else:
+        data_ticks = np.linspace(offset*n_grid/(offset+len_grid), (offset+np.floor(len_grid))*n_grid/(offset+len_grid), 5)
+        plot_ticks = [np.round(x, 2).astype(str) for x in np.linspace(0, np.floor(len_grid), 5)]
+        ax.set_xticks(data_ticks, minor=False)
+        ax.set_xticklabels(plot_ticks)
+        ax.set_yticks(data_ticks, minor=False)
+        ax.set_yticklabels(plot_ticks)
 
-    ax.set_xticks(x_tick_locs)
-    ax.set_xticklabels([np.round(x, 2).astype(str) for x in x_ticks])
-    ax.set_yticks(y_tick_locs)
-    ax.set_yticklabels([np.round(x, 2).astype(str) for x in y_ticks])
-
-    if show_legend:
+    if show_legend: # Add legend with proxy artists
         if origin_centered:
             ax.legend(handles=labels, title='predicted class', loc='lower left')
         else:
             ax.legend(handles=labels, title='predicted class')
+    
     if ax is None:
-        return fig, ax
+        return fig, ax, advs, labels
     else:
-        return ax
+        return advs, labels
 
 
 def plot_contrasted_dec_space(orig, adv1, adv2, model, n=4):
