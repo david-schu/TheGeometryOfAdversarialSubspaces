@@ -4,7 +4,7 @@ from torch.autograd import Variable
 from torch import optim
 import numpy as np
 import utils as u
-from robustness.attacker import AttackerModel
+from robustness1.attacker import AttackerModel
 
 
 NB_EPOCHS = 10

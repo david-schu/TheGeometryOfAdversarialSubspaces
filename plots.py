@@ -9,7 +9,7 @@ import matplotlib.patches as mpatches
 from matplotlib.colors import ListedColormap
 
 
-def plot_advs(advs, shape, orig=None, classes=None, orig_class=None, n=10, vmin=0, vmax=1):
+def plot_advs(advs, shape, orig=None, classes=None, orig_class=None, n=10, vmin=0, vmax=1, ax=None):
     if orig is None:
         j = 0
     else:
@@ -19,7 +19,6 @@ def plot_advs(advs, shape, orig=None, classes=None, orig_class=None, n=10, vmin=
     if classes is None:
         with_classes = False
 
-    n = np.minimum(n, len(advs))
     dirs = advs - np.reshape(orig, (1,-1))
 
     max_val = np.maximum(abs(np.min(dirs)), abs(np.max(dirs)))
@@ -31,7 +30,12 @@ def plot_advs(advs, shape, orig=None, classes=None, orig_class=None, n=10, vmin=
     else:
         dirs = np.reshape(dirs, [-1,shape[1],shape[2]])
         advs = np.reshape(advs, [-1,shape[1],shape[2]])
-    fig, ax = plt.subplots(2, n + j, squeeze=False)
+    
+    if ax is None:
+        ax_arg = None
+        fig, ax = plt.subplots(2, n + j, squeeze=False)
+    else:
+        ax_arg = ax
 
     if not (orig is None):
         if shape[0]==3:
@@ -64,10 +68,15 @@ def plot_advs(advs, shape, orig=None, classes=None, orig_class=None, n=10, vmin=
         ax[1, i + j].set_yticks([])
 
     #ax[1, n+j-1].set_xlabel('magnification factor ' + str(np.round(1/max_val, 2)), horizontalalignment='right', x=1.0)
-    fig.colorbar(im_adv, ax=ax[0, :].ravel().tolist(), shrink=0.7)
-    fig.colorbar(im_pert, ax=ax[1, :].ravel().tolist(), shrink=0.7)
+    if ax_arg is None:
+        fig.colorbar(im_adv, ax=ax[0, :].ravel().tolist(), shrink=0.7)
+        fig.colorbar(im_pert, ax=ax[1, :].ravel().tolist(), shrink=0.7)
+    else:
+        ax[0, :].colorbar(im_adv, shrink=0.7)
+        ax[1, :].colorbar(im_pert, shrink=0.7)
 
-    return fig, ax
+    if ax_arg is None:
+        return fig, ax
 
 
 def plot_mean_advs(advs, images, classes, labels, pert_lengths, n=10, vmin=0, vmax=1):
@@ -211,7 +220,8 @@ def plot_cw_surface(orig, adv1, adv2, model):
     plt.show()
 
 
-def plot_dec_space(orig, adv1, adv2, model, offset=0.1, len_grid_scale=2, n_grid=100, show_legend=True, show_advs=True, align_ticks=False,
+def plot_dec_space(orig, adv1, adv2, model, offset=0.1, len_grid_scale=2, n_grid=100,
+                   show_legend=True, show_advs=True, align_ticks=False,
                    overlay_inbounds=False, origin_centered=False, ax=None):
     if ax is None:
         fig, ax = plt.subplots()
