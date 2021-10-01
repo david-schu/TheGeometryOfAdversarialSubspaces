@@ -1,8 +1,6 @@
 import numpy as np
 from models import model as md
 import torch
-from robustness1.datasets import CIFAR
-import dill
 import sys
 
 from utils import dev, get_dist_dec
@@ -35,8 +33,8 @@ if __name__ == "__main__":
     images = data['images']
     labels = data['labels']
 
-    n_samples = 100
-    n_dims = 10
+    n_samples = 1000
+    n_dims = 8
 
     images = images[np.invert(np.isnan(pert_lengths)).sum(-1) >= n_dims]
     labels = labels[np.invert(np.isnan(pert_lengths)).sum(-1) >= n_dims]
