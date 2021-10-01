@@ -8,6 +8,7 @@ from foolbox.distances import LpDistance
 from foolbox.criteria import Misclassification, TargetedMisclassification
 from foolbox.attacks.base import MinimizationAttack, T, get_criterion, raise_if_kwargs
 
+from utils import make_orth_basis
 from cyipopt import minimize_ipopt
 
 
@@ -112,9 +113,8 @@ class CarliniWagner(fa.L2CarliniWagnerAttack):
 
         x_np = x.flatten().numpy()
 
-        # basis = make_orth_basis(dirs) / 1e2
+        # basis = make_orth_basis(dirs).T / 1e2
         # basis_ = ep.from_numpy(x, basis.astype(np.float64))
-        # z = np.zeros(basis.shape[-1])
         # con1 = {'type': 'ineq', 'fun': lambda z, basis, x_np: (basis @ z) + x_np, 'args': (basis, x_np,),
         #         'jac': lambda z, basis, x_np: basis}
         # con2 = {'type': 'ineq', 'fun': lambda z, basis, x_np: 1 - ((basis @ z) + x_np), 'args': (basis, x_np,),
@@ -152,16 +152,16 @@ class CarliniWagner(fa.L2CarliniWagnerAttack):
             init = (x_np+np.random.normal(scale=1, size=x_np.shape)).clip(0, 1)
             res = minimize_ipopt(loss_and_grad, x0=init,
                                  jac=True, constraints=cons, args=(consts_),  bounds=bnds,
-                                 options={'maxiter': self.steps, 'disp':0, 'jac_c_constant': 'yes',
+                                 options={'maxiter': self.steps, 'disp': 0, 'jac_c_constant': 'yes',
                                            'jac_d_constant': 'yes'})
 
             perturbed = ep.from_numpy(x, (res.x).astype(np.float64)).reshape(x.shape)
 
-            # res = minimize_ipopt(loss_and_grad, x0=np.zeros(z.shape), jac=True,
-            #                      constraints=cons, args=(consts_), options={'maxiter': self.steps, 'disp': 5,
+            # res = minimize_ipopt(loss_and_grad, x0=np.random.normal(scale=100, size=basis.shape[-1]), jac=True,
+            #                      constraints=cons, args=(consts_), options={'maxiter': self.steps, 'disp': 0,
             #                                                                 'jac_c_constant': 'yes', 'jac_d_constant': 'yes'})
             # perturbed = ep.from_numpy(x, ((basis @ res.x) + x_np).astype(np.float64)).reshape(x.shape)
-            print(res.message)
+            # print(res.message)
 
             valid_res = True
 
@@ -183,10 +183,18 @@ class CarliniWagner(fa.L2CarliniWagnerAttack):
                 if found_advs_iter:
                     count += 1
                     pert = perturbed - x
-                    scaled_pert = ep.from_numpy(x, np.linspace(.5, 1, 1000).astype(np.float64)).reshape((-1, 1, 1)) \
+                    n_scales = 1000
+                    batchsize = 100
+                    scaled_pert = ep.from_numpy(x, np.linspace(.5, 1, n_scales).astype(np.float64)).reshape((-1, 1, 1, 1)) \
                                   * pert.reshape(x.shape[1:])
-                    idx = (model((x + scaled_pert.expand_dims(1))).argmax(axis=1) == labels).sum()
+                    md_in = x + scaled_pert
+                    correct_classes = np.zeros(n_scales)
+                    for batch in range(int(n_scales/batchsize)):
+                        correct_classes[batch*batchsize:(batch+1)*batchsize] = \
+                            (model(md_in[batch*batchsize:(batch+1)*batchsize]).argmax(axis=1) == labels).numpy()
+                    idx = int(correct_classes.sum())
                     perturbed = x + scaled_pert[idx].reshape(x.shape)
+
                 norms = (perturbed - x).flatten().norms.l2(axis=-1)
                 closer = norms < best_advs_norms
                 new_best = ep.logical_and(closer, found_advs_iter)
@@ -207,24 +215,3 @@ class CarliniWagner(fa.L2CarliniWagnerAttack):
                 break
 
         return restore_type(best_advs)
-
-
-def make_orth_basis(dirs):
-    n_iterations = 3
-    n_pixel = 784  # dirs.shape[-1]
-    basis = np.random.uniform(-1, 1, (n_pixel - len(dirs), n_pixel))
-    basis = basis / np.linalg.norm(basis, axis=-1, keepdims=True)
-    if len(dirs) > 0:
-        basis_with_dirs = np.concatenate((dirs, basis), axis=0)
-    else:
-        basis_with_dirs = basis
-
-    for it in range(n_iterations):
-        for i, v in enumerate(basis):
-            v_orth = v - ((basis_with_dirs[:len(dirs) + i] * v.reshape((1, -1))).sum(-1, keepdims=True) *
-                          basis_with_dirs[:len(dirs) + i]).sum(0)
-            u_orth = v_orth / np.linalg.norm(v_orth)
-            basis_with_dirs[len(dirs) + i] = u_orth
-            basis[i] = u_orth
-
-    return basis.T

@@ -11,3 +11,15 @@ data/png_to_gif.txt
 Curvature/.ipynb_checkpoints/curvature_analysis-checkpoint.ipynb
 Curvature/.ipynb_checkpoints/mouse_principal_curvatures-checkpoint.ipynb
 Curvature/mouse_principal_curvatures.ipynb
+models/cifar_l2_0_5.pt
+models/cifar_nat.pt
+data/cifar-10-batches-py/test_batch
+data/cifar-10-batches-py/readme.html
+data/cifar-10-batches-py/data_batch_5
+data/cifar-10-batches-py/data_batch_4
+data/cifar-10-batches-py/data_batch_3
+data/cifar-10-batches-py/data_batch_2
+data/cifar-10-batches-py/data_batch_1
+data/cifar-10-batches-py/batches.meta
+.ipynb_checkpoints/DataTransformation-checkpoint.ipynb
+*.pdf
