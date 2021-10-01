@@ -78,7 +78,7 @@ def make_orth_basis(dirs=[]):
     return basis
 
 
-def get_dist_dec(orig, label, dirs, model, min_dist=.1, n_samples=1000, return_angles=False):
+def get_dist_dec(orig, label, dirs, model, min_dist=.1, n_samples=1000):
     shape = orig.shape
     n_steps = 20
     n_dirs = len(dirs)
@@ -114,9 +114,11 @@ def get_dist_dec(orig, label, dirs, model, min_dist=.1, n_samples=1000, return_a
 
         in_bounds = np.logical_or(input_.max(-1) <= 1, input_.min(-1) >= 0)
         dists[~in_bounds] = np.nan
+    if np.all(np.isnan(dists)):
+        largest_vec = np.zeros(dirs.shape[-1])
+    else:
+        largest_vec = sample_dirs[np.nanargmax(dists)]
+    angles = np.arccos((sample_dirs@dirs.T).clip(-1,1)).min(-1)
+    angles[np.isnan(dists)] = np.nan
 
-    if return_angles:
-        angles = np.arccos((sample_dirs@dirs.T).clip(-1,1)).min(-1)
-        angles[np.isnan(dists)] = np.nan
-        return dists, angles
-    return dists
+    return dists, angles, largest_vec

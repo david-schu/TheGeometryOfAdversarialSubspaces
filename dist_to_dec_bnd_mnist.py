@@ -14,32 +14,21 @@ if __name__ == "__main__":
     is_natural = int(sys.argv[1])
 
     if is_natural:
-        resume_path = './models/cifar_models/nat_diff.pt'
+        resume_path = './models/mnist_models/natural_0.pt'
     else:
-        resume_path = './models/cifar_models/rob_diff.pt'
+        resume_path = './models/mnist_models/robust_0.pt'
 
-    # Load model
-    ds = CIFAR('./data/cifar-10-batches-py')
-    classifier_model = ds.get_model('resnet50', False)
-    model = md.cifar_pretrained(classifier_model, ds)
-
-    checkpoint = torch.load(resume_path, pickle_module=dill, map_location=torch.device(dev()))
-
-    state_dict_path = 'model'
-    if not ('model' in checkpoint):
-        state_dict_path = 'state_dict'
-    sd = checkpoint[state_dict_path]
-    sd = {k[len('module.'):]: v for k, v in sd.items()}
-    model.load_state_dict(sd)
+    # load models
+    model = md.madry_diff()
+    model.load_state_dict(torch.load(resume_path, map_location=torch.device(dev())))
     model.to(dev())
-    model.double()
     model.eval()
 
     # load data
     if is_natural:
-        data_path = './data/cifar_natural_diff.npy'
+        data_path = './data/MNIST_runs/natural_0.npy'
     else:
-        data_path = './data/cifar_robust_diff.npy'
+        data_path = './data/MNIST_runs/robust_0.npy'
     data = np.load(data_path, allow_pickle=True).item()
     pert_lengths = data['pert_lengths']
     dirs = data['dirs']
@@ -47,7 +36,12 @@ if __name__ == "__main__":
     labels = data['labels']
 
     n_samples = 100
-    n_dims = 50
+    n_dims = 10
+
+    images = images[np.invert(np.isnan(pert_lengths)).sum(-1) >= n_dims]
+    labels = labels[np.invert(np.isnan(pert_lengths)).sum(-1) >= n_dims]
+    dirs = dirs[np.invert(np.isnan(pert_lengths)).sum(-1) >= n_dims]
+    pert_lengths = pert_lengths[np.invert(np.isnan(pert_lengths)).sum(-1) >= n_dims]
 
     #natural
     min_dists = pert_lengths[:, 0]
@@ -55,11 +49,11 @@ if __name__ == "__main__":
     dists = np.zeros((len(images), n_dims, n_samples))
     angles= np.zeros((len(images), n_dims, n_samples))
     largest_vecs = np.zeros((len(images, n_dims, dirs.shape[-1])))
+
     for i, img in enumerate(tqdm.tqdm(images)):
         for n in np.arange(0, n_dims):
-            dists[i, n], angles[i, n], largest_vecs[i, n] = get_dist_dec(img, labels[i], dirs[i, :n + 1], model,
-                                                                         min_dist=0.5 * min_dists[i],
-                                                                         n_samples=n_samples, return_angles=True)
+            dists[i, n], angles[i, n], largest_vecs[i, n] = get_dist_dec(img, labels[i], dirs[i, :n+1], model,
+                                                min_dist=0.5 * min_dists[i], n_samples=n_samples, return_angles=True)
 
         data = {
             'dists': dists,
