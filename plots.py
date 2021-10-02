@@ -262,7 +262,7 @@ def plot_dec_space(orig, adv1, adv2, model, offset=0.1, len_grid_scale=2, n_grid
     # Plot the surface.
     new_cmap = ListedColormap(colors)
 
-    ax.imshow(classes, cmap=new_cmap, origin='lower', vmin=0, vmax=9)
+    ax.imshow(classes, cmap=new_cmap, origin='lower', interpolation=None, vmin=0, vmax=9)
     if overlay_inbounds:
         new_cmap2 = ListedColormap(['none', 'k'])
         out_of_bounds = np.logical_or(advs.max(axis=(1,2,3))>1, advs.min(axis=(1,2,3))<0).reshape((n_grid, n_grid))
