@@ -112,7 +112,7 @@ def get_dist_dec(orig, label, dirs, model, min_dist=.1, n_samples=1000):
         scales[is_adv] = (upper[is_adv] + lower[is_adv]) / 2
         scales[~is_adv] = lower[~is_adv] * 2
 
-        in_bounds = np.logical_or(input_.max(-1) <= 1, input_.min(-1) >= 0)
+        in_bounds = np.logical_and(input_.max(-1) <= 1, input_.min(-1) >= 0)
         dists[~in_bounds] = np.nan
     if np.all(np.isnan(dists)):
         largest_vec = np.zeros(dirs.shape[-1])
