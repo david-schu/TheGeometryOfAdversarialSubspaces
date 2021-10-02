@@ -67,7 +67,7 @@ if __name__ == "__main__":
             'largest_vecs': largest_vecs
         }
         if is_natural:
-            save_path = './data/MNIST_runs/dists_to_bnd_natural.npy'
+            save_path = './data/dists_to_bnd_natural.npy'
         else:
-            save_path = './data/MNIST_runs/dists_to_bnd_robust.npy'
+            save_path = './data/dists_to_bnd_robust.npy'
         np.save(save_path, data)
