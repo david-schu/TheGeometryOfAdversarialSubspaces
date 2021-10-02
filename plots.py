@@ -225,7 +225,10 @@ def plot_dec_space(orig, adv1, adv2, model, offset=0.1, len_grid_scale=2, n_grid
                    overlay_inbounds=False, origin_centered=False, ax=None):
     if ax is None:
         fig, ax = plt.subplots()
-    shape = orig.shape
+    if orig.ndim == 3:
+        input_shape = orig.shape
+    else: # batch singleton dimension included
+        input_shape = orig.shape[1:]
     orig = orig.flatten()
     pert1 = adv1 - orig
     pert2 = adv2 - orig
@@ -242,7 +245,7 @@ def plot_dec_space(orig, adv1, adv2, model, offset=0.1, len_grid_scale=2, n_grid
     y = np.linspace(-offset, len_grid, n_grid)
     X, Y = np.meshgrid(x, y)
     advs = orig + (dir1[None, :] * np.reshape(X, (-1, 1)) + dir2[None, :] * np.reshape(Y, (-1, 1)))
-    advs = np.array(np.reshape(advs, ((-1,) + shape)).astype('float64'))
+    advs = np.array(np.reshape(advs, ((-1,) + input_shape)).astype('float64'))
     input = torch.split(torch.tensor(advs, device=dev()), 20)
 
     preds = np.empty((0, 10))
