@@ -136,12 +136,13 @@ def paired_activation_and_gradient(model, image, neuron1, neuron2):
     return activation_difference, grad
 
 
-def get_curvature(condition_zip, num_images, num_advs, origin_indices, num_iters, num_steps_per_iter, dtype):
+def get_curvature(condition_zip, origin_indices, num_advs, num_iters, num_steps_per_iter, dtype):
     """
     A note on the gradient of the difference in activations:
     The gradient points in the direction of the origin from the boundary image.
     Therefore, for large enough eps, origin - eps * grad/|grad| will reach the boundary; and boundary + eps * grad/|grad| will reach the origin 
     """
+    num_images = len(origin_indices)
     models, model_data = zip(*condition_zip)
     num_models = len(models)
     image_shape = model_data[0]['images'][0, ...][None, ...].shape
@@ -166,7 +167,8 @@ def get_curvature(condition_zip, num_images, num_advs, origin_indices, num_iters
                 def func(x):
                     acts_diff = paired_activation(model_, x, clean_lbl, adv_lbl)
                     return acts_diff
-                hessian = torch.autograd.functional.hessian(func, torchify(boundary_image[None,...]))
+                #hessian = torch.autograd.functional.hessian(func, torchify(boundary_image[None,...]))
+                hessian = torch.eye(int(boundary_image.size)).type(dtype).to(dev())
                 hessian = hessian.reshape((int(boundary_image.size), int(boundary_image.size))).type(dtype)
                 activation, gradient = paired_activation_and_gradient(model_, torchify(boundary_image[None, ...]), clean_lbl, adv_lbl)
                 gradient = gradient.reshape(-1).type(dtype)
