@@ -19,6 +19,9 @@ import response_contour_analysis.utils.principal_curvature as curve_utils
 
 if __name__ == "__main__":
     """
+    dataset_type
+        0 - MNIST
+        1 - CIFAR
     run_type
         0 - natural, paired boundary
         1 - robust, paired boundary
