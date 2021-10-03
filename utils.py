@@ -94,10 +94,10 @@ def get_dist_dec(orig, label, dirs, model, min_dist=.1, n_samples=1000):
     sample_dirs = sample_dirs / np.linalg.norm(sample_dirs, axis=-1, keepdims=True)
 
     dists = np.full(n_samples, np.nan)
-
+    found_advs = np.full(n_samples, False)
     for i in range(n_steps):
         input_dirs = scales * sample_dirs
-        input_ = (input_dirs + orig.flatten()[None])
+        input_ = input_dirs + orig.flatten()[None]
         input = torch.split(torch.tensor(input_.reshape((-1,) + shape), device=dev()), 100)
 
         preds = np.empty(0)
@@ -105,12 +105,13 @@ def get_dist_dec(orig, label, dirs, model, min_dist=.1, n_samples=1000):
             preds = np.concatenate((preds, model(batch).argmax(-1).cpu().numpy()), axis=0)
 
         is_adv = np.invert(preds == label)
+        found_advs[is_adv] = True
         dists[is_adv] = scales[is_adv, 0]
 
         upper[is_adv] = scales[is_adv]
         lower[~is_adv] = scales[~is_adv]
-        scales[is_adv] = (upper[is_adv] + lower[is_adv]) / 2
-        scales[~is_adv] = lower[~is_adv] * 2
+        scales[found_advs] = (upper[found_advs] + lower[found_advs]) / 2
+        scales[~found_advs] = lower[~found_advs] * 2
 
         in_bounds = np.logical_and(input_.max(-1) <= 1, input_.min(-1) >= 0)
         dists[~in_bounds] = np.nan
