@@ -167,8 +167,7 @@ def get_curvature(condition_zip, origin_indices, num_advs, num_iters, num_steps_
                 def func(x):
                     acts_diff = paired_activation(model_, x, clean_lbl, adv_lbl)
                     return acts_diff
-                #hessian = torch.autograd.functional.hessian(func, torchify(boundary_image[None,...]))
-                hessian = torch.eye(int(boundary_image.size)).type(dtype).to(dev())
+                hessian = torch.autograd.functional.hessian(func, torchify(boundary_image[None,...]))
                 hessian = hessian.reshape((int(boundary_image.size), int(boundary_image.size))).type(dtype)
                 activation, gradient = paired_activation_and_gradient(model_, torchify(boundary_image[None, ...]), clean_lbl, adv_lbl)
                 gradient = gradient.reshape(-1).type(dtype)

@@ -200,8 +200,7 @@ if __name__ == "__main__":
                 def func(x):
                     acts_diff = paired_activation(model_, x, clean_lbl, adv_lbl)
                     return acts_diff
-                #hessian = torch.autograd.functional.hessian(func, torchify(boundary_image[None,...]))
-                hessian = torch.eye(int(boundary_image.size)).type(dtype).to(dev())
+                hessian = torch.autograd.functional.hessian(func, torchify(boundary_image[None,...]))
                 hessian = hessian.reshape((int(boundary_image.size), int(boundary_image.size))).type(dtype)
 
                 if run_type == 4 or run_type == 5: # random subspace
