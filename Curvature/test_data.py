@@ -12,8 +12,6 @@ from utils import dev
 from robustness1.datasets import CIFAR
 from curve_utils import torchify, load_mnist, load_cifar
 
-sys.path.insert(0, './../..')
-
 code_directory = '../../'
 
 batch_size = 10
@@ -25,7 +23,6 @@ def run_test(model_data_zip):
         for batch in clean_image_splits:
             clean_model_predictions.append(torch.argmax(model_(batch), dim=1).detach().cpu().numpy())
         clean_model_predictions = np.stack(clean_model_predictions, axis=0).reshape(-1)
-
         assert np.all(clean_model_predictions == data_['labels']), f'{name_} failed.'
 
         for image_idx in range(data_['images'].shape[0]):
@@ -37,7 +34,6 @@ def run_test(model_data_zip):
             assert np.all(adv_model_predictions == data_['adv_class'][image_idx, :num_valid_advs]), f'{name} failed.'
 
         print(f'{name_} test passed')
-
 
 
 ######
