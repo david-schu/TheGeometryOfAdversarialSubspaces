@@ -29,12 +29,12 @@ def run_test(model_data_zip):
         assert np.all(clean_model_predictions == data_['labels']), f'{name_} failed.'
 
         for image_idx in range(data_['images'].shape[0]):
-            for adv_idx in range(data_['advs'][image_idx, ...].shape[0]):
-                if np.isfinite(data_['pert_lengths'][image_idx, adv_idx]):
-                    adv_image = torchify(data_['advs'][image_idx, adv_idx, ...]).reshape(data_['images'][image_idx, ...].shape)[None, ...]
-                    adv_model_prediction = torch.argmax(model_(adv_image), dim=1).detach().cpu().numpy()
-                    assert adv_model_prediction != clean_model_predictions[image_idx], f'{name_} failed.'
-                    assert adv_model_prediction == data_['adv_class'][image_idx, adv_idx], f'{name} failed.'
+            valid_advs = data_['advs'][image_idx, np.argwhere(np.isfinite(data_['pert_lengths'][image_idx, :]))]
+            num_valid_advs = valid_advs.shape[0]
+            adv_images = torchify(valid_advs).reshape((num_valid_advs, )+data_['images'][image_idx, ...].shape)
+            adv_model_predictions = torch.argmax(model_(adv_images), dim=1).detach().cpu().numpy()
+            assert np.all(adv_model_predictions != clean_model_predictions[image_idx]), f'{name_} failed.'
+            assert np.all(adv_model_predictions == data_['adv_class'][image_idx, :num_valid_advs]), f'{name} failed.'
 
         print(f'{name_} test passed')
 
