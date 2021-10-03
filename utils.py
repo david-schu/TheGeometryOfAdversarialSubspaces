@@ -64,7 +64,7 @@ def make_orth_basis(dirs=[], n_pixels=784, n_iterations=3):
     if len(dirs) > 0:
         basis_with_dirs = np.concatenate((dirs, basis), axis=0)
     else:
-        basis_with_dirs = basis
+        basis_with_dirs = basis.copy()
 
     for it in range(n_iterations):
         for i, v in enumerate(basis):
