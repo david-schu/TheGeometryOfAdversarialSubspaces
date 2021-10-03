@@ -36,6 +36,8 @@ if __name__ == "__main__":
         6 - natural, adversarial subspace
         7 - robust, adversarial subspace
     """
+    print(dev())
+
     dataset_type = int(sys.argv[1])
     run_type = int(sys.argv[2])
     image_index = int(sys.argv[3])
@@ -58,8 +60,8 @@ if __name__ == "__main__":
     else: # CIFAR
         model_natural, data_natural, model_robust, data_robust = load_cifar(code_directory)
         data_prefix = 'cifar'
-
     filename_prefix += f'{data_prefix}_batch/'
+
     if not os.path.exists(filename_prefix):
         os.makedirs(filename_prefix)
 
@@ -81,7 +83,6 @@ if __name__ == "__main__":
             'robust_origin':all_robust_origin_indices,
             'robust_valid':all_robust_valid_indices
         })
-        
     print('Data and models loaded')
 
     if run_type <= 3: #mean curvature calculations
@@ -97,7 +98,7 @@ if __name__ == "__main__":
             robust_adv_origin_indices = index_dict['robust_adv_origin']
         else:
             data_natural_paired = generate_paired_dict(model_natural, data_natural, all_natural_origin_indices,
-                                         all_natural_valid_indices, num_images, num_advs, num_steps_per_iter, num_iters)
+                                         all_natural_valid_indices, num_images, num_advs, num_steps_per_iter=num_steps_per_iter, num_iters=num_iters)
             data_robust_paired = generate_paired_dict(model_robust, data_robust, all_robust_origin_indices,
                                          all_robust_valid_indices, num_images, num_advs, num_steps_per_iter, num_iters)
             paired_natural_adv_origin_indices = get_origin_indices(model_natural, data_natural_paired, num_images, num_advs)[0]
@@ -112,6 +113,7 @@ if __name__ == "__main__":
                 'natural_adv_origin':natural_adv_origin_indices,
                 'robust_adv_origin':robust_adv_origin_indices
             })
+        print('Generated paired data')
 
         filename_postfix = data_prefix+f'_{image_index:03d}_curvatures_and_directions_autodiff.npz'
         if run_type == 0: # natural, paired
