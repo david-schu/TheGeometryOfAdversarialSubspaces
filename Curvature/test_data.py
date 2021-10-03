@@ -10,7 +10,7 @@ sys.path.insert(0, '../data')
 from models import model as model_loader
 from utils import dev
 from robustness1.datasets import CIFAR
-from curve_utils import *
+from curve_utils import torchify, load_mnist, load_cifar
 
 sys.path.insert(0, './../..')
 
@@ -44,26 +44,7 @@ def run_test(model_data_zip):
 #MNIST
 ######
 seed = 0
-# load data
-data_natural = np.load(code_directory+f'AdversarialDecomposition/data/natural_{seed}.npy', allow_pickle=True).item()
-data_madry = np.load(code_directory+f'AdversarialDecomposition/data/robust_{seed}.npy', allow_pickle=True).item()
-
-# load models
-model_natural = model_loader.madry_diff()
-model_natural.load_state_dict(torch.load(
-    code_directory+f'AdversarialDecomposition/models/natural_{seed}.pt',
-    map_location=dev()))
-model_natural.to(dev())
-model_natural.double()
-model_natural.eval()
-
-model_madry = model_loader.madry_diff()
-model_madry.load_state_dict(torch.load(
-    code_directory+f'AdversarialDecomposition/models/robust_{seed}.pt',
-    map_location=dev()))
-model_madry.to(dev())
-model_madry.double()
-model_madry.eval()
+model_natural, data_natural, model_madry, data_madry = load_mnist(code_directory, seed)
 model_data_zip = zip([model_natural, model_madry], [data_natural, data_madry], ['natural', 'robust'])
 print('MNIST:')
 run_test(model_data_zip)
@@ -71,40 +52,7 @@ run_test(model_data_zip)
 ######
 #CIFAR
 ######
-# load data
-data_natural = np.load(code_directory+'AdversarialDecomposition/data/cifar_natural_diff.npy', allow_pickle=True).item()
-data_madry = np.load(code_directory+'AdversarialDecomposition/data/cifar_robust_diff.npy', allow_pickle=True).item()
-
-# load models
-ds = CIFAR(code_directory+'AdversarialDecomposition/data/cifar-10-batches-py')
-classifier_model = ds.get_model('resnet50', False)
-
-model_natural = model_loader.cifar_pretrained(classifier_model, ds)
-resume_path = code_directory+'AdversarialDecomposition/models/nat_diff.pt'
-checkpoint = torch.load(resume_path, pickle_module=dill, map_location=torch.device(dev()))
-state_dict_path = 'model'
-if not ('model' in checkpoint):
-    state_dict_path = 'state_dict'
-sd = checkpoint[state_dict_path]
-sd = {k[len('module.'):]: v for k, v in sd.items()}
-model_natural.load_state_dict(sd)
-model_natural.to(dev())
-model_natural.double()
-model_natural.eval()
-
-model_madry = model_loader.cifar_pretrained(classifier_model, ds)
-resume_path = code_directory+'AdversarialDecomposition/models/rob_diff.pt'
-checkpoint = torch.load(resume_path, pickle_module=dill, map_location=torch.device(dev()))
-state_dict_path = 'model'
-if not ('model' in checkpoint):
-    state_dict_path = 'state_dict'
-sd = checkpoint[state_dict_path]
-sd = {k[len('module.'):]:v for k,v in sd.items()}
-model_madry.load_state_dict(sd)
-model_madry.to(dev())
-model_madry.double()
-model_madry.eval()
-
-model_data_zip = zip([model_natural, model_madry][::-1], [data_natural, data_madry][::-1], ['natural', 'robust'][::-1])
+model_natural, data_natural, model_madry, data_madry = load_cifar(code_directory)
+model_data_zip = zip([model_natural, model_madry], [data_natural, data_madry], ['natural', 'robust'])
 print('CIFAR:')
 run_test(model_data_zip)

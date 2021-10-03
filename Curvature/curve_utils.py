@@ -2,12 +2,15 @@ import sys
 
 import numpy as np
 import torch
+import dill
 from tqdm import tqdm
 
 sys.path.insert(0, './..')
 sys.path.insert(0, '../data')
 
+from models import model as model_loader
 from utils import dev
+from robustness1.datasets import CIFAR
 
 sys.path.insert(0, './../..')
 
@@ -61,22 +64,25 @@ def get_paired_boundary_image(model, origin, alt_image, num_steps_per_iter, num_
     return pert_image.reshape(origin.shape), direction, pert_length
 
 
-def get_valid_indices(model_predictions, data, num_advs):
+def get_valid_indices(model_predictions, data, num_advs=None):
     valid_indices = [] # Need to ensure that all images are correctly labeled & have valid adversarial examples
     for image_idx in range(data['images'].shape[0]):
         if model_predictions[image_idx] == data['labels'][image_idx]: # correctly labeled
-            if np.all(np.isfinite(data['pert_lengths'][image_idx, :num_advs])): # enough adversaries found
+            if num_advs is None: # don't care if it has enough advs
                 valid_indices.append(image_idx)
+            else: # valid must also have enough adversarial examples
+                if np.all(np.isfinite(data['pert_lengths'][image_idx, :num_advs])): # enough adversaries found
+                    valid_indices.append(image_idx)
     return  valid_indices
 
 
-def get_origin_indices(model, data, num_images, num_advs):
+def get_origin_indices(model, data, num_images, num_advs=None):
     batch_size = int(np.minimum(10, num_images))
-    image_splits = torch.split(torchify(data['images']), batch_size)
+    image_splits = torch.split(torchify(data['images']), batch_size, dim=0)
     model_predictions = []
     for batch in image_splits:
         model_predictions.append(torch.argmax(model(batch), dim=1).detach().cpu().numpy())
-    model_predictions = np.stack(model_predictions, axis=0).reshape((len(model_predictions)*batch_size,) + model_predictions[0].shape[1:])
+    model_predictions = np.stack(model_predictions, axis=0).reshape(-1)
     valid_indices = get_valid_indices(model_predictions, data, num_advs)
     origin_indices = np.random.choice(valid_indices, size=num_images, replace=False)
     return origin_indices, valid_indices
@@ -170,7 +176,7 @@ def get_curvature(condition_zip, num_images, num_advs, origin_indices, num_iters
                 principal_directions[model_idx, image_idx, adv_idx, ...] = curvature[2].detach().cpu().numpy()
                 pbar.update(1)
     pbar.close()
-    return shape_operators, principal_curvatures, principal_directions, origin_indices
+    return shape_operators, principal_curvatures, principal_directions
 
 
 def get_hessian_error(model, origin, clean_lbl, adv_lbl, abscissa, ordinate, hess_params):
@@ -206,3 +212,61 @@ def get_hessian_error(model, origin, clean_lbl, adv_lbl, abscissa, ordinate, hes
     sr1_rms_error = np.sqrt(np.mean(np.square(sr1_total_error.detach().cpu().numpy())))
     autodiff_rms_error = np.sqrt(np.mean(np.square(autodiff_total_error.detach().cpu().numpy())))
     return sr1_rms_error, autodiff_rms_error
+
+def load_mnist(code_directory, seed):
+    # load data
+    data_natural = np.load(code_directory+f'AdversarialDecomposition/data/natural_{seed}.npy', allow_pickle=True).item()
+    data_madry = np.load(code_directory+f'AdversarialDecomposition/data/robust_{seed}.npy', allow_pickle=True).item()
+
+    # load models
+    model_natural = model_loader.madry_diff()
+    model_natural.load_state_dict(torch.load(
+        code_directory+f'AdversarialDecomposition/models/natural_{seed}.pt',
+        map_location=dev()))
+    model_natural.to(dev())
+    model_natural.double()
+    model_natural.eval()
+
+    model_madry = model_loader.madry_diff()
+    model_madry.load_state_dict(torch.load(
+        code_directory+f'AdversarialDecomposition/models/robust_{seed}.pt',
+        map_location=dev()))
+    model_madry.to(dev())
+    model_madry.double()
+    model_madry.eval()
+    return model_natural, data_natural, model_madry, data_madry
+
+def load_cifar(code_directory):
+    # load data
+    data_natural = np.load(code_directory+'AdversarialDecomposition/data/cifar_natural_diff.npy', allow_pickle=True).item()
+    data_madry = np.load(code_directory+'AdversarialDecomposition/data/cifar_robust_diff.npy', allow_pickle=True).item()
+    # load models
+    ds = CIFAR(code_directory+'AdversarialDecomposition/data/cifar-10-batches-py')
+    classifier_model = ds.get_model('resnet50', False)
+    # natural
+    model_natural = model_loader.cifar_pretrained(classifier_model, ds)
+    resume_path = code_directory+'AdversarialDecomposition/models/nat_diff.pt'
+    checkpoint = torch.load(resume_path, pickle_module=dill, map_location=torch.device(dev()))
+    state_dict_path = 'model'
+    if not ('model' in checkpoint):
+        state_dict_path = 'state_dict'
+    sd = checkpoint[state_dict_path]
+    sd = {k[len('module.'):]: v for k, v in sd.items()}
+    model_natural.load_state_dict(sd)
+    model_natural.to(dev())
+    model_natural.double()
+    model_natural.eval()
+    # madry
+    model_madry = model_loader.cifar_pretrained(classifier_model, ds)
+    resume_path = code_directory+'AdversarialDecomposition/models/rob_diff.pt'
+    checkpoint = torch.load(resume_path, pickle_module=dill, map_location=torch.device(dev()))
+    state_dict_path = 'model'
+    if not ('model' in checkpoint):
+        state_dict_path = 'state_dict'
+    sd = checkpoint[state_dict_path]
+    sd = {k[len('module.'):]:v for k,v in sd.items()}
+    model_madry.load_state_dict(sd)
+    model_madry.to(dev())
+    model_madry.double()
+    model_madry.eval()
+    return model_natural, data_natural, model_madry, data_madry
