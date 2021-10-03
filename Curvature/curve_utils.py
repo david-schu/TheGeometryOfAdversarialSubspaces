@@ -213,11 +213,11 @@ def get_hessian_error(model, origin, clean_lbl, adv_lbl, abscissa, ordinate, hes
     autodiff_rms_error = np.sqrt(np.mean(np.square(autodiff_total_error.detach().cpu().numpy())))
     return sr1_rms_error, autodiff_rms_error
 
+
 def load_mnist(code_directory, seed):
     # load data
     data_natural = np.load(code_directory+f'AdversarialDecomposition/data/natural_{seed}.npy', allow_pickle=True).item()
     data_madry = np.load(code_directory+f'AdversarialDecomposition/data/robust_{seed}.npy', allow_pickle=True).item()
-
     # load models
     model_natural = model_loader.madry_diff()
     model_natural.load_state_dict(torch.load(
@@ -226,7 +226,6 @@ def load_mnist(code_directory, seed):
     model_natural.to(dev())
     model_natural.double()
     model_natural.eval()
-
     model_madry = model_loader.madry_diff()
     model_madry.load_state_dict(torch.load(
         code_directory+f'AdversarialDecomposition/models/robust_{seed}.pt',
@@ -236,14 +235,15 @@ def load_mnist(code_directory, seed):
     model_madry.eval()
     return model_natural, data_natural, model_madry, data_madry
 
+
 def load_cifar(code_directory):
     # load data
     data_natural = np.load(code_directory+'AdversarialDecomposition/data/cifar_natural_diff.npy', allow_pickle=True).item()
     data_madry = np.load(code_directory+'AdversarialDecomposition/data/cifar_robust_diff.npy', allow_pickle=True).item()
     # load models
+    # natural
     ds = CIFAR(code_directory+'AdversarialDecomposition/data/cifar-10-batches-py')
     classifier_model = ds.get_model('resnet50', False)
-    # natural
     model_natural = model_loader.cifar_pretrained(classifier_model, ds)
     resume_path = code_directory+'AdversarialDecomposition/models/nat_diff.pt'
     checkpoint = torch.load(resume_path, pickle_module=dill, map_location=torch.device(dev()))
@@ -257,6 +257,8 @@ def load_cifar(code_directory):
     model_natural.double()
     model_natural.eval()
     # madry
+    ds = CIFAR(code_directory+'AdversarialDecomposition/data/cifar-10-batches-py')
+    classifier_model = ds.get_model('resnet50', False)
     model_madry = model_loader.cifar_pretrained(classifier_model, ds)
     resume_path = code_directory+'AdversarialDecomposition/models/rob_diff.pt'
     checkpoint = torch.load(resume_path, pickle_module=dill, map_location=torch.device(dev()))
