@@ -22,6 +22,7 @@ if __name__ == "__main__":
     dataset_type
         0 - MNIST
         1 - CIFAR
+
     run_type
         0 - natural, paired boundary
         1 - robust, paired boundary
@@ -43,8 +44,8 @@ if __name__ == "__main__":
     filename_prefix = code_directory+'AdversarialDecomposition/data/'
 
     batch_size = 10
-    num_images = 50
-    num_advs = 10
+    num_images = 20
+    num_advs = 8
     seed = 0
 
     num_iters = 2 # for paired image boundary search
@@ -57,6 +58,10 @@ if __name__ == "__main__":
     else: # CIFAR
         model_natural, data_natural, model_robust, data_robust = load_cifar(code_directory)
         data_prefix = 'cifar'
+
+    filename_prefix += f'{data_prefix}_batch/'
+    if not os.path.exists(filename_prefix):
+        os.makedirs(filename_prefix)
 
     # valid_indices is a list of all indices where the model output matches the data label. This should be every index.
     # origin_indices is a random subset of valid_indices based on the num_images parameter
@@ -108,7 +113,7 @@ if __name__ == "__main__":
                 'robust_adv_origin':robust_adv_origin_indices
             })
 
-        filename_postfix = data_prefix+'_curvatures_and_directions_autodiff.npz'
+        filename_postfix = data_prefix+f'_{image_index:03d}_curvatures_and_directions_autodiff.npz'
         if run_type == 0: # natural, paired
             data_ = data_natural_paired
             model_ = model_natural
@@ -149,14 +154,14 @@ if __name__ == "__main__":
         else: # adversarial conditions
             save_dict['data'] = []
         save_dict['origin_indices'] = [condition_origin_indices[image_index]]
-        save_dict['shape_operators'] = shape_operators
+        #save_dict['shape_operators'] = shape_operators
         save_dict['principal_curvatures'] = principal_curvatures
         save_dict['principal_directions'] = principal_directions
         save_dict['mean_curvatures'] = np.mean(principal_curvatures, axis=-1)
 
 
     else: # subspace experiments
-        filename_postfix = data_prefix+'_curvatures_autodiff.npz'
+        filename_postfix = data_prefix+f'_{image_index:03d}_curvatures_autodiff.npz'
 
         if run_type == 4: # natural, random
             origin_indices = [all_natural_origin_indices[image_index]]
@@ -212,12 +217,12 @@ if __name__ == "__main__":
 
                 elif run_type == 6 or run_type == 7: # adversarial subspace
                     adv_dirs = data_['dirs'][origin_idx, :num_advs, ...].reshape(num_advs, n_pixels)
-                    if adv_idx > 0 and adv_idx < num_advs: # exclude current perturbation direction
-                        adv_dirs = np.concatenate((adv_dirs[:adv_idx], adv_dirs[adv_idx+1:]))
+                    if adv_idx > 0 and adv_idx < num_advs: # swap sign of current perturbation direction
+                        adv_dirs = np.concatenate((adv_dirs[:adv_idx], -adv_dirs[adv_idx], adv_dirs[adv_idx+1:]))
                     elif adv_idx == 0:
-                        adv_dirs = adv_dirs[adv_idx+1:]
+                        adv_dirs = np.concatenate((-adv_dirs[adv_idx], adv_dirs[adv_idx+1:]))
                     else:
-                        adv_dirs = adv_dirs[:adv_idx]
+                        adv_dirs = np.concatenate((adv_dirs[:adv_idx], -adv_dirs[adv_idx]))
                     adv_basis = torch.from_numpy(adv_dirs).type(dtype).to(dev())
                     curvature = curve_utils.local_response_curvature_isoresponse_surface(gradient, hessian, projection_subspace_of_interest=adv_basis)
                     adv_subspace_curvatures = curvature[1].detach().cpu().numpy()
