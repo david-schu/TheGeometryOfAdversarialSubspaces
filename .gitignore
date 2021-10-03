@@ -7,6 +7,10 @@
 data/*
 *.mp4
 *.gif
+*.pt
+*.err
+*.out
+*.sif
 .ipynb_checkpoints/*
 Curvature/.ipynb*
 Decomposition/.ipynb_checkpoints*
