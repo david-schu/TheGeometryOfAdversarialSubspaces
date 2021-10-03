@@ -21,7 +21,6 @@ import response_contour_analysis.utils.model_handling as model_utils
 import response_contour_analysis.utils.principal_curvature as curve_utils
 
 code_directory = '../../'
-filename_prefix = code_directory+'AdversarialDecomposition/data/'
 
 batch_size = 10
 num_images = 50
@@ -66,22 +65,22 @@ model_madry.to(dev())
 model_madry.double()
 model_madry.eval()
 
-model_data_zip = zip([model_natural, model_madry], [data_natural, data_madry])
-for model_, data_ in model_data_zip:
+model_data_zip = zip([model_natural, model_madry], [data_natural, data_madry], ['natural', 'robust'])
+for model_, data_, name_ in model_data_zip:
     clean_image_splits = torch.split(torchify(data_['images']), batch_size, dim=0)
     clean_model_predictions = []
     for batch in clean_image_splits:
         clean_model_predictions.append(torch.argmax(model_(batch), dim=1).detach().cpu().numpy())
     clean_model_predictions = np.stack(clean_model_predictions, axis=0).reshape(-1)
 
-    assert np.all(clean_model_predictions == data_['labels'])
+    assert np.all(clean_model_predictions == data_['labels']), f'{name_} failed.'
 
     for image_idx in range(data_['images'].shape[0]):
         for adv_idx in range(data_['advs'][image_idx, ...].shape[0]):
             if np.isfinite(data_['pert_lengths'][image_idx, adv_idx]):
                 adv_image = torchify(data_['advs'][image_idx, adv_idx, ...]).reshape(data_['images'][image_idx, ...].shape)[None, ...]
                 adv_model_prediction = torch.argmax(model_(adv_image), dim=1).detach().cpu().numpy()
-                assert adv_model_prediction != clean_model_predictions[image_idx]
-                assert adv_model_prediction == data_['adv_class'][image_idx, adv_idx]
+                assert adv_model_prediction != clean_model_predictions[image_idx], f'{name_} failed.'
+                assert adv_model_prediction == data_['adv_class'][image_idx, adv_idx], f'{name} failed.'
 
 print('test passed')
