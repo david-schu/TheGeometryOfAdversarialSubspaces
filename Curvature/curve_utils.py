@@ -32,7 +32,7 @@ def tab_name_to_hex(tab):
 
 
 def torchify(img):
-    output = torch.from_numpy(img).type(torch.DoubleTensor).to(dev()) # always autodiff
+    output = torch.from_numpy(img).type(torch.DoubleTensor).to(dev())
     output.requires_grad = True
     return output
 
@@ -130,7 +130,7 @@ def paired_activation_and_gradient(model, image, neuron1, neuron2):
     return activation_difference, grad
 
 
-def get_curvature(condition_zip, num_images, num_advs, origin_indices, num_iters, num_steps_per_iter, autodiff=False):
+def get_curvature(condition_zip, num_images, num_advs, origin_indices, num_iters, num_steps_per_iter, dtype):
     """
     A note on the gradient of the difference in activations:
     The gradient points in the direction of the origin from the boundary image.
@@ -157,26 +157,13 @@ def get_curvature(condition_zip, num_images, num_advs, origin_indices, num_iters
                     num_iters=num_iters
                 )[0]
                 adv_lbl = int(data_['adv_class'][origin_idx, adv_idx])
-                if autodiff:
-                    def func(x):
-                        acts_diff = paired_activation(model_, x, clean_lbl, adv_lbl)
-                        return acts_diff
-                    hessian = torch.autograd.functional.hessian(func, torchify(boundary_image[None,...]))
-                    hessian = hessian.reshape((int(boundary_image.size), int(boundary_image.size)))
-                else:
-                    def func(x):
-                        acts_diff, grad = paired_activation_and_gradient(model_, x, clean_lbl, adv_lbl)
-                        return acts_diff, grad
-                    hessian = curve_utils.sr1_hessian(
-                        func, torchify(boundary_image[None, ...]),
-                        distance=hess_params['hessian_dist'],
-                        n_points=hess_params['hessian_num_pts'],
-                        random_walk=hess_params['hessian_random_walk'],
-                        learning_rate=hess_params['hessian_lr'],
-                        return_points=False,
-                        progress=False)
+                def func(x):
+                    acts_diff = paired_activation(model_, x, clean_lbl, adv_lbl)
+                    return acts_diff
+                hessian = torch.autograd.functional.hessian(func, torchify(boundary_image[None,...]))
+                hessian = hessian.reshape((int(boundary_image.size), int(boundary_image.size))).type(dtype)
                 activation, gradient = paired_activation_and_gradient(model_, torchify(boundary_image[None, ...]), clean_lbl, adv_lbl)
-                gradient = gradient.reshape(-1)
+                gradient = gradient.reshape(-1).type(dtype)
                 curvature = curve_utils.local_response_curvature_isoresponse_surface(gradient, hessian)
                 shape_operators[model_idx, image_idx, adv_idx, ...] = curvature[0].detach().cpu().numpy()
                 principal_curvatures[model_idx, image_idx, adv_idx, :] = curvature[1].detach().cpu().numpy()
