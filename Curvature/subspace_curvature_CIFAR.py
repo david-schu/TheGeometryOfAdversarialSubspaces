@@ -25,16 +25,17 @@ if __name__ == "__main__":
     hess_params['hessian_random_walk'] = False
     hess_params['return_points'] = False
     hess_params['lr_decay'] = False#True
+    hess_radius_mult = 0.7 # times the min adv perturbation length
     num_iters = 2 # for paired image boundary search
     num_steps_per_iter = 100 # for paired image boundary search
     buffer_portion = 0.25
     num_eps = 1000
-    batch_size = 1000
-    num_images = 50#labels_nat.size
-    hess_radius_mult = 0.7 # times the min adv perturbation length
-    num_advs = 8
+
+    batch_size = 10
+
+    num_images = 50
+    num_advs = 10
     autodiff = True
-    num_hessian_tests = 0#10
     
     def tab_name_to_hex(tab): 
         conv_table = {
