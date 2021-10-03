@@ -84,7 +84,10 @@ def get_origin_indices(model, data, num_images, num_advs=None):
         model_predictions.append(torch.argmax(model(batch), dim=1).detach().cpu().numpy())
     model_predictions = np.stack(model_predictions, axis=0).reshape(-1)
     valid_indices = get_valid_indices(model_predictions, data, num_advs)
-    origin_indices = np.random.choice(valid_indices, size=num_images, replace=False)
+    #origin_indices = np.random.choice(valid_indices, size=num_images, replace=False)
+    step_size = len(valid_indices) // num_images
+    last = num_images * step_size
+    origin_indices = [valid_indices[i] for i in range(0, last, step_size)]
     return origin_indices, valid_indices
 
 
