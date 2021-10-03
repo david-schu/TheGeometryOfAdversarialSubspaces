@@ -13,6 +13,6 @@
 #SBATCH --mail-type=END
 #SBATCH --mail-user=dylan.paiton@uni-tuebingen.de
 
-singularity exec --nv docker://davidschultheiss/ad:latest /opt/conda/bin/python3 subspace_curvature_CIFAR.py
+singularity exec --nv docker://davidschultheiss/ad:latest /opt/conda/bin/python3 subspace_curvature $arg1 $arg2 $arg3
 
 echo DONE!
