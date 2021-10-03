@@ -43,8 +43,8 @@ if __name__ == "__main__":
     filename_prefix = code_directory+'AdversarialDecomposition/data/'
 
     batch_size = 10
-    num_images = 2#50
-    num_advs = 2#10
+    num_images = 50
+    num_advs = 10
     seed = 0
 
     num_iters = 2 # for paired image boundary search
