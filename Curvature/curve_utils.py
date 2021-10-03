@@ -1,3 +1,19 @@
+import sys
+
+import numpy as np
+import torch
+from tqdm import tqdm
+
+sys.path.insert(0, './..')
+sys.path.insert(0, '../data')
+
+from utils import dev
+
+sys.path.insert(0, './../..')
+
+import response_contour_analysis.utils.model_handling as model_utils
+import response_contour_analysis.utils.principal_curvature as curve_utils
+
 def tab_name_to_hex(tab):
     conv_table = {
         "tab:blue": "#1f77b4",
@@ -33,6 +49,9 @@ def get_paired_boundary_image(model, origin, alt_image, num_steps_per_iter, num_
             step_idx += 1
         return step_idx-1, pert_image
     image_line = np.linspace(origin.reshape(-1), alt_image.reshape(-1), num_steps_per_iter)
+    correct_img_out = torch.argmax(model(torchify(image_line[0, ...].reshape(input_shape))))
+    alt_img_out = torch.argmax(model(torchify(image_line[-1, ...].reshape(input_shape))))
+    assert correct_img_out != alt_img_out
     for search_iter in range(num_iters):
         step_idx, pert_image = find_pert(image_line)
         image_line = np.linspace(image_line[step_idx - 1, ...], image_line[step_idx, ...], num_steps_per_iter)
@@ -42,24 +61,29 @@ def get_paired_boundary_image(model, origin, alt_image, num_steps_per_iter, num_
     return pert_image.reshape(origin.shape), direction, pert_length
 
 
-def get_origin_indices(model, data, num_images):
-    batch_size = 10
-    image_splits = torch.split(torchify(data_['images']), batch_size)
+def get_valid_indices(model_predictions, data, num_advs):
+    valid_indices = [] # Need to ensure that all images are correctly labeled & have valid adversarial examples
+    for image_idx in range(data['images'].shape[0]):
+        if model_predictions[image_idx] == data['labels'][image_idx]: # correctly labeled
+            if np.all(np.isfinite(data['pert_lengths'][image_idx, :num_advs])): # enough adversaries found
+                valid_indices.append(image_idx)
+    return  valid_indices
+
+
+def get_origin_indices(model, data, num_images, num_advs):
+    batch_size = int(np.minimum(10, num_images))
+    image_splits = torch.split(torchify(data['images']), batch_size)
     model_predictions = []
     for batch in image_splits:
-        model_predictions.append(torch.argmax(model_(batch), dim=1).detach().cpu().numpy())
+        model_predictions.append(torch.argmax(model(batch), dim=1).detach().cpu().numpy())
     model_predictions = np.stack(model_predictions, axis=0).reshape((len(model_predictions)*batch_size,) + model_predictions[0].shape[1:])
-    valid_indices = [] # Need to ensure that all images are correctly labeled & have valid adversarial examples
-    for image_idx in range(data_['images'].shape[0]):
-        if model_predictions[image_idx] == data_['labels'][image_idx]: # correctly labeled
-            if np.all(np.isfinite(data_['pert_lengths'][image_idx, :num_advs])): # enough adversaries found
-                valid_indices.append(image_idx)
+    valid_indices = get_valid_indices(model_predictions, data, num_advs)
     origin_indices = np.random.choice(valid_indices, size=num_images, replace=False)
-    return origin_indices
+    return origin_indices, valid_indices
 
 
-def generate_paired_dict(data_dict, model, num_images, num_advs):
-    image_shape = data_dict['images'].shape[1:]
+def generate_paired_dict(model, data, origin_indices, valid_indices, num_images, num_advs, num_steps_per_iter, num_iters):
+    image_shape = data['images'].shape[1:]
     num_pixels = int(np.prod(image_shape))
     images = np.zeros((num_images,) + image_shape)
     labels = np.zeros((num_images), dtype=np.int)
@@ -68,12 +92,12 @@ def generate_paired_dict(data_dict, model, num_images, num_advs):
     pert_lengths = np.zeros((num_images, num_advs))
     adv_class = np.zeros((num_images, num_advs))
     for image_idx, origin_idx in enumerate(list(origin_indices)):
-        images[image_idx, ...] = data_dict['images'][origin_idx, ...]
-        labels[image_idx] = data_dict['labels'][origin_idx]
+        images[image_idx, ...] = data['images'][origin_idx, ...]
+        labels[image_idx] = data['labels'][origin_idx]
         shuffled_valid_indices = np.random.choice(valid_indices, size=len(valid_indices), replace=False)
-        alt_indices = [idx for idx, alt_class in zip(shuffled_valid_indices, data_dict['labels'][shuffled_valid_indices]) if alt_class != labels[image_idx]]
+        alt_indices = [idx for idx, alt_class in zip(shuffled_valid_indices, data['labels'][shuffled_valid_indices]) if alt_class != labels[image_idx]]
         for dir_idx, alt_idx in enumerate(alt_indices[:num_advs]):
-            alt_image = data_dict['images'][alt_idx, ...]
+            alt_image = data['images'][alt_idx, ...]
             boundary_image, boundary_dir, pert_length = get_paired_boundary_image(
                 model, images[image_idx, ...], alt_image, num_steps_per_iter, num_iters)
             dirs[image_idx, dir_idx, ...] = boundary_dir.reshape(1, -1)
@@ -106,7 +130,7 @@ def paired_activation_and_gradient(model, image, neuron1, neuron2):
     return activation_difference, grad
 
 
-def get_curvature(condition_zip, num_images, num_advs, num_eps, batch_size, buffer_portion, origin_indices, autodiff=False):
+def get_curvature(condition_zip, num_images, num_advs, origin_indices, num_iters, num_steps_per_iter, autodiff=False):
     """
     A note on the gradient of the difference in activations:
     The gradient points in the direction of the origin from the boundary image.
