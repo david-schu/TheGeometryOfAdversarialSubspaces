@@ -43,18 +43,15 @@ def torchify(img):
 def get_paired_boundary_image(model, origin, alt_image, num_steps_per_iter, num_iters):
     input_shape = (1,)+origin.shape
     def find_pert(image_line):
-        correct_lbl = torch.argmax(model(torchify(image_line[0, ...].reshape(input_shape))))
-        pert_lbl = correct_lbl.clone()
+        labels = get_batch_predictions(model, image_line.reshape((-1,)+origin.shape), batch_size=100)
+        pert_lbl = correct_lbl = labels[0]
         step_idx = 1 # already know the first one
         while pert_lbl == correct_lbl:
             pert_image = image_line[step_idx, ...]
-            pert_lbl = torch.argmax(model(torchify(pert_image.reshape(input_shape))))
+            pert_lbl = labels[step_idx]
             step_idx += 1
         return step_idx-1, pert_image
     image_line = np.linspace(origin.reshape(-1), alt_image.reshape(-1), num_steps_per_iter)
-    correct_img_out = torch.argmax(model(torchify(image_line[0, ...].reshape(input_shape))))
-    alt_img_out = torch.argmax(model(torchify(image_line[-1, ...].reshape(input_shape))))
-    assert correct_img_out != alt_img_out
     for search_iter in range(num_iters):
         step_idx, pert_image = find_pert(image_line)
         image_line = np.linspace(image_line[step_idx - 1, ...], image_line[step_idx, ...], num_steps_per_iter)
@@ -62,6 +59,30 @@ def get_paired_boundary_image(model, origin, alt_image, num_steps_per_iter, num_
     pert_length = np.linalg.norm(delta_image)
     direction = delta_image / pert_length
     return pert_image.reshape(origin.shape), direction, pert_length
+
+
+#def get_paired_boundary_image(model, origin, alt_image, num_steps_per_iter, num_iters):
+#    input_shape = (1,)+origin.shape
+#    def find_pert(image_line):
+#        correct_lbl = torch.argmax(model(torchify(image_line[0, ...].reshape(input_shape))))
+#        pert_lbl = correct_lbl.clone()
+#        step_idx = 1 # already know the first one
+#        while pert_lbl == correct_lbl:
+#            pert_image = image_line[step_idx, ...]
+#            pert_lbl = torch.argmax(model(torchify(pert_image.reshape(input_shape))))
+#            step_idx += 1
+#        return step_idx-1, pert_image
+#    image_line = np.linspace(origin.reshape(-1), alt_image.reshape(-1), num_steps_per_iter)
+#    #correct_img_out = torch.argmax(model(torchify(image_line[0, ...].reshape(input_shape))))
+#    #alt_img_out = torch.argmax(model(torchify(image_line[-1, ...].reshape(input_shape))))
+#    #assert correct_img_out != alt_img_out
+#    for search_iter in range(num_iters):
+#        step_idx, pert_image = find_pert(image_line)
+#        image_line = np.linspace(image_line[step_idx - 1, ...], image_line[step_idx, ...], num_steps_per_iter)
+#    delta_image = origin.reshape(-1) - pert_image
+#    pert_length = np.linalg.norm(delta_image)
+#    direction = delta_image / pert_length
+#    return pert_image.reshape(origin.shape), direction, pert_length
 
 
 def get_valid_indices(model_predictions, data, num_advs=None):
@@ -76,13 +97,18 @@ def get_valid_indices(model_predictions, data, num_advs=None):
     return  valid_indices
 
 
-def get_origin_indices(model, data, num_images, num_advs=None):
-    batch_size = int(np.minimum(10, num_images))
-    image_splits = torch.split(torchify(data['images']), batch_size, dim=0)
+def get_batch_predictions(model, data, batch_size=10):
+    image_splits = torch.split(torchify(data), batch_size, dim=0)
     model_predictions = []
     for batch in image_splits:
         model_predictions.append(torch.argmax(model(batch), dim=1).detach().cpu().numpy())
     model_predictions = np.stack(model_predictions, axis=0).reshape(-1)
+    return model_predictions
+
+
+def get_origin_indices(model, data, num_images, num_advs=None):
+    batch_size = int(np.minimum(10, num_images))
+    model_predictions = get_batch_predictions(model, data['images'], batch_size)
     valid_indices = get_valid_indices(model_predictions, data, num_advs)
     #origin_indices = np.random.choice(valid_indices, size=num_images, replace=False)
     step_size = len(valid_indices) // num_images
@@ -105,10 +131,12 @@ def generate_paired_dict(model, data, origin_indices, valid_indices, num_images,
         labels[image_idx] = data['labels'][origin_idx]
         shuffled_valid_indices = np.random.choice(valid_indices, size=len(valid_indices), replace=False)
         alt_indices = [idx for idx, alt_class in zip(shuffled_valid_indices, data['labels'][shuffled_valid_indices]) if alt_class != labels[image_idx]]
+        alt_images = data['images'][alt_indices[:num_advs]]
         for dir_idx, alt_idx in enumerate(alt_indices[:num_advs]):
             alt_image = data['images'][alt_idx, ...]
             boundary_image, boundary_dir, pert_length = get_paired_boundary_image(
-                model, images[image_idx, ...], alt_image, num_steps_per_iter, num_iters)
+                model, images[image_idx, ...], alt_image,
+                num_steps_per_iter=num_steps_per_iter, num_iters=num_iters)
             dirs[image_idx, dir_idx, ...] = boundary_dir.reshape(1, -1)
             advs[image_idx, dir_idx, ...] = boundary_image.reshape(1, -1)
             adv_class[image_idx,  dir_idx] = torch.argmax(model(torchify(boundary_image[None, ...]))).item()
@@ -123,19 +151,19 @@ def generate_paired_dict(model, data, origin_indices, valid_indices, num_images,
     return output_dict
 
 
-def paired_activation(model, image, neuron1, neuron2):
-    if not image.requires_grad:
-        image.requires_grad = True
+def paired_activation(model, images, neuron1, neuron2):
+    if not images.requires_grad:
+        images.requires_grad = True
     model.zero_grad()
-    activation1 = model_utils.unit_activation(model, image, neuron1, compute_grad=True)
-    activation2 = model_utils.unit_activation(model, image, neuron2, compute_grad=True)
+    activation1 = model_utils.unit_activation(model, images, neuron1, compute_grad=True)
+    activation2 = model_utils.unit_activation(model, images, neuron2, compute_grad=True)
     activation_difference = activation1 - activation2
     return activation_difference
 
 
-def paired_activation_and_gradient(model, image, neuron1, neuron2):
-    activation_difference = paired_activation(model, image, neuron1, neuron2)
-    grad = torch.autograd.grad(activation_difference, image)[0]
+def paired_activation_and_gradient(model, images, neuron1, neuron2):
+    activation_difference = paired_activation(model, images, neuron1, neuron2)
+    grad = torch.autograd.grad(activation_difference, images)[0]
     return activation_difference, grad
 
 
