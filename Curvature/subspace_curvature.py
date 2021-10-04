@@ -187,8 +187,7 @@ if __name__ == "__main__":
             run_name = 'robust_adv_subspace_'
         print('experiment ' + run_name)
 
-        subspace_size = num_advs-1
-        all_subspace_curvatures = np.zeros((num_images, subspace_size))
+        all_subspace_curvatures = np.zeros((num_images, num_advs))
         pbar = tqdm(total=num_advs*num_images, leave=False)
         for image_idx, origin_idx in enumerate(list(origin_indices)):
             for adv_idx in range(num_advs):
@@ -212,19 +211,14 @@ if __name__ == "__main__":
 
                 if run_type == 4 or run_type == 5: # random subspace
                     norm_gradient = (gradient / torch.linalg.norm(gradient)).detach().cpu().numpy()
-                    random_basis = torch.from_numpy(data_utils.get_rand_orth_vectors(norm_gradient, num_orth_directions=subspace_size)).type(dtype).to(dev())
+                    random_basis = torch.from_numpy(data_utils.get_rand_orth_vectors(norm_gradient, num_orth_directions=num_advs)).type(dtype).to(dev())
                     curvature = curve_utils.local_response_curvature_isoresponse_surface(gradient, hessian, projection_subspace_of_interest=random_basis)
                     rand_subspace_curvatures = curvature[1].detach().cpu().numpy()
                     all_subspace_curvatures[image_idx, :] = rand_subspace_curvatures
 
                 elif run_type == 6 or run_type == 7: # adversarial subspace
                     adv_dirs = data_['dirs'][origin_idx, :num_advs, ...].reshape(num_advs, n_pixels)
-                    if adv_idx > 0 and adv_idx < num_advs: # swap sign of current perturbation direction
-                        adv_dirs = np.concatenate((adv_dirs[:adv_idx], -adv_dirs[adv_idx], adv_dirs[adv_idx+1:]))
-                    elif adv_idx == 0:
-                        adv_dirs = np.concatenate((-adv_dirs[adv_idx], adv_dirs[adv_idx+1:]))
-                    else:
-                        adv_dirs = np.concatenate((adv_dirs[:adv_idx], -adv_dirs[adv_idx]))
+                    adv_dirs[adv_idx, :] = -adv_dirs[adv_idx, :] # swap sign of current perturbation direction
                     adv_basis = torch.from_numpy(adv_dirs).type(dtype).to(dev())
                     curvature = curve_utils.local_response_curvature_isoresponse_surface(gradient, hessian, projection_subspace_of_interest=adv_basis)
                     adv_subspace_curvatures = curvature[1].detach().cpu().numpy()
