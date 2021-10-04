@@ -151,15 +151,10 @@ if __name__ == "__main__":
             condition_zip, [condition_origin_indices[image_index]], num_advs, num_iters, num_steps_per_iter, dtype)
 
         save_dict = {}
-        if run_type <= 1: # paired conditions
-            save_dict['data'] = data_
-        else: # adversarial conditions
-            save_dict['data'] = []
         save_dict['origin_indices'] = [condition_origin_indices[image_index]]
         #save_dict['shape_operators'] = shape_operators
         save_dict['principal_curvatures'] = principal_curvatures
         save_dict['principal_directions'] = principal_directions
-        save_dict['mean_curvatures'] = np.mean(principal_curvatures, axis=-1)
 
 
     else: # subspace experiments
@@ -225,7 +220,7 @@ if __name__ == "__main__":
                     adv_basis = torch.from_numpy(adv_dirs).type(dtype).to(dev())
                     curvature = curve_utils.local_response_curvature_isoresponse_surface(gradient, hessian, projection_subspace_of_interest=adv_basis)
                     adv_subspace_curvatures = curvature[1].detach().cpu().numpy()
-                    adv_subspace_directions = curvature[2].deetach().cpu().numpy()
+                    adv_subspace_directions = curvature[2].detach().cpu().numpy()
                     all_subspace_curvatures[image_idx, adv_idx, :] = adv_subspace_curvatures
                     all_subspace_directions[image_idx, adv_idx, ...] = adv_subspace_directions
                 pbar.update(1)
