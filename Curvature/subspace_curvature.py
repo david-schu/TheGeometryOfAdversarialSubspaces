@@ -206,23 +206,17 @@ if __name__ == "__main__":
                     return acts_diff
                 hessian = torch.autograd.functional.hessian(func, torchify(boundary_image[None,...]))
                 hessian = hessian.reshape((int(boundary_image.size), int(boundary_image.size))).type(dtype)
-
                 if run_type == 4 or run_type == 5: # random subspace
                     norm_gradient = (gradient / torch.linalg.norm(gradient)).detach().cpu().numpy()
-                    random_basis = torch.from_numpy(data_utils.get_rand_orth_vectors(norm_gradient, num_orth_directions=num_advs)).type(dtype).to(dev())
-                    curvature = curve_utils.local_response_curvature_isoresponse_surface(gradient, hessian, projection_subspace_of_interest=random_basis)
-                    rand_subspace_curvatures = curvature[1].detach().cpu().numpy()
-                    all_subspace_curvatures[image_idx, adv_idx, ] = rand_subspace_curvatures
-
+                    projection_basis = torch.from_numpy(data_utils.get_rand_orth_vectors(norm_gradient, num_orth_directions=num_advs)).type(dtype).to(dev())
                 elif run_type == 6 or run_type == 7: # adversarial subspace
-                    adv_dirs = data_['dirs'][origin_idx, :num_advs, ...].reshape(num_advs, n_pixels)
-                    #adv_dirs[adv_idx, :] = -adv_dirs[adv_idx, :] # swap sign of current perturbation direction
-                    adv_basis = torch.from_numpy(adv_dirs).type(dtype).to(dev())
-                    curvature = curve_utils.local_response_curvature_isoresponse_surface(gradient, hessian, projection_subspace_of_interest=adv_basis)
-                    adv_subspace_curvatures = curvature[1].detach().cpu().numpy()
-                    adv_subspace_directions = curvature[2].detach().cpu().numpy()
-                    all_subspace_curvatures[image_idx, adv_idx, :] = adv_subspace_curvatures
-                    all_subspace_directions[image_idx, adv_idx, ...] = adv_subspace_directions
+                    # We don't include the current direction, because it is the negative of the gradient
+                    adv_dirs = data_['dirs'][origin_idx, :num_advs+1, ...]
+                    adv_dirs = np.delete(adv_dirs, adv_idx, axis=0).reshape(num_advs, n_pixels)
+                    projection_basis = torch.from_numpy(adv_dirs).type(dtype).to(dev())
+                curvature = curve_utils.local_response_curvature_isoresponse_surface(gradient, hessian, projection_subspace_of_interest=projection_basis)
+                all_subspace_curvatures[image_idx, adv_idx, :] = curvature[1].detach().cpu().numpy()
+                all_subspace_directions[image_idx, adv_idx, ...] = curvature[2].detach().cpu().numpy()
                 pbar.update(1)
         pbar.close()
 
