@@ -187,8 +187,11 @@ if __name__ == "__main__":
             run_name = 'robust_adv_subspace_'
         print('experiment ' + run_name)
 
-        all_subspace_curvatures = np.zeros((num_images, num_advs))
-        pbar = tqdm(total=num_advs*num_images, leave=False)
+        num_exp_images = len(origin_indices)
+        image_size = data_['images'][0, ...].size
+        all_subspace_curvatures = np.zeros((num_exp_images, num_advs, num_advs))
+        all_subspace_directions = np.zeros((num_exp_images, num_advs, image_size, num_advs))
+        pbar = tqdm(total=num_advs*num_exp_images, leave=True)
         for image_idx, origin_idx in enumerate(list(origin_indices)):
             for adv_idx in range(num_advs):
                 boundary_image, boundary_dir, pert_length = get_paired_boundary_image(
@@ -214,21 +217,24 @@ if __name__ == "__main__":
                     random_basis = torch.from_numpy(data_utils.get_rand_orth_vectors(norm_gradient, num_orth_directions=num_advs)).type(dtype).to(dev())
                     curvature = curve_utils.local_response_curvature_isoresponse_surface(gradient, hessian, projection_subspace_of_interest=random_basis)
                     rand_subspace_curvatures = curvature[1].detach().cpu().numpy()
-                    all_subspace_curvatures[image_idx, :] = rand_subspace_curvatures
+                    all_subspace_curvatures[image_idx, adv_idx, ] = rand_subspace_curvatures
 
                 elif run_type == 6 or run_type == 7: # adversarial subspace
                     adv_dirs = data_['dirs'][origin_idx, :num_advs, ...].reshape(num_advs, n_pixels)
-                    adv_dirs[adv_idx, :] = -adv_dirs[adv_idx, :] # swap sign of current perturbation direction
+                    #adv_dirs[adv_idx, :] = -adv_dirs[adv_idx, :] # swap sign of current perturbation direction
                     adv_basis = torch.from_numpy(adv_dirs).type(dtype).to(dev())
                     curvature = curve_utils.local_response_curvature_isoresponse_surface(gradient, hessian, projection_subspace_of_interest=adv_basis)
                     adv_subspace_curvatures = curvature[1].detach().cpu().numpy()
-                    all_subspace_curvatures[image_idx, :] = adv_subspace_curvatures
+                    adv_subspace_directions = curvature[2].deetach().cpu().numpy()
+                    all_subspace_curvatures[image_idx, adv_idx, :] = adv_subspace_curvatures
+                    all_subspace_directions[image_idx, adv_idx, ...] = adv_subspace_directions
                 pbar.update(1)
         pbar.close()
 
         save_dict = {}
         save_dict['origin_indices'] = origin_indices
         save_dict['principal_curvatures'] = all_subspace_curvatures
+        save_dict['principal_directions'] = all_subspace_directions
 
     filename = filename_prefix + run_name + filename_postfix
     np.savez(filename, data=save_dict)

@@ -183,7 +183,7 @@ def get_curvature(condition_zip, origin_indices, num_advs, num_iters, num_steps_
     principal_curvatures = np.zeros((num_models, num_images, num_advs, num_dims))
     principal_directions = np.zeros((num_models, num_images, num_advs, image_size, num_dims))
     for model_idx, (model_, data_)  in enumerate(zip(models, model_data)):
-        pbar = tqdm(total=num_advs*num_images, leave=False)
+        pbar = tqdm(total=num_advs*num_images, leave=True)
         for image_idx, origin_idx in enumerate(list(origin_indices)):
             clean_lbl = int(data_['labels'][origin_idx])
             for adv_idx in range(num_advs):
