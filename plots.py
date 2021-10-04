@@ -222,7 +222,7 @@ def plot_cw_surface(orig, adv1, adv2, model):
 
 def plot_dec_space(orig, adv1, adv2, model, offset=0.1, len_grid_scale=2, n_grid=100,
                    show_legend=True, show_advs=True, align_ticks=False,
-                   overlay_inbounds=False, origin_centered=False, ax=None):
+                   overlay_inbounds=False, origin_centered=False, colors=None, ax=None):
     if ax is None:
         fig, ax = plt.subplots()
     if orig.ndim == 3:
@@ -253,7 +253,8 @@ def plot_dec_space(orig, adv1, adv2, model, offset=0.1, len_grid_scale=2, n_grid
         preds = np.concatenate((preds, model(batch).detach().cpu().numpy()), axis=0)
 
     classes = np.argmax(preds, axis=-1).reshape((n_grid, n_grid))
-    colors = ['orange', 'green', 'brown', 'grey', 'blue', 'pink','cyan', 'olive', 'red', 'purple']
+    if colors is None:
+        colors = ['orange', 'green', 'brown', 'grey', 'blue', 'pink','cyan', 'olive', 'red', 'purple']
     labels = []
     colorList = []
     for i, c in enumerate(np.unique(classes)):
