@@ -1,9 +1,8 @@
 #!/bin/bash
-#SBATCH --job-name=curvature_analysis
 #SBATCH --ntasks=1                      # Number of tasks (see below)
 #SBATCH --cpus-per-task=5               # Number of CPU cores per task
 #SBATCH --nodes=1                       # Ensure that all cores are on one machine
-#SBATCH --time=0-01:30                  # Runtime in D-HH:MM
+#SBATCH --time=0-06:00                  # Runtime in D-HH:MM
 #SBATCH --partition=gpu-2080ti          # Partition to submit to
 #SBATCH --mem=100G                      # Memory pool for all cores (see also --mem-per-cpu)
 #SBATCH --output=batch_curvature_%j.out # File to which STDOUT will be written
