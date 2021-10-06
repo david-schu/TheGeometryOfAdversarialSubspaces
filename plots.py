@@ -1,8 +1,6 @@
 from matplotlib import pyplot as plt
 import numpy as np
-from utils import orth_check, map_to, dev
-from matplotlib.ticker import FormatStrFormatter
-import matplotlib.patches as mpatches
+from utils import dev
 import torch
 from mpl_toolkits.mplot3d import art3d
 import matplotlib.patches as mpatches
@@ -76,36 +74,6 @@ def plot_mean_advs(advs, images, classes, labels, pert_lengths, n=10, vmin=0, vm
     dist_to_mean = np.sum(np.abs(pert_lengths - mean_pert_length), axis=-1)
     min_idx = np.argmin(dist_to_mean)
     return plot_advs(advs[min_idx], images[min_idx], classes[min_idx], labels[min_idx], n=n, vmin=vmin, vmax=vmax)
-
-
-def plot_pert_len_difs(advs_natural, advs_robust, images, n=10, ord=2):
-    n = np.minimum(n, advs_natural[0].shape[-2])
-    pert_len_natural = np.linalg.norm(advs_natural - images.reshape((-1, 1, 784)), ord=ord, axis=-1)
-    pert_len_robust = np.linalg.norm(advs_robust - images.reshape((-1, 1, 784)), ord=ord, axis=-1)
-    pert_len_natural[np.all(advs_natural == 0, axis=-1)] = np.nan
-    pert_len_robust[np.all(advs_robust == 0, axis=-1)] = np.nan
-
-    pert_len_difs = pert_len_robust - pert_len_natural
-    pert_len_difs = pert_len_difs[:, :n]
-    mask = ~np.isnan(pert_len_difs)
-    filtered_data = [d[m] for d, m in zip(pert_len_difs.T, mask.T)]
-
-    boxprops = dict(color='blue', linewidth=1.5, alpha=0.7)
-    whiskerprops = dict(color='blue', alpha=0.7)
-    capprops = dict(color='blue', alpha=0.7)
-    medianprops = dict(linestyle=None, linewidth=0)
-    meanpointprops = dict(marker='o', markeredgecolor='black',
-                          markerfacecolor='orange')
-    plt.boxplot(filtered_data, whis=[10, 90], showfliers=False, showmeans=True, boxprops=boxprops,
-                whiskerprops=whiskerprops, capprops=capprops, meanprops=meanpointprops, medianprops=medianprops)
-    plt.title('Difference of perturbation lengths between robust and natural model')
-    plt.xlabel('d')
-    if ord == np.inf:
-        plt.ylabel('adversarial vector length ($\ell_\infty-norm$)')
-    else:
-        plt.ylabel('adversarial vector length ($\ell_%d-norm$)' % (ord))
-
-    return fig, ax
 
 
 def plot_pert_lengths(pert_lengths, n=10, labels=None, ord=2, showmeans=False):
@@ -315,40 +283,6 @@ def plot_dec_space(orig, adv1, adv2, model, offset=0.1, len_grid_scale=2, n_grid
         return advs, labels
 
 
-def plot_contrasted_dec_space(orig, adv1, adv2, model, n=4):
-    epsilon = np.linspace(0, 0.5, n+2)
-    dir1 = adv1 - np.reshape(orig, (784))
-    dir2 = adv2 - np.reshape(orig, (784))
-
-    n_cols = int(np.ceil(n+2)/2)
-    n_rows = int(np.ceil((n+2)/n_cols))
-    fig, ax = plt.subplots(2, n+2)
-
-    for i in range(n+2):
-        scaled_orig = map_to(orig, epsilon[i], 1-epsilon[i])
-
-        plt.subplot(2, n+2, i+1)
-        plot_dec_space(scaled_orig, dir1+np.reshape(scaled_orig, (784)), dir2+np.reshape(scaled_orig, (784)), model, show_legend=False)
-        plt.title('contrast = %.1f' % (1-2*epsilon[i]))
-        # if i < (n+2-n_cols):
-        #     plt.gca().xaxis.set_visible(False)
-        if not (i % n_cols) == 0:
-            plt.gca().yaxis.set_visible(False)
-
-        plt.subplot(2, n+2, i+1+n+2)
-        plt.imshow(scaled_orig[0], cmap='gray', vmin=0, vmax=1)
-        plt.xticks([])
-        plt.yticks([])
-
-    # colors = ['orange', 'green', 'brown', 'grey', 'pink', 'blue', 'cyan', 'olive',
-    #           'red', 'purple']
-    # labels = []
-    # for c in range(10):
-    #     labels.append(mpatches.Patch(color=colors[c], label='Class ' + str(c)))
-    # fig.legend(handles=labels, title='predicted class', loc='upper right', bbox_to_anchor=(0.95, 0.7))
-    # plt.subplots_adjust(right=0.9)
-    plt.show()
-
 
 def plot_var_hist(classes, labels, title=None, with_colors=True):
     bar_width = 0.4
@@ -383,29 +317,3 @@ def plot_var_hist(classes, labels, title=None, with_colors=True):
     plt.tight_layout()
 
     return fig, ax
-
-
-def show_consistency(adv_dirs):
-    inner_prods = []
-    for i in range(adv_dirs.shape[1]):
-        all_zero = np.all(adv_dirs[:, i] == 0, axis=-1)
-        orth = orth_check(adv_dirs[~all_zero, i])
-        inner_prods.append(abs(orth[np.triu_indices_from(orth, 1)]))
-    plt.figure()
-    plt.boxplot(inner_prods, showfliers=False, whis='range')
-    plt.xlabel('d')
-    plt.ylabel('inner poduct across runs')
-    # plt.title('Consistency of Adversarial Directions over %d runs' % (adv_dirs.shape[0]))
-    plt.show()
-
-
-def show_orth(adv_dirs):
-    orth = orth_check(adv_dirs)
-    table = plt.table(np.around(orth, decimals=2), loc='center')
-    table.scale(1, 1.5)
-    table.auto_set_font_size(False)
-    table.set_fontsize(14)
-    plt.xticks([])
-    plt.yticks([])
-    plt.box()
-    plt.title('Orthorgonality of adversarial directions', y=0.9)

@@ -6,18 +6,16 @@ import torchvision.datasets as datasets
 def orth_check(adv_dirs):
     adv_dirs = np.array(adv_dirs).reshape((adv_dirs.shape[0],-1))
     orth = np.dot(adv_dirs,adv_dirs.T)
-    return orth, np.allclose(orth, np.identity(orth.shape[0]),atol=1e-2)
+    return orth, np.allclose(orth, np.identity(orth.shape[0]),atol=1e-7)
 
 
-def classification(img, label, model):
+def classification(img, label, model, is_adv=True):
     if not torch.is_tensor(img):
         img = torch.tensor(img, device=dev())
     pred = model(img).cpu().detach().numpy()[0]
-    sorted = np.sort(pred)
     img_class = np.argmax(pred)
-    is_adv = label != img_class
-    if not is_adv and int(sorted[-2] * 10000) == int(sorted[-1] * 10000):
-        img_class = pred.argsort()[-2]
+    if is_adv:
+        assert img_class!=label
     return img_class
 
 

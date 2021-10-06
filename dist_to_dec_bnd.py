@@ -11,7 +11,7 @@ import tqdm
 
 
 if __name__ == "__main__":
-    is_natural = int(sys.argv[1])
+    is_natural = 1#int(sys.argv[1])
 
     if is_natural:
         resume_path = './models/cifar_models/nat_diff.pt'
