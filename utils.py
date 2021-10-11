@@ -55,15 +55,14 @@ def map_to(x, tmin, tmax, rmin=0, rmax=1):
         x_t = (x-rmin)*(tmax-tmin)/(rmax-rmin)+tmin
     return x_t
 
-def make_orth_basis(dirs=[]):
-    n_iterations = 3
-    n_pixel = 784  # dirs.shape[-1]
-    basis = np.random.uniform(-1, 1, (n_pixel - len(dirs), n_pixel))
+
+def make_orth_basis(dirs=[], n_pixels=784, n_iterations=3):
+    basis = np.random.uniform(-1, 1, (n_pixels - len(dirs), n_pixels))
     basis = basis / np.linalg.norm(basis, axis=-1, keepdims=True)
     if len(dirs) > 0:
         basis_with_dirs = np.concatenate((dirs, basis), axis=0)
     else:
-        basis_with_dirs = basis
+        basis_with_dirs = basis.copy()
 
     for it in range(n_iterations):
         for i, v in enumerate(basis):

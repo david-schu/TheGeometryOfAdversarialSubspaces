@@ -7,7 +7,7 @@ import matplotlib.patches as mpatches
 from matplotlib.colors import ListedColormap
 
 
-def plot_advs(advs, shape, orig=None, classes=None, orig_class=None, n=10, vmin=0, vmax=1):
+def plot_advs(advs, shape, orig=None, classes=None, orig_class=None, n=10, vmin=0, vmax=1, ax=None):
     if orig is None:
         j = 0
     else:
@@ -17,7 +17,6 @@ def plot_advs(advs, shape, orig=None, classes=None, orig_class=None, n=10, vmin=
     if classes is None:
         with_classes = False
 
-    n = np.minimum(n, len(advs))
     dirs = advs - np.reshape(orig, (1,-1))
 
     max_val = np.maximum(abs(np.min(dirs)), abs(np.max(dirs)))
@@ -29,7 +28,12 @@ def plot_advs(advs, shape, orig=None, classes=None, orig_class=None, n=10, vmin=
     else:
         dirs = np.reshape(dirs, [-1,shape[1],shape[2]])
         advs = np.reshape(advs, [-1,shape[1],shape[2]])
-    fig, ax = plt.subplots(2, n + j, squeeze=False)
+    
+    if ax is None:
+        ax_arg = None
+        fig, ax = plt.subplots(2, n + j, squeeze=False)
+    else:
+        ax_arg = ax
 
     if not (orig is None):
         if shape[0]==3:
@@ -62,10 +66,15 @@ def plot_advs(advs, shape, orig=None, classes=None, orig_class=None, n=10, vmin=
         ax[1, i + j].set_yticks([])
 
     #ax[1, n+j-1].set_xlabel('magnification factor ' + str(np.round(1/max_val, 2)), horizontalalignment='right', x=1.0)
-    fig.colorbar(im_adv, ax=ax[0, :].ravel().tolist(), shrink=0.7)
-    fig.colorbar(im_pert, ax=ax[1, :].ravel().tolist(), shrink=0.7)
+    if ax_arg is None:
+        fig.colorbar(im_adv, ax=ax[0, :].ravel().tolist(), shrink=0.7)
+        fig.colorbar(im_pert, ax=ax[1, :].ravel().tolist(), shrink=0.7)
+    else:
+        ax[0, :].colorbar(im_adv, shrink=0.7)
+        ax[1, :].colorbar(im_pert, shrink=0.7)
 
-    return fig, ax
+    if ax_arg is None:
+        return fig, ax
 
 
 def plot_mean_advs(advs, images, classes, labels, pert_lengths, n=10, vmin=0, vmax=1):
@@ -179,11 +188,15 @@ def plot_cw_surface(orig, adv1, adv2, model):
     plt.show()
 
 
-def plot_dec_space(orig, adv1, adv2, model, offset=0.1, len_grid_scale=2, n_grid=100, show_legend=True, show_advs=True, align_ticks=False,
-                   overlay_inbounds=False, origin_centered=False, ax=None):
+def plot_dec_space(orig, adv1, adv2, model, offset=0.1, len_grid_scale=2, n_grid=100,
+                   show_legend=True, show_advs=True, align_ticks=False,
+                   overlay_inbounds=False, origin_centered=False, colors=None, ax=None):
     if ax is None:
         fig, ax = plt.subplots()
-    shape = orig.shape
+    if orig.ndim == 3:
+        input_shape = orig.shape
+    else: # batch singleton dimension included
+        input_shape = orig.shape[1:]
     orig = orig.flatten()
     pert1 = adv1 - orig
     pert2 = adv2 - orig
@@ -200,7 +213,7 @@ def plot_dec_space(orig, adv1, adv2, model, offset=0.1, len_grid_scale=2, n_grid
     y = np.linspace(-offset, len_grid, n_grid)
     X, Y = np.meshgrid(x, y)
     advs = orig + (dir1[None, :] * np.reshape(X, (-1, 1)) + dir2[None, :] * np.reshape(Y, (-1, 1)))
-    advs = np.array(np.reshape(advs, ((-1,) + shape)).astype('float64'))
+    advs = np.array(np.reshape(advs, ((-1,) + input_shape)).astype('float64'))
     input = torch.split(torch.tensor(advs, device=dev()), 20)
 
     preds = np.empty((0, 10))
@@ -208,7 +221,8 @@ def plot_dec_space(orig, adv1, adv2, model, offset=0.1, len_grid_scale=2, n_grid
         preds = np.concatenate((preds, model(batch).detach().cpu().numpy()), axis=0)
 
     classes = np.argmax(preds, axis=-1).reshape((n_grid, n_grid))
-    colors = ['orange', 'green', 'brown', 'grey', 'blue', 'pink','cyan', 'olive', 'red', 'purple']
+    if colors is None:
+        colors = ['orange', 'green', 'brown', 'grey', 'blue', 'pink','cyan', 'olive', 'red', 'purple']
     labels = []
     colorList = []
     for i, c in enumerate(np.unique(classes)):
@@ -217,7 +231,7 @@ def plot_dec_space(orig, adv1, adv2, model, offset=0.1, len_grid_scale=2, n_grid
     # Plot the surface.
     new_cmap = ListedColormap(colors)
 
-    ax.imshow(classes, cmap=new_cmap, origin='lower', vmin=0, vmax=9)
+    ax.imshow(classes, cmap=new_cmap, origin='lower', interpolation=None, vmin=0, vmax=9)
     if overlay_inbounds:
         new_cmap2 = ListedColormap(['none', 'k'])
         out_of_bounds = np.logical_or(advs.max(axis=(1,2,3))>1, advs.min(axis=(1,2,3))<0).reshape((n_grid, n_grid))
