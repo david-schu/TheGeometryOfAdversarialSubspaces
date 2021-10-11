@@ -61,30 +61,6 @@ def get_paired_boundary_image(model, origin, alt_image, num_steps_per_iter, num_
     return pert_image.reshape(origin.shape), direction, pert_length
 
 
-#def get_paired_boundary_image(model, origin, alt_image, num_steps_per_iter, num_iters):
-#    input_shape = (1,)+origin.shape
-#    def find_pert(image_line):
-#        correct_lbl = torch.argmax(model(torchify(image_line[0, ...].reshape(input_shape))))
-#        pert_lbl = correct_lbl.clone()
-#        step_idx = 1 # already know the first one
-#        while pert_lbl == correct_lbl:
-#            pert_image = image_line[step_idx, ...]
-#            pert_lbl = torch.argmax(model(torchify(pert_image.reshape(input_shape))))
-#            step_idx += 1
-#        return step_idx-1, pert_image
-#    image_line = np.linspace(origin.reshape(-1), alt_image.reshape(-1), num_steps_per_iter)
-#    #correct_img_out = torch.argmax(model(torchify(image_line[0, ...].reshape(input_shape))))
-#    #alt_img_out = torch.argmax(model(torchify(image_line[-1, ...].reshape(input_shape))))
-#    #assert correct_img_out != alt_img_out
-#    for search_iter in range(num_iters):
-#        step_idx, pert_image = find_pert(image_line)
-#        image_line = np.linspace(image_line[step_idx - 1, ...], image_line[step_idx, ...], num_steps_per_iter)
-#    delta_image = origin.reshape(-1) - pert_image
-#    pert_length = np.linalg.norm(delta_image)
-#    direction = delta_image / pert_length
-#    return pert_image.reshape(origin.shape), direction, pert_length
-
-
 def get_valid_indices(model_predictions, data, num_advs=None):
     valid_indices = [] # Need to ensure that all images are correctly labeled & have valid adversarial examples
     for image_idx in range(data['images'].shape[0]):
