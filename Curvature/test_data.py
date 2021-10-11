@@ -1,15 +1,11 @@
 import sys
 
-import dill
 import numpy as np
 import torch
 
 sys.path.insert(0, './..')
 sys.path.insert(0, '../data')
 
-from models import model as model_loader
-from utils import dev
-from robustness1.datasets import CIFAR
 from curve_utils import torchify, load_mnist, load_cifar
 
 code_directory = '../../'

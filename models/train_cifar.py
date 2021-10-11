@@ -1,8 +1,8 @@
 import sys
 sys.path.insert(0, './..')
 sys.path.insert(0, '../data')
-from robustness1 import model_utils, train, defaults
-from robustness1.datasets import CIFAR
+from robustness import model_utils, train, defaults
+from models.cifar_models.datasets import CIFAR
 
 # We use cox (http://github.com/MadryLab/cox) to log, store and analyze
 # results. Read more at https//cox.readthedocs.io.

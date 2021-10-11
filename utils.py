@@ -1,8 +1,9 @@
 import numpy as np
 import torch
 import torchvision.datasets as datasets
-from models import model as model_loader
-from robustness1.datasets import CIFAR
+from models.mnist_models import model as model_loader
+from models.cifar_models.datasets import CIFAR
+from models.cifar_models.resnet_models.resnet import CifarPretrained
 import dill
 
 
@@ -72,6 +73,8 @@ def load_stable_data(d_set='MNIST'):
         data = np.load('./data/MNIST/stable_data.npy', allow_pickle=True).item()
     elif d_set == 'CIFAR':
         data = np.load('./data/CIFAR/stable_data.npy', allow_pickle=True).item()
+    else:
+        raise ValueError('Invalid Dataset')
     return data
 
 
@@ -85,7 +88,7 @@ def load_model(resume_path, dataset):
         model [PyTorch model] a classification model
     """
     if dataset == 'MNIST':
-        model = model_loader.madry_diff()
+        model = model_loader.Madry()
         model.load_state_dict(
             torch.load(resume_path, map_location=torch.device(dev())))
         model.to(dev())
@@ -95,7 +98,7 @@ def load_model(resume_path, dataset):
     elif dataset == 'CIAFR':
         ds = CIFAR('./data/cifar-10-batches-py')
         classifier_model = ds.get_model('resnet50', False)
-        model = model_loader.cifar_pretrained(classifier_model, ds)
+        model = CifarPretrained(classifier_model, ds)
         checkpoint = torch.load(resume_path, pickle_module=dill, map_location=torch.device(dev()))
         state_dict_path = 'model'
         if not ('model' in checkpoint):

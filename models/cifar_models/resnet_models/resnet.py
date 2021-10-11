@@ -4,10 +4,20 @@ Reference:
 [1] Kaiming He, Xiangyu Zhang, Shaoqing Ren, Jian Sun
     Deep Residual Learning for Image Recognition. arXiv:1512.03385
 '''
-import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from ..tools.custom_modules import SequentialWithArgs, FakeReLU
+from robustness.attacker import AttackerModel
+
+class SequentialWithArgs(nn.Sequential):
+    def forward(self, input, *args, **kwargs):
+        vs = list(self._modules.values())
+        l = len(vs)
+        for i in range(l):
+            if i == l-1:
+                input = vs[i](input, *args, **kwargs)
+            else:
+                input = vs[i](input)
+        return input
 
 class BasicBlock(nn.Module):
     expansion = 1
@@ -28,12 +38,10 @@ class BasicBlock(nn.Module):
                           stride=stride, bias=False),
                 nn.BatchNorm2d(self.expansion*planes))
 
-    def forward(self, x, fake_relu=False):
+    def forward(self, x):
         out = F.elu(self.bn1(self.conv1(x)))
         out = self.bn2(self.conv2(out))
         out += self.shortcut(x)
-        if fake_relu:
-            return FakeReLU.apply(out)
         return F.elu(out)
 
 
@@ -57,13 +65,11 @@ class Bottleneck(nn.Module):
                 nn.BatchNorm2d(self.expansion*planes)
             )
 
-    def forward(self, x, fake_relu=False):
+    def forward(self, x):
         out = F.elu(self.bn1(self.conv1(x)))
         out = F.elu(self.bn2(self.conv2(out)))
         out = self.bn3(self.conv3(out))
         out += self.shortcut(x)
-        if fake_relu:
-            return FakeReLU.apply(out)
         return F.elu(out)
 
 
@@ -108,38 +114,13 @@ class ResNet(nn.Module):
             return final, pre_out
         return final
 
-def ResNet18(**kwargs):
-    return ResNet(BasicBlock, [2,2,2,2], **kwargs)
 
-def ResNet18Wide(**kwargs):
-    return ResNet(BasicBlock, [2,2,2,2], wm=5, **kwargs)
+class CifarPretrained(AttackerModel):
+    def forward(self, x):
+        return AttackerModel.forward(self, x, with_image=False)
 
-def ResNet18Thin(**kwargs):
-    return ResNet(BasicBlock, [2,2,2,2], wd=.75, **kwargs)
-
-def ResNet34(**kwargs):
-    return ResNet(BasicBlock, [3,4,6,3], **kwargs)
 
 def ResNet50(**kwargs):
     print('Custom model')
     return ResNet(Bottleneck, [3,4,6,3], **kwargs)
-
-def ResNet101(**kwargs):
-    return ResNet(Bottleneck, [3,4,23,3], **kwargs)
-
-def ResNet152(**kwargs):
-    return ResNet(Bottleneck, [3,8,36,3], **kwargs)
-
-resnet50 = ResNet50
-resnet18 = ResNet18
-resnet34 = ResNet34
-resnet101 = ResNet101
-resnet152 = ResNet152
-resnet18wide = ResNet18Wide
-
-# resnet18thin = ResNet18Thin
-def test():
-    net = ResNet18()
-    y = net(torch.randn(1,3,32,32))
-    print(y.size())
 

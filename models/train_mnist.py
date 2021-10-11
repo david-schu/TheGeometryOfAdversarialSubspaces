@@ -1,6 +1,6 @@
 import torch
 from torchvision import datasets, transforms
-from models import model, eval
+from models.mnist_models import model, eval
 
 train_batch_size = 50
 eval_batch_size = 200

@@ -1,22 +1,13 @@
 import sys
 
-import dill
-from tqdm import tqdm
-import numpy as np
-import torch
-from torchvision import datasets
-
 sys.path.insert(0, './..')
 sys.path.insert(0, '../data')
 
-from models import model as model_loader
-from utils import dev, make_orth_basis
-from robustness1.datasets import CIFAR
+from utils import make_orth_basis
 from curve_utils import *
 
 sys.path.insert(0, './../..')
 
-import response_contour_analysis.utils.model_handling as model_utils
 import response_contour_analysis.utils.principal_curvature as curve_utils
 
 if __name__ == "__main__":

@@ -4,12 +4,11 @@ from torch.autograd import Variable
 from torch import optim
 import numpy as np
 import utils as u
-from robustness1.attacker import AttackerModel
+
 
 NB_EPOCHS = 10
 BATCH_SIZE = 128
 LEARNING_RATE = .001
-
 
 class model_trainable(torch.nn.Module):
     def __init__(self):
@@ -141,6 +140,4 @@ class Madry(model_trainable):
         return x
 
 
-class CifarPretrained(AttackerModel):
-    def forward(self, x):
-        return AttackerModel.forward(self, x, with_image=False)
+

@@ -8,9 +8,9 @@ from tqdm import tqdm
 sys.path.insert(0, './..')
 sys.path.insert(0, '../data')
 
-from models import model as model_loader
+from models.mnist_models import model as model_loader
 from utils import dev
-from robustness1.datasets import CIFAR
+from models.cifar_models.datasets import CIFAR
 
 sys.path.insert(0, './../..')
 
