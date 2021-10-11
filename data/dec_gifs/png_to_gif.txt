@@ -1,3 +1,0 @@
-ffmpeg -i %03d.png -c:v libx264 -vf fps=25 -pix_fmt yuv420p out.mp4
-ffmpeg -i out.mp4 -vf "fps=25,scale=1200:-1:flags=lanczos,split[s0][s1];[s0]palettegen[p];[s1][p]paletteuse" -loop 0 output.gif
-

@@ -6,11 +6,9 @@ import numpy as np
 import utils as u
 from robustness1.attacker import AttackerModel
 
-
 NB_EPOCHS = 10
 BATCH_SIZE = 128
 LEARNING_RATE = .001
-
 
 
 class model_trainable(torch.nn.Module):
@@ -120,34 +118,9 @@ class model_trainable(torch.nn.Module):
                     correctAdv = 0
 
 
-
-class madry(model_trainable):
+class Madry(model_trainable):
     def __init__(self):
-        super(madry, self).__init__()
-        self.conv1 = nn.Conv2d(1, 32, 5, padding=2)
-        self.maxPool1 = nn.MaxPool2d(kernel_size=2, stride=2)
-        self.conv2 = nn.Conv2d(32, 64, 5, padding=2)
-        self.maxPool2 = nn.MaxPool2d(kernel_size=2, stride=2)
-        self.fc1 = nn.Linear(64 * 7 * 7, 1024)
-        self.fc2 = nn.Linear(1024, 10)
-        self.relu = nn.ReLU()
-
-    def forward(self, x):
-        x = x.clip(0, 1)
-        x = self.relu(self.conv1(x))
-        x = self.maxPool1(x)
-        x = self.relu(self.conv2(x))
-        x = self.maxPool2(x)
-        x = x.view(-1, 64 * 7 * 7)
-        x = self.relu(self.fc1(x))
-        x = self.fc2(x)
-        return x
-
-
-
-class madry_diff(model_trainable):
-    def __init__(self):
-        super(madry_diff, self).__init__()
+        super(Madry, self).__init__()
         self.conv1 = nn.Conv2d(1, 32, 5, padding=2).double()
         self.maxPool1 = nn.MaxPool2d(kernel_size=2, stride=2).double()
         self.conv2 = nn.Conv2d(32, 64, 5, padding=2).double()
@@ -156,9 +129,8 @@ class madry_diff(model_trainable):
         self.fc2 = nn.Linear(1024, 10).double()
         self.elu = nn.ELU().double()
 
-
     def forward(self, x):
-        # x = x.clip(0, 1)
+        x = x.clip(0, 1)
         x = self.elu(self.conv1(x))
         x = self.maxPool1(x)
         x = self.elu(self.conv2(x))
@@ -169,36 +141,6 @@ class madry_diff(model_trainable):
         return x
 
 
-class cifar_model(torch.nn.Module):
-    def __init__(self):
-        super(cifar_model, self).__init__()
-        self.conv11 = nn.Conv2d(3, 32, 3, padding=1)
-        self.conv12 = nn.Conv2d(32, 32, 3, padding=1)
-        self.maxPool1 = nn.MaxPool2d(kernel_size=2, stride=2)
-        self.conv21 = nn.Conv2d(32, 64, 3, padding=1)
-        self.conv22 = nn.Conv2d(64, 64, 3, padding=1)
-        self.maxPool2 = nn.MaxPool2d(kernel_size=2, stride=2)
-        self.conv31 = nn.Conv2d(64, 128, 3, padding=1)
-        self.conv32 = nn.Conv2d(128, 128, 3, padding=1)
-        self.maxPool3 = nn.MaxPool2d(kernel_size=2, stride=2)
-        self.fc1 = nn.Linear(128 * 4 * 4, 1024)
-        self.fc2 = nn.Linear(1024, 10)
-        self.relu = nn.ReLU()
-        self.dropout = nn.Dropout(p=0.3)
-
-    def forward(self, x):
-        x = self.relu(self.conv12(self.conv11(x)))
-        x = self.maxPool1(x)
-        x = self.relu(self.conv22(self.conv21(x)))
-        x = self.maxPool2(x)
-        x = self.relu(self.conv32(self.conv31(x)))
-        x = self.maxPool3(x)
-        x = x.view(-1, 128 * 4 * 4)
-        x = self.relu(self.fc1(x))
-        x = self.fc2(x)
-        return x
-
-
-class cifar_pretrained(AttackerModel):
+class CifarPretrained(AttackerModel):
     def forward(self, x):
         return AttackerModel.forward(self, x, with_image=False)
