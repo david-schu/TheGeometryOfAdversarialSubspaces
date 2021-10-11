@@ -26,7 +26,7 @@ class OrthogonalAttack(MinimizationAttack):
         ...
 
 
-class CarliniWagner(fa.L2CarliniWagnerAttack):
+class L2OrthAttack(fa.L2CarliniWagnerAttack):
     def run(
             self,
             model: Model,

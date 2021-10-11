@@ -1,6 +1,5 @@
 import sys
 sys.path.insert(0, './..')
-sys.path.insert(0, '../data')
 
 import numpy as np
 import torch
@@ -8,8 +7,8 @@ import dill
 from robustness1.datasets import CIFAR
 
 # own modules
-from utils import load_data, dev
-from attacks import CarliniWagner
+from utils import dev
+from attacks import L2OrthAttack
 from run_attack import run_attack
 from models import model as md
 
@@ -34,7 +33,7 @@ if __name__ == "__main__":
     params = {
         'n_adv_dims': 50,
         'early_stop': 3,
-        'input_attack': CarliniWagner,
+        'input_attack': L2OrthAttack,
         'random_start': False
     }
 
@@ -44,9 +43,9 @@ if __name__ == "__main__":
 
     # load a model
     # if is_natural:
-    #     model_path = './../models/natural_' + str(model_id) + '.pt'
+    #     model_path = './../models/natural_' + str(model_seed) + '.pt'
     # else:
-    #     model_path = './../models/robust_' + str(model_id) + '.pt'
+    #     model_path = './../models/robust_' + str(model_seed) + '.pt'
     # model = md.madry_diff()
     # model.load_state_dict(torch.load(model_path, map_location=torch.device(dev())))      # natural cnn - same architecture as madry robust model but nmot adversarially trained
 
@@ -71,7 +70,7 @@ if __name__ == "__main__":
     model.eval()
 
     # load batched data
-    data = np.load('../data/CIFAR/stable_data_diff.npy', allow_pickle=True).item()
+
     all_images, all_labels = data['images'], data['labels']
     images = all_images[all_labels == 0][:n_images]
     labels = all_labels[all_labels == 0][:n_images]

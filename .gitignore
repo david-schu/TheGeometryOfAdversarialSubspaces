@@ -16,5 +16,5 @@ data/*
 
 .ipynb_checkpoints/*
 models/.ipynb_checkpoints*
-Decomposition/.ipynb_checkpoints*
+SubspaceExtraction/.ipynb_checkpoints*
 Curvature/.ipynb_checkpoints*
