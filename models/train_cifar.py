@@ -44,6 +44,9 @@ train_kwargs = {
     'adv_train': 1,
     'constraint': '2',
     'eps': 0.5,
+    'epochs': 200,
+    'custom_lr_multplier': [(100,.1), (150,.1)],
+    'weight_decay': 5e-4,
     'attack_lr': 1.5,
     'attack_steps': 20
 }
