@@ -115,37 +115,10 @@ class CifarPretrained(AttackerModel):
         return AttackerModel.forward(self, x, with_image=False)
 
 
-def ResNet18(**kwargs):
-    return ResNet(BasicBlock, [2,2,2,2], **kwargs)
-
-def ResNet18Wide(**kwargs):
-    return ResNet(BasicBlock, [2,2,2,2], wm=5, **kwargs)
-
-def ResNet18Thin(**kwargs):
-    return ResNet(BasicBlock, [2,2,2,2], wd=.75, **kwargs)
-
-def ResNet34(**kwargs):
-    return ResNet(BasicBlock, [3,4,6,3], **kwargs)
-
 def ResNet50(**kwargs):
     print('Custom model')
     return ResNet(Bottleneck, [3,4,6,3], **kwargs)
 
-def ResNet101(**kwargs):
-    return ResNet(Bottleneck, [3,4,23,3], **kwargs)
-
-def ResNet152(**kwargs):
-    return ResNet(Bottleneck, [3,8,36,3], **kwargs)
 
 resnet50 = ResNet50
-resnet18 = ResNet18
-resnet34 = ResNet34
-resnet101 = ResNet101
-resnet152 = ResNet152
-resnet18wide = ResNet18Wide
 
-# resnet18thin = ResNet18Thin
-def test():
-    net = ResNet18()
-    y = net(torch.randn(1,3,32,32))
-    print(y.size())
