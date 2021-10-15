@@ -4,8 +4,6 @@ sys.path.insert(0, '../data')
 from robustness import train, defaults
 from cifar_models import model_utils
 from robustness.datasets import CIFAR
-from models.cifar_models.resnet_models.resnet import CifarPretrained
-from utils import dev
 
 # We use cox (http://github.com/MadryLab/cox) to log, store and analyze
 # results. Read more at https//cox.readthedocs.io.
@@ -15,8 +13,6 @@ import cox.store
 # Hard-coded dataset, architecture, batch size, workers
 ds = CIFAR('../data')
 model, _ = model_utils.make_and_restore_model(arch='resnet50', dataset=ds)
-model.to(dev())
-model.double()
 train_loader, val_loader = ds.make_loaders(batch_size=128, workers=8)
 
 # # Create a cox store for logging
