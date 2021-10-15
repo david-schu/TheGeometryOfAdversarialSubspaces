@@ -39,10 +39,10 @@ class BasicBlock(nn.Module):
                 nn.BatchNorm2d(self.expansion*planes))
 
     def forward(self, x):
-        out = F.elu(self.bn1(self.conv1(x)))
+        out = F.silu(self.bn1(self.conv1(x)))
         out = self.bn2(self.conv2(out))
         out += self.shortcut(x)
-        return F.elu(out)
+        return F.silu(out)
 
 
 class Bottleneck(nn.Module):
@@ -66,11 +66,11 @@ class Bottleneck(nn.Module):
             )
 
     def forward(self, x):
-        out = F.elu(self.bn1(self.conv1(x)))
-        out = F.elu(self.bn2(self.conv2(out)))
+        out = F.silu(self.bn1(self.conv1(x)))
+        out = F.silu(self.bn2(self.conv2(out)))
         out = self.bn3(self.conv3(out))
         out += self.shortcut(x)
-        return F.elu(out)
+        return F.silu(out)
 
 
 class ResNet(nn.Module):
@@ -99,14 +99,14 @@ class ResNet(nn.Module):
             self.in_planes = planes * block.expansion
         return SequentialWithArgs(*layers)
 
-    def forward(self, x, with_latent=False, fake_relu=False, no_relu=False):
-        assert (not no_relu),  \
-            "no_relu not yet supported for this architecture"
-        out = F.elu(self.bn1(self.conv1(x)))
+    def forward(self, x, with_latent=False, fake_rsilu=False, no_rsilu=False):
+        assert (not no_rsilu),  \
+            "no_rsilu not yet supported for this architecture"
+        out = F.silu(self.bn1(self.conv1(x)))
         out = self.layer1(out)
         out = self.layer2(out)
         out = self.layer3(out)
-        out = self.layer4(out, fake_relu=fake_relu)
+        out = self.layer4(out, fake_rsilu=fake_rsilu)
         out = F.avg_pool2d(out, 4)
         pre_out = out.view(out.size(0), -1)
         final = self.linear(pre_out)

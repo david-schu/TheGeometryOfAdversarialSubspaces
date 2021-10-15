@@ -2,9 +2,8 @@ import numpy as np
 import torch
 import torchvision.datasets as datasets
 from models.mnist_models import model as model_loader
-from models.cifar_models.datasets import CIFAR
-from models.cifar_models.resnet_models.resnet import CifarPretrained
-import dill
+from robustness.datasets import CIFAR
+from models.cifar_models import model_utils
 
 
 def classification(img, model, is_adv=True, orig_label=None):
@@ -96,16 +95,8 @@ def load_model(resume_path, dataset):
         model.eval()
 
     elif dataset == 'CIAFR':
-        ds = CIFAR('./data/cifar-10-batches-py')
-        classifier_model = ds.get_model('resnet50', False)
-        model = CifarPretrained(classifier_model, ds)
-        checkpoint = torch.load(resume_path, pickle_module=dill, map_location=torch.device(dev()))
-        state_dict_path = 'model'
-        if not ('model' in checkpoint):
-            state_dict_path = 'state_dict'
-        sd = checkpoint[state_dict_path]
-        sd = {k[len('module.'):]: v for k, v in sd.items()}
-        model.load_state_dict(sd)
+        ds = CIFAR('./data')
+        model, _ = model_utils.make_and_restore_model(arch='resnet50', dataset=ds)
         model.to(dev())
         model.double()
         model.eval()
