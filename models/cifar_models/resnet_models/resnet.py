@@ -124,3 +124,5 @@ def ResNet50(**kwargs):
     print('Custom model')
     return ResNet(Bottleneck, [3,4,6,3], **kwargs)
 
+
+resnet50 = ResNet50
