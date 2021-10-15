@@ -3,7 +3,7 @@ from torch import nn
 import dill
 import os
 from robustness.attacker import AttackerModel
-from models.cifar_models import resnet_models
+from models import cifar_models
 from models.cifar_models.resnet_models.resnet import CifarPretrained
 
 
@@ -37,7 +37,7 @@ def make_and_restore_model(*_, arch, dataset, resume_path=None,
         A tuple consisting of the model (possibly loaded with checkpoint), and the checkpoint itself
     """
 
-    classifier_model = resnet_models.__dict__[arch](num_classes=dataset.num_classes)
+    classifier_model = cifar_models.__dict__[arch](num_classes=dataset.num_classes)
     if pytorch_pretrained:
         model = CifarPretrained(classifier_model, dataset)
     else:
