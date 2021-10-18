@@ -8,7 +8,7 @@ from models.cifar_models.resnet import CifarPretrained
 
 
 def make_and_restore_model(*_, arch, dataset, resume_path=None,
-                           parallel=False, pytorch_pretrained=False, add_custom_forward=False):
+                           parallel=False, attack_model=False):
     """
     Makes a model and (optionally) restores it from a checkpoint.
 
@@ -37,7 +37,7 @@ def make_and_restore_model(*_, arch, dataset, resume_path=None,
     """
 
     classifier_model = cifar_models.__dict__[arch](num_classes=dataset.num_classes)
-    if resume_path:
+    if attack_model:
         model = CifarPretrained(classifier_model, dataset)
     else:
         model = AttackerModel(classifier_model, dataset)
