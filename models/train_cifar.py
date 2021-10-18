@@ -47,8 +47,8 @@ train_kwargs = {
     'epochs': 200,
     'custom_lr_multplier': [(100,.1), (150,.1)],
     'weight_decay': 5e-4,
-    'attack_lr': 1.5,
-    'attack_steps': 20
+    'attack_lr': .03,
+    'attack_steps': 40
 }
 train_args = Parameters(train_kwargs)
 
