@@ -30,7 +30,7 @@ from gowal21uncovering.utils import WATrainer
 # Setup
 
 parse = parser_train()
-parse.add_argument('--tau', type=float, default=0.995, help='Weight averaging decay.')
+parse.add_argument('--tau', type=float, default=0, help='Weight averaging decay.')
 args = parse.parse_args()
 assert args.data in SEMISUP_DATASETS, f'Only data in {SEMISUP_DATASETS} is supported!'
 
