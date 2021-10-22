@@ -8,7 +8,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from core.attacks import create_attack
 from core.metrics import accuracy
 from core.models import create_model
 
@@ -45,23 +44,10 @@ class Trainer(object):
         if self.params.pretrained_file is not None:
             self.load_model(os.path.join(self.params.log_dir, self.params.pretrained_file, 'weights-best.pt'))
         
-        self.attack, self.eval_attack = self.init_attack(self.model, self.criterion, self.params.attack, self.params.attack_eps, 
-                                                         self.params.attack_iter, self.params.attack_step)
+
         
     
-    @staticmethod
-    def init_attack(model, criterion, attack_type, attack_eps, attack_iter, attack_step):
-        """
-        Initialize adversary.
-        """
-        attack = create_attack(model, criterion, attack_type, attack_eps, attack_iter, attack_step, rand_init_type='uniform')
-        if attack_type in ['linf-pgd', 'l2-pgd']:
-            eval_attack = create_attack(model, criterion, attack_type, attack_eps, 2*attack_iter, attack_step)
-        elif attack_type in ['fgsm', 'linf-df']:
-            eval_attack = create_attack(model, criterion, 'linf-pgd', 8/255, 20, 2/255)
-        elif attack_type in ['fgm', 'l2-df']:
-            eval_attack = create_attack(model, criterion, 'l2-pgd', 128/255, 20, 15/255)
-        return attack,  eval_attack
+
     
     
     def init_optimizer(self, num_epochs):

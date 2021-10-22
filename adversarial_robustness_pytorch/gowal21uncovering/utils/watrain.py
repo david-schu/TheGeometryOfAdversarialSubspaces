@@ -8,10 +8,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from core.attacks import create_attack
-from core.attacks import CWLoss
 from core.metrics import accuracy
-from core.models import create_model
 
 from core.utils import ctx_noparamgrad_and_eval
 from core.utils import Trainer
@@ -36,8 +33,7 @@ class WATrainer(Trainer):
         
         seed(args.seed)
         self.wa_model = copy.deepcopy(self.model)
-        self.eval_attack = create_attack(self.wa_model, CWLoss, args.attack, args.attack_eps, 4*args.attack_iter, 
-                                         args.attack_step)
+
         num_samples = 50000 if 'cifar' in self.params.data else 73257
         num_samples = 100000 if 'tiny-imagenet' in self.params.data else num_samples
         self.update_steps = int(np.floor(num_samples/self.params.batch_size) + 1)

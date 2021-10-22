@@ -26,7 +26,6 @@ from core.utils import seed
 
 
 # Setup
-
 parse = parser_train()
 args = parse.parse_args()
 

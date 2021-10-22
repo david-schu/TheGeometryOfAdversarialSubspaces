@@ -1,6 +1,5 @@
 import argparse
 
-from core.attacks import ATTACKS
 from core.data import DATASETS
 from core.models import MODELS
 from .train import SCHEDULERS
@@ -40,7 +39,7 @@ def parser_train():
     parser.add_argument('--nesterov', type=str2bool, default=True, help='Use Nesterov momentum.')
     parser.add_argument('--clip-grad', type=float, default=None, help='Gradient norm clipping.')
 
-    parser.add_argument('-a', '--attack', type=str, choices=ATTACKS, default='linf-pgd', help='Type of attack.')
+    parser.add_argument('-a', '--attack', type=str,  default='linf-pgd', help='Type of attack.')
     parser.add_argument('--attack-eps', type=str2float, default=8/255, help='Epsilon for the attack.')
     parser.add_argument('--attack-step', type=str2float, default=2/255, help='Step size for PGD attack.')
     parser.add_argument('--attack-iter', type=int, default=10, help='Max. number of iterations (if any) for the attack.')
