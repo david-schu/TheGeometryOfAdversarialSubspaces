@@ -92,7 +92,7 @@ for epoch in range(1, NUM_ADV_EPOCHS+1):
     if args.scheduler:
         last_lr = trainer.scheduler.get_last_lr()[0]
     
-    res = trainer.train(train_dataloader, epoch=epoch, adversarial=True)
+    res = trainer.train(train_dataloader, epoch=epoch, adversarial=False)
     test_acc = trainer.eval(test_dataloader)
 
     logger.log('Loss: {:.4f}.\tLR: {:.4f}'.format(res['loss'], last_lr))
