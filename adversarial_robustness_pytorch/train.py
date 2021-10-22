@@ -79,11 +79,10 @@ if NUM_ADV_EPOCHS > 0:
     metrics = pd.DataFrame()
     logger.log('Standard Accuracy-\tTest: {:2f}%.'.format(trainer.eval(test_dataloader)*100))
     
-    old_score = [0.0, 0.0]
+    old_score = 0.0
     logger.log('Adversarial training for {} epochs'.format(NUM_ADV_EPOCHS))
     trainer.init_optimizer(args.num_adv_epochs)
-    test_adv_acc = 0.0    
-    
+
 
 for epoch in range(1, NUM_ADV_EPOCHS+1):
     start = time.time()
@@ -102,17 +101,10 @@ for epoch in range(1, NUM_ADV_EPOCHS+1):
         logger.log('Standard Accuracy-\tTest: {:.2f}%.'.format(test_acc*100))
     epoch_metrics = {'train_'+k: v for k, v in res.items()}
     epoch_metrics.update({'epoch': epoch, 'lr': last_lr, 'test_clean_acc': test_acc, 'test_adversarial_acc': ''})
+
     
-    if epoch % args.adv_eval_freq == 0 or epoch > (NUM_ADV_EPOCHS-5) or (epoch >= (NUM_ADV_EPOCHS-10) and NUM_ADV_EPOCHS > 90):
-        test_adv_acc = trainer.eval(test_dataloader, adversarial=True)
-        logger.log('Adversarial Accuracy-\tTrain: {:.2f}%.\tTest: {:.2f}%.'.format(res['adversarial_acc']*100, 
-                                                                                   test_adv_acc*100))
-        epoch_metrics.update({'test_adversarial_acc': test_adv_acc})
-    else:
-        logger.log('Adversarial Accuracy-\tTrain: {:.2f}%.'.format(res['adversarial_acc']*100))
-    
-    if test_adv_acc >= old_score[1]:
-        old_score[0], old_score[1] = test_acc, test_adv_acc
+    if test_acc >= old_score:
+        old_score = test_acc
         trainer.save_model(WEIGHTS)
     trainer.save_model(os.path.join(LOG_DIR, 'weights-last.pt'))
 
