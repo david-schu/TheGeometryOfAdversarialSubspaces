@@ -49,10 +49,10 @@ if __name__ == "__main__":
             save_path = '../data/mnist_robust_' + str(batch_n) + '.npy'
     elif dset == 'CIFAR':
         if is_natural:
-            model_path = './../models/cifar_models/nat_diff.pt'
+            model_path = './../models/cifar_models/nat_diff_new.pt'
             save_path = '../data/cifar_natural_' + str(batch_n) + '.npy'
         else:
-            model_path = './../models/cifar_models/rob_diff.pt'
+            model_path = './../models/cifar_models/rob_diff_new.pt'
             save_path = '../data/cifar_robust_' + str(batch_n) + '.npy'
     else:
         raise ValueError('No valid dataset specification')

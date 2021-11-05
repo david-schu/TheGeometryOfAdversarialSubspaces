@@ -2,8 +2,10 @@ import numpy as np
 import torch
 import torchvision.datasets as datasets
 from models.mnist_models import model as model_loader
+from models.cifar_models.new_model import WideResNet,Swish
 from robustness.datasets import CIFAR
 from models.cifar_models import model_utils
+from models.cifar_models import model_zoo
 
 
 def classification(img, model, is_adv=True, orig_label=None):
@@ -71,7 +73,7 @@ def load_stable_data(d_set='MNIST'):
     if d_set == 'MNIST':
         data = np.load('./data/MNIST/stable_data.npy', allow_pickle=True).item()
     elif d_set == 'CIFAR':
-        data = np.load('./data/CIFAR/stable_data.npy', allow_pickle=True).item()
+        data = np.load('./data/CIFAR/stable_data_new.npy', allow_pickle=True).item()
     else:
         raise ValueError('Invalid Dataset')
     return data
@@ -95,8 +97,17 @@ def load_model(resume_path, dataset):
         model.eval()
 
     elif dataset == 'CIAFR':
-        ds = CIFAR('./data')
-        model, _ = model_utils.make_and_restore_model(arch='resnet50', dataset=ds)
+        # ds = CIFAR('./data')
+        # model, _ = model_utils.make_and_restore_model(arch='resnet50', dataset=ds)
+        model = model_zoo.WideResNet(
+            num_classes=10, depth=70, width=16,
+            activation_fn=model_zoo.Swish,
+            mean=model_zoo.CIFAR10_MEAN,
+            std=model_zoo.CIFAR10_STD)
+
+        # The model was trained without biases for the batch norm (thankfully those are initialized to zero) :/
+        params = torch.load(resume_path)
+        model.load_state_dict(params, strict=False)
         model.to(dev())
         model.double()
         model.eval()
