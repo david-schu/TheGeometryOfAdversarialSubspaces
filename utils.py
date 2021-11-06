@@ -71,9 +71,9 @@ def load_stable_data(d_set='MNIST'):
         data [dict] a dictionary that includes data which is balanced and correctly classified for all relevant models
     """
     if d_set == 'MNIST':
-        data = np.load('./data/MNIST/stable_data.npy', allow_pickle=True).item()
+        data = np.load('../data/MNIST/stable_data.npy', allow_pickle=True).item()
     elif d_set == 'CIFAR':
-        data = np.load('./data/CIFAR/stable_data_new.npy', allow_pickle=True).item()
+        data = np.load('../data/CIFAR/stable_data_new.npy', allow_pickle=True).item()
     else:
         raise ValueError('Invalid Dataset')
     return data
