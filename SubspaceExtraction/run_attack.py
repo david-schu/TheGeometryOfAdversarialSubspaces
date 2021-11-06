@@ -54,7 +54,7 @@ def run_attack(model,
 
         count = 0
 
-        class_ = classification(adv, label, model)
+        class_ = classification(adv, model, orig_label=label,is_adv=True)
         a_ = adv.flatten()
         pert_length = torch.norm(a_ - x_orig)
 
