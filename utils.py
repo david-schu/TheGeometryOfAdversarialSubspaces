@@ -96,7 +96,7 @@ def load_model(resume_path, dataset):
         model.double()
         model.eval()
 
-    elif dataset == 'CIAFR':
+    elif dataset == 'CIFAR':
         # ds = CIFAR('./data')
         # model, _ = model_utils.make_and_restore_model(arch='resnet50', dataset=ds)
         model = model_zoo.WideResNet(
