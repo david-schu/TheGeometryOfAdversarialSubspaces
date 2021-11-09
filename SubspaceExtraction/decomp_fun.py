@@ -30,7 +30,7 @@ if __name__ == "__main__":
 
     # set hyperparameters
     params = {
-        'n_adv_dims': 50,
+        'n_adv_dims': 30,
         'early_stop': 3,
         'input_attack': L2OrthAttack,
         'random_start': False
@@ -84,7 +84,7 @@ if __name__ == "__main__":
     # run decomposition over batches
     for i in range(len(images)):
         new_advs, new_dirs, new_classes, new_pert_lengths = run_attack(model, images[i].unsqueeze(0), labels[i].unsqueeze(0),
-                                                                       attack_params, **params)
+                                                                       attack_params, save_path, **params)
         advs[i] = new_advs.cpu().detach().numpy()
         dirs[i] = new_dirs.cpu().detach().numpy()
         adv_class[i] = new_classes.cpu().detach().numpy()

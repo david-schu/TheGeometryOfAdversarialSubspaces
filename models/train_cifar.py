@@ -1,12 +1,22 @@
 import sys
+
+import torch
+
 sys.path.insert(0, './..')
 sys.path.insert(0, '../data')
+from models.cifar_models.new_model import WideResNet, Swish
 from robustness import train, defaults
 from cifar_models import model_utils
 from robustness.datasets import CIFAR
 
 # We use cox (http://github.com/MadryLab/cox) to log, store and analyze
 # results. Read more at https//cox.readthedocs.io.
+
+
+model = WideResNet(depth=70, width=16, activation_fn=Swish)
+params = torch.load('./cifar_models/rob_diff_new.pt')
+model.load_state_dict(params)
+
 from cox.utils import Parameters
 import cox.store
 
