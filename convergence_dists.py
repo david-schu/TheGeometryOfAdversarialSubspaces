@@ -38,15 +38,15 @@ if __name__ == "__main__":
     images = data['images']
     labels = data['labels']
 
-    n_samples = np.linspace(5, 100, 5)
+    n_samples = [int(x) for x in np.linspace(99, 100, 20)]
     n_dims = 50
 
-    #natural
+    # natural
     min_dists = pert_lengths[:, 0]
     all_dists = []
 
     for n in n_samples:
-        dists = np.zeros(len(images), n)
+        dists = np.zeros((len(images), n))
         for i, img in enumerate(tqdm.tqdm(images)):
             dists[i], _, _ = get_dist_dec(img, labels[i], dirs[i, :n_dims], model, min_dist=0.5 * min_dists[i],
                                           n_samples=n)
@@ -56,5 +56,5 @@ if __name__ == "__main__":
             'dists': all_dists,
         }
 
-        save_path = './data/smaple_convergence.npy'
+        save_path = './data/sample_convergence.npy'
         np.save(save_path, data)
