@@ -6,18 +6,16 @@ import torchvision.datasets as datasets
 def orth_check(adv_dirs):
     adv_dirs = np.array(adv_dirs).reshape((adv_dirs.shape[0],-1))
     orth = np.dot(adv_dirs,adv_dirs.T)
-    return orth, np.allclose(orth, np.identity(orth.shape[0]),atol=1e-2)
+    return orth, np.allclose(orth, np.identity(orth.shape[0]),atol=1e-7)
 
 
-def classification(img, label, model):
+def classification(img, label, model, is_adv=True):
     if not torch.is_tensor(img):
         img = torch.tensor(img, device=dev())
     pred = model(img).cpu().detach().numpy()[0]
-    sorted = np.sort(pred)
     img_class = np.argmax(pred)
-    is_adv = label != img_class
-    if not is_adv and int(sorted[-2] * 10000) == int(sorted[-1] * 10000):
-        img_class = pred.argsort()[-2]
+    if is_adv:
+        assert img_class!=label
     return img_class
 
 
@@ -77,7 +75,7 @@ def make_orth_basis(dirs=[], n_pixels=784, n_iterations=3):
     return basis
 
 
-def get_dist_dec(orig, label, dirs, model, min_dist=.1, n_samples=1000, return_angles=False):
+def get_dist_dec(orig, label, dirs, model, min_dist=.1, n_samples=1000):
     shape = orig.shape
     n_steps = 20
     n_dirs = len(dirs)
@@ -93,10 +91,10 @@ def get_dist_dec(orig, label, dirs, model, min_dist=.1, n_samples=1000, return_a
     sample_dirs = sample_dirs / np.linalg.norm(sample_dirs, axis=-1, keepdims=True)
 
     dists = np.full(n_samples, np.nan)
-
+    found_advs = np.full(n_samples, False)
     for i in range(n_steps):
         input_dirs = scales * sample_dirs
-        input_ = (input_dirs + orig.flatten()[None])
+        input_ = input_dirs + orig.flatten()[None]
         input = torch.split(torch.tensor(input_.reshape((-1,) + shape), device=dev()), 100)
 
         preds = np.empty(0)
@@ -104,18 +102,21 @@ def get_dist_dec(orig, label, dirs, model, min_dist=.1, n_samples=1000, return_a
             preds = np.concatenate((preds, model(batch).argmax(-1).cpu().numpy()), axis=0)
 
         is_adv = np.invert(preds == label)
+        found_advs[is_adv] = True
         dists[is_adv] = scales[is_adv, 0]
 
         upper[is_adv] = scales[is_adv]
         lower[~is_adv] = scales[~is_adv]
-        scales[is_adv] = (upper[is_adv] + lower[is_adv]) / 2
-        scales[~is_adv] = lower[~is_adv] * 2
+        scales[found_advs] = (upper[found_advs] + lower[found_advs]) / 2
+        scales[~found_advs] = lower[~found_advs] * 2
 
-        in_bounds = np.logical_or(input_.max(-1) <= 1, input_.min(-1) >= 0)
+        in_bounds = np.logical_and(input_.max(-1) <= 1, input_.min(-1) >= 0)
         dists[~in_bounds] = np.nan
+    if np.all(np.isnan(dists)):
+        largest_vec = np.zeros(dirs.shape[-1])
+    else:
+        largest_vec = sample_dirs[np.nanargmax(dists)]
+    angles = np.arccos((sample_dirs@dirs.T).clip(-1,1)).min(-1)
+    angles[np.isnan(dists)] = np.nan
 
-    if return_angles:
-        angles = np.arccos((sample_dirs@dirs.T).clip(-1,1)).min(-1)
-        angles[np.isnan(dists)] = np.nan
-        return dists, angles
-    return dists
+    return dists, angles, largest_vec

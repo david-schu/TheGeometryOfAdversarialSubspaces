@@ -15,5 +15,6 @@
 data/*
 
 .ipynb_checkpoints/*
-Decomposition/.ipynb_checkpoints/*
-Curvature/.ipynb_checkpoints/*
+models/.ipynb_checkpoints*
+Decomposition/.ipynb_checkpoints*
+Curvature/.ipynb_checkpoints*

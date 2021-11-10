@@ -1,7 +1,7 @@
 import sys
 sys.path.insert(0, './..')
 sys.path.insert(0, '../data')
-from robustness1 import model_utils, datasets, train, defaults
+from robustness1 import model_utils, train, defaults
 from robustness1.datasets import CIFAR
 
 # We use cox (http://github.com/MadryLab/cox) to log, store and analyze
@@ -44,6 +44,9 @@ train_kwargs = {
     'adv_train': 1,
     'constraint': '2',
     'eps': 0.5,
+    'epochs': 200,
+    'custom_lr_multplier': [(100,.1), (150,.1)],
+    'weight_decay': 5e-4,
     'attack_lr': 1.5,
     'attack_steps': 20
 }
