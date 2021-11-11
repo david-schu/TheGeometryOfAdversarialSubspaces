@@ -3,6 +3,7 @@ from models import model as md
 import torch
 from robustness1.datasets import CIFAR
 import dill
+import sys
 
 from utils import dev, get_dist_dec
 
@@ -10,6 +11,7 @@ import tqdm
 
 
 if __name__ == "__main__":
+    sample_n = int(sys.argv[1])
 
     resume_path = './models/cifar_models/nat_diff.pt'
 
@@ -45,16 +47,15 @@ if __name__ == "__main__":
     min_dists = pert_lengths[:, 0]
     all_dists = []
 
-    for n in n_samples:
-        dists = np.zeros((len(images), n))
-        for i, img in enumerate(tqdm.tqdm(images)):
-            dists[i], _, _ = get_dist_dec(img, labels[i], dirs[i, :n_dims], model, min_dist=0.5 * min_dists[i],
-                                          n_samples=n)
-        all_dists.append(dists)
+    n = n_samples[sample_n]
+    dists = np.zeros((len(images), n))
+    for i, img in enumerate(tqdm.tqdm(images)):
+        dists[i], _, _ = get_dist_dec(img, labels[i], dirs[i, :n_dims], model, min_dist=0.5 * min_dists[i],
+                                      n_samples=n)
 
         data = {
-            'dists': all_dists,
+            'dists': dists,
         }
 
-        save_path = './data/sample_convergence.npy'
+        save_path = './data/sample_convergence_' + str(sample_n) + '.npy'
         np.save(save_path, data)
