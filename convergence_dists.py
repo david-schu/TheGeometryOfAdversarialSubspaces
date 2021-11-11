@@ -38,7 +38,7 @@ if __name__ == "__main__":
     images = data['images']
     labels = data['labels']
 
-    n_samples = [int(x) for x in np.linspace(99, 100, 20)]
+    n_samples = [int(x) for x in np.linspace(5, 100, 20)]
     n_dims = 50
 
     # natural
