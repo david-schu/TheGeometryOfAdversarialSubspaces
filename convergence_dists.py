@@ -50,7 +50,7 @@ if __name__ == "__main__":
         for i, img in enumerate(tqdm.tqdm(images)):
             dists[i], _, _ = get_dist_dec(img, labels[i], dirs[i, :n_dims], model, min_dist=0.5 * min_dists[i],
                                           n_samples=n)
-            all_dists.append(dists)
+        all_dists.append(dists)
 
         data = {
             'dists': all_dists,
