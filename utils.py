@@ -2,9 +2,6 @@ import numpy as np
 import torch
 import torchvision.datasets as datasets
 from models.mnist_models import model as model_loader
-from models.cifar_models.new_model import WideResNet,Swish
-from robustness.datasets import CIFAR
-from models.cifar_models import model_utils
 from models.cifar_models import model_zoo
 
 

@@ -10,11 +10,13 @@ is_natural = 1
 
 #load model
 if is_natural:
-    model_path = './../models/cifar_models/nat_diff.pt'
-    data_path = './data/cifar_natural_diff.npy'
+    model_path = './../models/cifar_models/nat_diff_new.pt'
+    data_path = './data/cifar_runs/cifar_natural_wrn.npy'
+    save_path = './data/dists_to_bnd_natural_wrn.npy'
 else:
-    model_path = './../models/cifar_models/rob_diff.pt'
-    data_path = './data/cifar_robust_diff.npy'
+    model_path = './../models/cifar_models/rob_diff_new.pt'
+    data_path = './data/cifar_runs/cifar_robust_wrn.npy'
+    save_path = './data/dists_to_bnd_robust_wrn.npy'
 
 model = load_model(resume_path=model_path, dataset=dset)
 
@@ -45,8 +47,4 @@ for i, img in enumerate(tqdm.tqdm(images)):
         'angles': angles,
         'largest_vecs': largest_vecs
     }
-    if is_natural:
-        save_path = './data/dists_to_bnd_natural.npy'
-    else:
-        save_path = './data/dists_to_bnd_robust.npy'
     np.save(save_path, data)
