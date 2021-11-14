@@ -8,8 +8,10 @@ from utils import get_dist_dec
 import tqdm
 
 if __name__ == "__main__":
-    is_natural = int(sys.argv[1])
+    batch_n = int(sys.argv[1])
+    is_natural = int(sys.argv[2])
     dset='CIFAR'
+    batchsize=1
     with torch.no_grad():
         #load model
         if is_natural:
@@ -19,19 +21,19 @@ if __name__ == "__main__":
         else:
             model_path = './models/cifar_models/rob_diff_new.pt'
             data_path = './data/cifar_runs/cifar_robust_wrn.npy'
-            save_path = './data/dists_to_bnd_robust_wrn.npy'
+            save_path = './data/dists_to_bnd_robust_wrn_'+str(batch_n)+'.npy'
 
         model = load_model(resume_path=model_path, dataset=dset)
 
         # load data
         data = np.load(data_path, allow_pickle=True).item()
-        pert_lengths = data['pert_lengths']
-        dirs = data['dirs']
-        images = data['images']
-        labels = data['labels']
+        pert_lengths = data['pert_lengths'][(batch_n*batchsize):(batch_n*batchsize+batchsize)]
+        dirs = data['dirs'][(batch_n*batchsize):(batch_n*batchsize+batchsize)]
+        images = data['images'][(batch_n*batchsize):(batch_n*batchsize+batchsize)]
+        labels = data['labels'][(batch_n*batchsize):(batch_n*batchsize+batchsize)]
 
         n_samples = 100
-        n_dims = 50
+        n_dims = 20
 
         #natural
         min_dists = pert_lengths[:, 0]
