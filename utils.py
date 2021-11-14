@@ -207,11 +207,12 @@ def get_dist_dec(orig, label, dirs, model, min_dist=.1, n_samples=1000):
     for i in range(n_steps):
         input_dirs = scales * sample_dirs
         input_ = input_dirs + orig.flatten()[None]
-        input = torch.split(torch.tensor(input_.reshape((-1,) + shape), device=dev()), 100)
+        input = torch.split(torch.tensor(input_.reshape((-1,) + shape), device=dev()), 20)
 
         preds = np.empty(0)
         for batch in input:
             preds = np.concatenate((preds, model(batch).argmax(-1).cpu().numpy()), axis=0)
+            torch.cuda.empty_cache()
 
         is_adv = np.invert(preds == label)
         found_advs[is_adv] = True
