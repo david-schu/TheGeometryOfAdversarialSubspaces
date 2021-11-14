@@ -11,11 +11,11 @@ if __name__ == "__main__":
 
     #load model
     if is_natural:
-        model_path = './../models/cifar_models/nat_diff_new.pt'
+        model_path = './models/cifar_models/nat_diff_new.pt'
         data_path = './data/cifar_runs/cifar_natural_wrn.npy'
         save_path = './data/dists_to_bnd_natural_wrn.npy'
     else:
-        model_path = './../models/cifar_models/rob_diff_new.pt'
+        model_path = './models/cifar_models/rob_diff_new.pt'
         data_path = './data/cifar_runs/cifar_robust_wrn.npy'
         save_path = './data/dists_to_bnd_robust_wrn.npy'
 
