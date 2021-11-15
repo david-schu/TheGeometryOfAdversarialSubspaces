@@ -17,7 +17,7 @@ if __name__ == "__main__":
         if is_natural:
             model_path = './models/cifar_models/nat_diff_new.pt'
             data_path = './data/cifar_runs/cifar_natural_wrn.npy'
-            save_path = './data/dists_to_bnd_natural_wrn.npy'
+            save_path = './data/dists_to_bnd_natural_wrn'+str(batch_n)+'.npy'
         else:
             model_path = './models/cifar_models/rob_diff_new.pt'
             data_path = './data/cifar_runs/cifar_robust_wrn.npy'
