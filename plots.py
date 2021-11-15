@@ -214,11 +214,12 @@ def plot_dec_space(orig, adv1, adv2, model, offset=0.1, len_grid_scale=2, n_grid
     X, Y = np.meshgrid(x, y)
     advs = orig + (dir1[None, :] * np.reshape(X, (-1, 1)) + dir2[None, :] * np.reshape(Y, (-1, 1)))
     advs = np.array(np.reshape(advs, ((-1,) + input_shape)).astype('float64'))
-    input = torch.split(torch.tensor(advs, device=dev()), 20)
+    input = torch.split(torch.tensor(advs, device=dev()), 10)
 
     preds = np.empty((0, 10))
     for batch in input:
         preds = np.concatenate((preds, model(batch).detach().cpu().numpy()), axis=0)
+        torch.cuda.empty_cache()
 
     classes = np.argmax(preds, axis=-1).reshape((n_grid, n_grid))
     if colors is None:
