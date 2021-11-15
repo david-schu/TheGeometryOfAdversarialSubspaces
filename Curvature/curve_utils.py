@@ -9,8 +9,9 @@ sys.path.insert(0, './..')
 sys.path.insert(0, '../data')
 
 from models import model as model_loader
-from utils import dev
+from utils import dev, load_model
 from robustness1.datasets import CIFAR
+from models.cifar_models import model_zoo
 
 sys.path.insert(0, './../..')
 
@@ -40,10 +41,10 @@ def torchify(img):
     return output
 
 
-def get_paired_boundary_image(model, origin, alt_image, num_steps_per_iter, num_iters):
+def get_paired_boundary_image(model, origin, alt_image, num_steps_per_iter, num_iters, batch_size=None):
     input_shape = (1,)+origin.shape
     def find_pert(image_line):
-        labels = get_batch_predictions(model, image_line.reshape((-1,)+origin.shape), batch_size=100)
+        labels = get_batch_predictions(model, image_line.reshape((-1,)+origin.shape), batch_size)
         pert_lbl = correct_lbl = labels[0]
         step_idx = 1 # already know the first one
         while pert_lbl == correct_lbl:
@@ -73,17 +74,20 @@ def get_valid_indices(model_predictions, data, num_advs=None):
     return  valid_indices
 
 
-def get_batch_predictions(model, data, batch_size=10):
+def get_batch_predictions(model, data, batch_size=None):
+    if batch_size is None:
+        batch_size = int(np.minimum(10, data.size))
     image_splits = torch.split(torchify(data), batch_size, dim=0)
     model_predictions = []
     for batch in image_splits:
         model_predictions.append(torch.argmax(model(batch), dim=1).detach().cpu().numpy())
-    model_predictions = np.stack(model_predictions, axis=0).reshape(-1)
+    model_predictions = np.concatenate(model_predictions, axis=0).reshape(-1)
     return model_predictions
 
 
-def get_origin_indices(model, data, num_images, num_advs=None):
-    batch_size = int(np.minimum(10, num_images))
+def get_origin_indices(model, data, num_images, num_advs=None, batch_size=None):
+    if batch_size is None:
+        batch_size = int(np.minimum(10, num_images))
     model_predictions = get_batch_predictions(model, data['images'], batch_size)
     valid_indices = get_valid_indices(model_predictions, data, num_advs)
     #origin_indices = np.random.choice(valid_indices, size=num_images, replace=False)
@@ -102,6 +106,7 @@ def generate_paired_dict(model, data, origin_indices, valid_indices, num_images,
     advs = np.zeros((num_images, num_advs, 1, num_pixels))
     pert_lengths = np.zeros((num_images, num_advs))
     adv_class = np.zeros((num_images, num_advs))
+    pbar = tqdm(total=len(list(origin_indices))*num_advs, leave=True)
     for image_idx, origin_idx in enumerate(list(origin_indices)):
         images[image_idx, ...] = data['images'][origin_idx, ...]
         labels[image_idx] = data['labels'][origin_idx]
@@ -117,6 +122,8 @@ def generate_paired_dict(model, data, origin_indices, valid_indices, num_images,
             advs[image_idx, dir_idx, ...] = boundary_image.reshape(1, -1)
             adv_class[image_idx,  dir_idx] = torch.argmax(model(torchify(boundary_image[None, ...]))).item()
             pert_lengths[image_idx, dir_idx] =  pert_length
+            pbar.update(1)
+    pbar.close()
     output_dict = {}
     output_dict['images'] = images
     output_dict['labels'] = labels
@@ -246,37 +253,69 @@ def load_mnist(code_directory, seed):
 
 def load_cifar(code_directory):
     # load data
-    data_natural = np.load(code_directory+'AdversarialDecomposition/data/cifar_natural_diff.npy', allow_pickle=True).item()
-    data_madry = np.load(code_directory+'AdversarialDecomposition/data/cifar_robust_diff.npy', allow_pickle=True).item()
+    #data_natural = np.load(code_directory+'AdversarialDecomposition/data/cifar_natural_diff.npy', allow_pickle=True).item()
+    #data_madry = np.load(code_directory+'AdversarialDecomposition/data/cifar_robust_diff.npy', allow_pickle=True).item()
+    data_natural = np.load(code_directory+'AdversarialDecomposition/data/cifar_natural_wrn.npy', allow_pickle=True).item()
+    data_madry = np.load(code_directory+'AdversarialDecomposition/data/cifar_robust_wrn.npy', allow_pickle=True).item()
     # load models
     # natural
     ds = CIFAR(code_directory+'AdversarialDecomposition/data/cifar-10-batches-py')
-    classifier_model = ds.get_model('resnet50', False)
-    model_natural = model_loader.cifar_pretrained(classifier_model, ds)
-    resume_path = code_directory+'AdversarialDecomposition/models/nat_diff.pt'
-    checkpoint = torch.load(resume_path, pickle_module=dill, map_location=torch.device(dev()))
-    state_dict_path = 'model'
-    if not ('model' in checkpoint):
-        state_dict_path = 'state_dict'
-    sd = checkpoint[state_dict_path]
-    sd = {k[len('module.'):]: v for k, v in sd.items()}
-    model_natural.load_state_dict(sd)
+    resume_path = code_directory+'AdversarialDecomposition/models/nat_diff_new.pt'
+    model_natural = model_zoo.WideResNet(
+        num_classes=10, depth=70, width=16,
+        activation_fn=model_zoo.Swish,
+        mean=model_zoo.CIFAR10_MEAN,
+        std=model_zoo.CIFAR10_STD)
+
+    # The model was trained without biases for the batch norm (thankfully those are initialized to zero) :/
+    params = torch.load(resume_path)
+    model_natural.load_state_dict(params, strict=False)
     model_natural.to(dev())
     model_natural.double()
     model_natural.eval()
+
+    #classifier_model = ds.get_model('resnet50', False)
+    #model_natural = model_loader.cifar_pretrained(classifier_model, ds)
+    #resume_path = code_directory+'AdversarialDecomposition/models/nat_diff.pt'
+    #checkpoint = torch.load(resume_path, pickle_module=dill, map_location=torch.device(dev()))
+    #state_dict_path = 'model'
+    #if not ('model' in checkpoint):
+    #    state_dict_path = 'state_dict'
+    #sd = checkpoint[state_dict_path]
+    #sd = {k[len('module.'):]: v for k, v in sd.items()}
+    #model_natural.load_state_dict(sd)
+    #model_natural.to(dev())
+    #model_natural.double()
+    #model_natural.eval()
+
     # madry
     ds = CIFAR(code_directory+'AdversarialDecomposition/data/cifar-10-batches-py')
-    classifier_model = ds.get_model('resnet50', False)
-    model_madry = model_loader.cifar_pretrained(classifier_model, ds)
-    resume_path = code_directory+'AdversarialDecomposition/models/rob_diff.pt'
-    checkpoint = torch.load(resume_path, pickle_module=dill, map_location=torch.device(dev()))
-    state_dict_path = 'model'
-    if not ('model' in checkpoint):
-        state_dict_path = 'state_dict'
-    sd = checkpoint[state_dict_path]
-    sd = {k[len('module.'):]:v for k,v in sd.items()}
-    model_madry.load_state_dict(sd)
+    resume_path = code_directory+'AdversarialDecomposition/models/rob_diff_new.pt'
+    model_madry = model_zoo.WideResNet(
+        num_classes=10, depth=70, width=16,
+        activation_fn=model_zoo.Swish,
+        mean=model_zoo.CIFAR10_MEAN,
+        std=model_zoo.CIFAR10_STD)
+
+    # The model was trained without biases for the batch norm (thankfully those are initialized to zero) :/
+    params = torch.load(resume_path)
+    model_madry.load_state_dict(params, strict=False)
     model_madry.to(dev())
     model_madry.double()
     model_madry.eval()
+
+    #classifier_model = ds.get_model('resnet50', False)
+    #model_madry = model_loader.cifar_pretrained(classifier_model, ds)
+    #resume_path = code_directory+'AdversarialDecomposition/models/rob_diff.pt'
+    #checkpoint = torch.load(resume_path, pickle_module=dill, map_location=torch.device(dev()))
+    #state_dict_path = 'model'
+    #if not ('model' in checkpoint):
+    #    state_dict_path = 'state_dict'
+    #sd = checkpoint[state_dict_path]
+    #sd = {k[len('module.'):]:v for k,v in sd.items()}
+    #model_madry.load_state_dict(sd)
+    #model_madry.to(dev())
+    #model_madry.double()
+    #model_madry.eval()
+
     return model_natural, data_natural, model_madry, data_madry

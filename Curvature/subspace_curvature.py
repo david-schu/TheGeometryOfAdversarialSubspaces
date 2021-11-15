@@ -46,12 +46,12 @@ if __name__ == "__main__":
     filename_prefix = code_directory+'AdversarialDecomposition/data/'
 
     batch_size = 10
-    num_images = 50
-    num_advs = 10
+    num_images = 25#50
+    num_advs = 8#10
     seed = 0
 
     num_iters = 2 # for paired image boundary search
-    num_steps_per_iter = 100 # for paired image boundary search
+    num_steps_per_iter = 50#100 # for paired image boundary search
     dtype = torch.double
 
     if dataset_type == 0: # MNIST
@@ -68,15 +68,15 @@ if __name__ == "__main__":
     # valid_indices is a list of all indices where the model output matches the data label. This should be every index.
     # origin_indices is a random subset of valid_indices based on the num_images parameter
     image_index_filename = filename_prefix+data_prefix+f'_{num_images}image_indices.npz'
-    if os.path.exists(image_index_filename): 
+    if os.path.exists(image_index_filename):
         index_dict = np.load(image_index_filename, allow_pickle=True)['data'].item()
         all_natural_origin_indices = index_dict['natural_origin']
         all_natural_valid_indices = index_dict['natural_valid']
         all_robust_origin_indices = index_dict['robust_origin']
         all_robust_valid_indices = index_dict['robust_valid']
     else:
-        all_natural_origin_indices, all_natural_valid_indices = get_origin_indices(model_natural, data_natural, num_images, num_advs=None)
-        all_robust_origin_indices, all_robust_valid_indices = get_origin_indices(model_robust, data_robust, num_images, num_advs=None)
+        all_natural_origin_indices, all_natural_valid_indices = get_origin_indices(model_natural, data_natural, num_images, num_advs=None, batch_size=batch_size)
+        all_robust_origin_indices, all_robust_valid_indices = get_origin_indices(model_robust, data_robust, num_images, num_advs=None, batch_size=batch_size)
         np.savez(image_index_filename, data={
             'natural_origin':all_natural_origin_indices,
             'natural_valid':all_natural_valid_indices,
@@ -88,7 +88,7 @@ if __name__ == "__main__":
     if run_type <= 3: #mean curvature calculations
         # need to make a new subset of indices that also have enough valid adversarial examples
         adv_image_index_filename = filename_prefix+data_prefix+f'_{num_images}image_{num_advs}adv_indices.npz'
-        if os.path.exists(adv_image_index_filename): 
+        if os.path.exists(adv_image_index_filename):
             index_dict = np.load(adv_image_index_filename, allow_pickle=True)['data'].item()
             data_natural_paired = index_dict['data_natural_paired']
             data_robust_paired = index_dict['data_robust_paired']
@@ -101,10 +101,10 @@ if __name__ == "__main__":
                                          all_natural_valid_indices, num_images, num_advs, num_steps_per_iter=num_steps_per_iter, num_iters=num_iters)
             data_robust_paired = generate_paired_dict(model_robust, data_robust, all_robust_origin_indices,
                                          all_robust_valid_indices, num_images, num_advs, num_steps_per_iter, num_iters)
-            paired_natural_adv_origin_indices = get_origin_indices(model_natural, data_natural_paired, num_images, num_advs)[0]
-            paired_robust_adv_origin_indices = get_origin_indices(model_robust, data_robust_paired, num_images, num_advs)[0]
-            natural_adv_origin_indices = get_origin_indices(model_natural, data_natural, num_images, num_advs)[0]
-            robust_adv_origin_indices = get_origin_indices(model_robust, data_robust, num_images, num_advs)[0]
+            paired_natural_adv_origin_indices = get_origin_indices(model_natural, data_natural_paired, num_images, num_advs, batch_size)[0]
+            paired_robust_adv_origin_indices = get_origin_indices(model_robust, data_robust_paired, num_images, num_advs, batch_size)[0]
+            natural_adv_origin_indices = get_origin_indices(model_natural, data_natural, num_images, num_advs, batch_size)[0]
+            robust_adv_origin_indices = get_origin_indices(model_robust, data_robust, num_images, num_advs, batch_size)[0]
             np.savez(adv_image_index_filename, data={
                 'data_natural_paired':data_natural_paired,
                 'data_robust_paired':data_robust_paired,
@@ -194,7 +194,8 @@ if __name__ == "__main__":
                     origin=data_['images'][origin_idx, ...],
                     alt_image=data_['advs'][origin_idx, adv_idx, ...],
                     num_steps_per_iter=num_steps_per_iter,
-                    num_iters=num_iters)
+                    num_iters=num_iters,
+                    batch_size=batch_size)
                 clean_lbl = int(data_['labels'][origin_idx])
                 adv_lbl = int(data_['adv_class'][origin_idx, adv_idx])
                 activation, gradient = paired_activation_and_gradient(model_,
