@@ -9,7 +9,7 @@ sys.path.insert(0, './..')
 sys.path.insert(0, '../data')
 
 from models import model as model_loader
-from utils import dev, load_model
+from utils import dev
 from robustness1.datasets import CIFAR
 from models.cifar_models import model_zoo
 
