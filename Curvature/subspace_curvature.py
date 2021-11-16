@@ -215,7 +215,7 @@ if __name__ == "__main__":
                     adv_dirs = data_['dirs'][origin_idx, :num_advs+1, ...]
                     adv_dirs = np.delete(adv_dirs, adv_idx, axis=0).reshape(num_advs, n_pixels)
                     projection_basis = torch.from_numpy(adv_dirs).type(dtype).to(dev())
-                curvature = curve_utils.local_response_curvature_isoresponse_surface(gradient, hessian, projection_subspace_of_interest=projection_basis)
+                curvature = curve_utils.local_response_curvature_level_set(gradient, hessian, projection_subspace_of_interest=projection_basis)
                 all_subspace_curvatures[image_idx, adv_idx, :] = curvature[1].detach().cpu().numpy()
                 all_subspace_directions[image_idx, adv_idx, ...] = curvature[2].detach().cpu().numpy()
                 pbar.update(1)
