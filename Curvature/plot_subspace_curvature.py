@@ -170,10 +170,10 @@ for data_idx, mean_curvatures in enumerate([paired_mean_curvatures, adv_mean_cur
     axs[data_idx].set_xticks([], minor=True)
     axs[data_idx].set_xticklabels(model_types)
     if data_idx == 0:
-        axs[data_idx].set_ylabel('Mean curvature')
-        axs[data_idx].set_title('Paired image boundary')
+        axs[data_idx].set_ylabel('mean curvature')
+        axs[data_idx].set_title('paired image boundary')
     else:
-        axs[data_idx].set_title('Adversarial image boundary')
+        axs[data_idx].set_title('adversarial image boundary')
 
 for model_idx in range(adv_mean_curvatures.shape[0]):
     boxprops = dict(color=plot_colors[model_idx], linewidth=1.5, alpha=0.7)
@@ -187,8 +187,8 @@ for model_idx in range(adv_mean_curvatures.shape[0]):
         data = adv_mean_curvatures[model_idx, :, adv_idx].reshape(-1)
         axs[2].boxplot(data, sym='', positions=[adv_idx], whis=(10, 90), widths=bar_width, meanline=True, showmeans=True, boxprops=boxprops,
             whiskerprops=whiskerprops, capprops=capprops, medianprops=medianprops, meanprops=meanprops)
-axs[2].set_title('Adversarial image boundary')
-axs[2].set_xlabel('Dimension number')
+axs[2].set_title('adversarial image boundary')
+axs[2].set_xlabel('dimension number')
 axs[2].set_xticks([i for i in range(adv_mean_curvatures.shape[-1])], minor=False)
 axs[2].set_xticks([], minor=True)
 axs[2].set_xticklabels([str(i+1) for i in range(adv_mean_curvatures.shape[-1])])
@@ -208,7 +208,7 @@ def make_space_above(axes, topmargin=1):
 
 make_space_above(axs, topmargin=0.5)
 
-fig.suptitle(f'Curvature at the decision boundary\nfor {num_images} images and the first {num_advs} adversarial directions', y=1.0)
+fig.suptitle(f'curvature at the decision boundary\nfor {num_images} images and the first {num_advs} adversarial directions', y=1.0)
 #plt.show()
 fig.savefig(ROOT+f'/data/mean_curvature_boxplots.png', transparent=True, bbox_inches='tight', pad_inches=0.01)
 
@@ -218,7 +218,7 @@ fig.savefig(ROOT+f'/data/mean_curvature_boxplots.png', transparent=True, bbox_in
 
 bar_width = 0.5
 fig, axs = pplt.subplots(nrows=1, ncols=2, sharey=True, figwidth=figwidth)
-titles = ['Test image boundary', 'Adversarial image boundary']
+titles = ['test image boundary', 'adversarial image boundary']
 for data_idx, mean_curvatures in enumerate([paired_mean_curvatures, adv_mean_curvatures]):
     data = pd.DataFrame(mean_curvatures.reshape(-1, np.prod(mean_curvatures.shape[1:])).transpose(1, 0),
                         columns=pd.Index(model_types, name=''))
@@ -230,7 +230,7 @@ for data_idx, mean_curvatures in enumerate([paired_mean_curvatures, adv_mean_cur
                          )
     axs[data_idx].format(
         xticklabels=['',''],#model_types,
-        ylabel='Mean curvature',
+        ylabel='mean curvature',
         title=titles[data_idx],
         xgrid=False
     )
@@ -238,7 +238,7 @@ for data_idx, mean_curvatures in enumerate([paired_mean_curvatures, adv_mean_cur
 
 
 axs.format(
-    suptitle=f'Curvature at the decision boundary',#\naveraged across {num_images} images and the first {num_advs} adversarial directions'
+    suptitle=f'curvature at the decision boundary',#\naveraged across {num_images} images and the first {num_advs} adversarial directions'
 )
 
 #pplt.show()
@@ -275,10 +275,10 @@ ix.scatter(adv_principal_curvatures[1, ...].mean(axis=(0, 1)),
            s=0.005, alpha=1.0, c=plot_colors[1])
 
 ax.format(
-    title=f'Curvature profile, averaged across {num_images} images',
+    title=f'curvature profile, averaged across {num_images} images',
     xlim=(-5, num_dims+5),
-    ylabel='Curvature',
-    xlabel='Principal curvature direction',
+    ylabel='curvature',
+    xlabel='principal curvature direction',
     grid=False
 )
 for ax_loc in ['top', 'right']:
@@ -319,7 +319,7 @@ axs[0].scatter(rand_subspace_pcs[1, ...].mean(axis=(0,1)), s=2.0, c=plot_colors[
                bardata=np.std(rand_subspace_pcs[1, ...], axis=(0,1)), barc=plot_colors[1], barlw=0.5, capsize=0.0,)
 axs[0].axhline(0.0, color='black', linestyle='dashed', linewidth=0.5)
 axs[0].format(
-    title=f'Random subspaces'
+    title=f'random subspaces'
 )
 for ax_loc in ['top', 'right']:
     axs[0].spines[ax_loc].set_color('none')
@@ -330,19 +330,19 @@ axs[1].scatter(adv_subspace_pcs[1, ...].mean(axis=(0,1)), s=2.0, c=plot_colors[1
                bardata=np.std(adv_subspace_pcs[1, ...], axis=(0,1)), barc=plot_colors[1], barlw=0.5, capsize=0.0,)
 axs[1].axhline(0.0, color='black', linestyle='dashed', linewidth=0.5)
 axs[1].format(
-    title=f'Adversarial subspaces'
+    title=f'adversarial subspaces'
 )
 for ax_loc in ['top', 'right']:
     axs[1].spines[ax_loc].set_color('none')
 
 axs.format(
-    ylabel='Curvature',
-    xlabel='Principal curvature directions',
+    ylabel='curvature',
+    xlabel='principal curvature directions',
     grid=False
 )
 
-legend_handles = [mpatches.Patch(color=plot_colors[0], label='Natural'),
-                  mpatches.Patch(color=plot_colors[1], label='Robust')]
+legend_handles = [mpatches.Patch(color=plot_colors[0], label='natural'),
+                  mpatches.Patch(color=plot_colors[1], label='robust')]
 axs[0].legend(handles=legend_handles, loc='upper right', ncols=1, frame=False)
 
 #pplt.show()
@@ -365,7 +365,7 @@ fig, axs = pplt.subplots(array, sharey=False, sharex=False,
 
 all_mean_curvatures_max = np.max([paired_mean_curvatures.max(), adv_mean_curvatures.max()])
 all_mean_curvatures_min = np.min([paired_mean_curvatures.min(), adv_mean_curvatures.min()])
-titles = ['Test boundary', 'Adversarial boundary']
+titles = ['test boundary', 'adversarial boundary']
 ax = axs[:2]
 for data_idx, mean_curvatures in enumerate([paired_mean_curvatures, adv_mean_curvatures]):
     data = pd.DataFrame(mean_curvatures.reshape(-1, np.prod(mean_curvatures.shape[1:])).transpose(1, 0),
@@ -388,7 +388,7 @@ ax.format(
     yticklabels=['-0.5', '0.0', '0.5'],
     xgrid=False,
 )
-ax[0].format(ylabel='Mean curvature')
+ax[0].format(ylabel='mean curvature')
 
 ax = axs[2]
 num_models, num_images, num_advs, num_dims = adv_principal_curvatures.shape
@@ -421,11 +421,11 @@ ix.scatter(adv_principal_curvatures[0, ...].mean(axis=(0, 1)),
 ix.scatter(adv_principal_curvatures[1, ...].mean(axis=(0, 1)),
            s=0.005, alpha=1.0, c=plot_colors[1])
 ax.format(
-    title=f'Adversarial boundary',#,\nfull dimensionality',
+    title=f'adversarial boundary',#,\nfull dimensionality',
     xlim=(-5, num_dims+5),
     xticks=(1, 1500, 3000),
     ylim=(min_pc, max_pc),
-    ylabel='Curvature',
+    ylabel='curvature',
     grid=False
 )
 
@@ -437,14 +437,14 @@ ax[0].scatter(rand_subspace_pcs[0, ...].mean(axis=(0,1)), s=2.0, c=plot_colors[0
 ax[0].scatter(rand_subspace_pcs[1, ...].mean(axis=(0,1)), s=2.0, c=plot_colors[1],
                bardata=np.std(rand_subspace_pcs[1, ...], axis=(0,1)), barc=plot_colors[1], barlw=0.5, capsize=0.0,)
 ax[0].axhline(0.0, color='black', linestyle='dashed', linewidth=0.5)
-ax[0].format(title=f'Random subspaces')#, titlepad=-5)
+ax[0].format(title=f'random subspaces')#, titlepad=-5)
 
 ax[1].scatter(adv_subspace_pcs[0, ...].mean(axis=(0,1)), s=2.0, c=plot_colors[0],
                bardata=np.std(adv_subspace_pcs[0, ...], axis=(0,1)), barc=plot_colors[0], barlw=0.5, capsize=0.0,)
 ax[1].scatter(adv_subspace_pcs[1, ...].mean(axis=(0,1)), s=2.0, c=plot_colors[1],
                bardata=np.std(adv_subspace_pcs[1, ...], axis=(0,1)), barc=plot_colors[1], barlw=0.5, capsize=0.0,)
 ax[1].axhline(0.0, color='black', linestyle='dashed', linewidth=0.5)
-ax[1].format(title=f'Adversarial subspaces')#, titlepad=-5)
+ax[1].format(title=f'adversarial subspaces')#, titlepad=-5)
 
 ax.format(
     xticks=[i for i in range(num_advs)],
@@ -454,7 +454,7 @@ ax.format(
     grid=False
 )
 
-axs[3].format(xlabel='Principal curvature directions')
+axs[3].format(xlabel='principal curvature directions')
 
 for ax_loc in ['top', 'right']:
     for ax in axs:
@@ -463,7 +463,7 @@ for ax_loc in ['top', 'right']:
 legend_handles = [mpatches.Patch(color=plot_colors[0], label=model_types[0]),
                   mpatches.Patch(color=plot_colors[1], label=model_types[1])]
 legend = axs[-1].legend(legend_handles,
-               title='Training type',
+               title='training type',
                columnspacing=-1., markerfirst=True,
                loc='fill', frame=False, ncols=1, pad=-8)
 #for handle in legend.legendHandles:
