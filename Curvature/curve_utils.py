@@ -1,3 +1,4 @@
+from datetime import datetime
 import os
 import sys
 #import sleep
@@ -19,6 +20,25 @@ sys.path.insert(0, './../..')
 
 import response_contour_analysis.utils.model_handling as model_utils
 import response_contour_analysis.utils.principal_curvature as curve_utils
+
+
+def flush():
+    sys.stdout.flush()
+    sys.stderr.flush()
+
+
+def torch_hessian(*args, **kwargs):
+    vectorize=False
+    print(datetime.utcnow())
+    print("computing hessian with vectorize=", vectorize)
+    flush()
+    torch._C._debug_only_display_vmap_fallback_warnings(True)
+    hessian = torch.autograd.functional.hessian(*args, **kwargs, vectorize=vectorize)
+    print("hessian done")
+    print(datetime.utcnow())
+    torch._C._debug_only_display_vmap_fallback_warnings(False)
+    return hessian
+
 
 def tab_name_to_hex(tab):
     conv_table = {
@@ -182,9 +202,11 @@ def get_curvature(condition_zip, origin_indices, num_advs, num_iters, num_steps_
             for adv_idx in range(num_advs):
                 if not np.all(np.isnan(principal_curvatures[model_idx, image_idx, adv_idx, :])):
                     print(f'iteration {model_idx}:{len(models)}-{image_idx}:{len(list(origin_indices))}-{adv_idx}:{num_advs} done')
+                    flush()
                     continue
                 else:
                     print(f'iteration {model_idx}:{len(models)}-{image_idx}:{len(list(origin_indices))}-{adv_idx}:{num_advs}')
+                    flush()
                 boundary_image = get_paired_boundary_image(
                     model=model_,
                     origin=data_['images'][origin_idx, ...],
@@ -193,11 +215,13 @@ def get_curvature(condition_zip, origin_indices, num_advs, num_iters, num_steps_
                     num_iters=num_iters
                 )[0]
                 print('... boundary image found')
+                flush()
                 adv_lbl = int(data_['adv_class'][origin_idx, adv_idx])
                 def func(x):
                     acts_diff = paired_activation(model_, x, clean_lbl, adv_lbl)
                     return acts_diff
-                hessian = torch.autograd.functional.hessian(func, torchify(boundary_image[None,...]))
+                #hessian = torch.autograd.functional.hessian(func, torchify(boundary_image[None,...]))
+                hessian = torch_hessian(func, torchify(boundary_image[None,...]))
                 hessian = hessian.reshape((int(boundary_image.size), int(boundary_image.size))).type(dtype)
                 activation, gradient = paired_activation_and_gradient(model_, torchify(boundary_image[None, ...]), clean_lbl, adv_lbl)
                 gradient = gradient.reshape(-1).type(dtype)
@@ -206,6 +230,7 @@ def get_curvature(condition_zip, origin_indices, num_advs, num_iters, num_steps_
                 principal_curvatures[model_idx, image_idx, adv_idx, :] = curvature[1].detach().cpu().numpy()
                 principal_directions[model_idx, image_idx, adv_idx, ...] = curvature[2].detach().cpu().numpy()
                 print('... curvature found')
+                flush()
                 #sleep(60)
                 np.savez(cache_filename,
                     shape_operators=shape_operators,
@@ -233,9 +258,11 @@ def get_subspace_curvature(run_type, model, data, origin_indices, num_advs, num_
         for adv_idx in range(num_advs):
             if not np.all(np.isnan(all_subspace_curvatures[image_idx, adv_idx, :])):
                 print(f'iteration {image_idx}:{len(list(origin_indices))}-{adv_idx}:{num_advs} done')
+                flush()
                 continue
             else:
                 print(f'iteration {image_idx}:{len(list(origin_indices))}-{adv_idx}:{num_advs}')
+                flush()
             boundary_image, boundary_dir, pert_length = get_paired_boundary_image(
                 model=model,
                 origin=data['images'][origin_idx, ...],
@@ -244,6 +271,7 @@ def get_subspace_curvature(run_type, model, data, origin_indices, num_advs, num_
                 num_iters=num_iters,
                 batch_size=batch_size)
             print('... boundary image found')
+            flush()
             clean_lbl = int(data['labels'][origin_idx])
             adv_lbl = int(data['adv_class'][origin_idx, adv_idx])
             activation, gradient = paired_activation_and_gradient(model,
@@ -253,7 +281,7 @@ def get_subspace_curvature(run_type, model, data, origin_indices, num_advs, num_
             def func(x):
                 acts_diff = paired_activation(model, x, clean_lbl, adv_lbl)
                 return acts_diff
-            hessian = torch.autograd.functional.hessian(func, torchify(boundary_image[None,...]))
+            hessian = torch_hessian(func, torchify(boundary_image[None,...]))
             hessian = hessian.reshape((int(boundary_image.size), int(boundary_image.size))).type(dtype)
             if run_type == 4 or run_type == 5: # random subspace
                 norm_gradient = (gradient / torch.linalg.norm(gradient)).detach().cpu().numpy()
@@ -267,6 +295,7 @@ def get_subspace_curvature(run_type, model, data, origin_indices, num_advs, num_
             curvature = curve_utils.local_response_curvature_level_set(gradient, hessian,
                     projection_subspace_of_interest=projection_basis)
             print('... curvature found')
+            flush()
             all_subspace_curvatures[image_idx, adv_idx, :] = curvature[1].detach().cpu().numpy()
             all_subspace_directions[image_idx, adv_idx, ...] = curvature[2].detach().cpu().numpy()
             np.savez(cache_filename,
@@ -294,7 +323,7 @@ def get_hessian_error(model, origin, clean_lbl, adv_lbl, abscissa, ordinate, hes
         learning_rate=hess_params['hessian_lr'],
         return_points=False,
         progress=True)
-    autodiff_hessian = torch.autograd.functional.hessian(act_func, origin)
+    autodiff_hessian = torch_hessian(act_func, origin)
     autodiff_hessian = autodiff_hessian.reshape((int(origin.numel()), int(origin.numel())))
     n_x_samples = 10
     n_y_samples = 100
