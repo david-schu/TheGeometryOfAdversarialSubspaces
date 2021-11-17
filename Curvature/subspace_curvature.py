@@ -1,5 +1,5 @@
 import sys
-import os.path
+import os
 
 from tqdm import tqdm
 import numpy as np
@@ -37,6 +37,8 @@ if __name__ == "__main__":
         7 - robust, adversarial subspace
     """
     print(dev())
+    cache_filename1 = os.environ.get("CACHEFILE")
+    print(f'Cache file = {cache_filename1}')
 
     dataset_type = int(sys.argv[1])
     run_type = int(sys.argv[2])
@@ -50,8 +52,8 @@ if __name__ == "__main__":
     num_advs = 8#10
     seed = 0
 
-    num_iters = 2 # for paired image boundary search
-    num_steps_per_iter = 50#100 # for paired image boundary search
+    num_iters = 1 # for paired image boundary search
+    num_steps_per_iter = 10#100 # for paired image boundary search
     dtype = torch.double
 
     if dataset_type == 0: # MNIST
@@ -182,44 +184,8 @@ if __name__ == "__main__":
             run_name = 'robust_adv_subspace_'
         print('experiment ' + run_name)
 
-        num_exp_images = len(origin_indices)
-        image_size = data_['images'][0, ...].size
-        all_subspace_curvatures = np.zeros((num_exp_images, num_advs, num_advs))
-        all_subspace_directions = np.zeros((num_exp_images, num_advs, image_size, num_advs))
-        pbar = tqdm(total=num_advs*num_exp_images, leave=True)
-        for image_idx, origin_idx in enumerate(list(origin_indices)):
-            for adv_idx in range(num_advs):
-                boundary_image, boundary_dir, pert_length = get_paired_boundary_image(
-                    model=model_,
-                    origin=data_['images'][origin_idx, ...],
-                    alt_image=data_['advs'][origin_idx, adv_idx, ...],
-                    num_steps_per_iter=num_steps_per_iter,
-                    num_iters=num_iters,
-                    batch_size=batch_size)
-                clean_lbl = int(data_['labels'][origin_idx])
-                adv_lbl = int(data_['adv_class'][origin_idx, adv_idx])
-                activation, gradient = paired_activation_and_gradient(model_,
-                        torchify(boundary_image[None, ...]), clean_lbl, adv_lbl)
-                gradient = gradient.reshape(-1).type(dtype)
-                n_pixels = gradient.numel()
-                def func(x):
-                    acts_diff = paired_activation(model_, x, clean_lbl, adv_lbl)
-                    return acts_diff
-                hessian = torch.autograd.functional.hessian(func, torchify(boundary_image[None,...]))
-                hessian = hessian.reshape((int(boundary_image.size), int(boundary_image.size))).type(dtype)
-                if run_type == 4 or run_type == 5: # random subspace
-                    norm_gradient = (gradient / torch.linalg.norm(gradient)).detach().cpu().numpy()
-                    projection_basis = torch.from_numpy(data_utils.get_rand_orth_vectors(norm_gradient, num_orth_directions=num_advs)).type(dtype).to(dev())
-                elif run_type == 6 or run_type == 7: # adversarial subspace
-                    # We don't include the current direction, because it is the negative of the gradient
-                    adv_dirs = data_['dirs'][origin_idx, :num_advs+1, ...]
-                    adv_dirs = np.delete(adv_dirs, adv_idx, axis=0).reshape(num_advs, n_pixels)
-                    projection_basis = torch.from_numpy(adv_dirs).type(dtype).to(dev())
-                curvature = curve_utils.local_response_curvature_level_set(gradient, hessian, projection_subspace_of_interest=projection_basis)
-                all_subspace_curvatures[image_idx, adv_idx, :] = curvature[1].detach().cpu().numpy()
-                all_subspace_directions[image_idx, adv_idx, ...] = curvature[2].detach().cpu().numpy()
-                pbar.update(1)
-        pbar.close()
+        all_subspace_curvatures, all_subspace_directions = get_subspace_curvature(run_type, model_,
+                data_, origin_indices, num_advs, num_steps_per_iter, num_iters, batch_size)
 
         save_dict = {}
         save_dict['origin_indices'] = origin_indices

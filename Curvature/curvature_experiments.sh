@@ -12,6 +12,13 @@
 #SBATCH --mail-user=dylan.paiton@uni-tuebingen.de
 
 echo "parameters: $arg1 $arg2 $arg3"
-srun singularity exec --nv /mnt/qb/bethge/shared/dylan_david_shared/singularity/dpaiton_pytorch_latest-2021-10-03-f617935c6553.sif /opt/conda/bin/python3 subspace_curvature.py $arg1 $arg2 $arg3
+export SINGULARITYENV_CACHEFILE=/mnt/qb/bethge/shared/dylan_david_shared/cache/$arg1-$arg2-$arg3-cachefile.npz
+export IMAGE=/mnt/qb/bethge/shared/dylan_david_shared/singularity/dpaiton_pytorch_latest-2021-10-03-f617935c6553.sif
+export tmp_dir=$(mktemp -d -t singularity-XXXXXXXXX)
+export LOCAL_IMAGE=$tmp_dir/image.sif
 
+rsync -av --progress $IMAGE $LOCAL_IMAGE
+srun singularity exec --nv $LOCAL_IMAGE /opt/conda/bin/python3 subspace_curvature.py $arg1 $arg2 $arg3
+
+rm -rf $tmp_dir
 echo DONE!
