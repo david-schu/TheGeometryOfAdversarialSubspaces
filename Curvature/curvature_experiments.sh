@@ -8,10 +8,10 @@
 #SBATCH --output=run_outputs/batch_curvature_%j.out # File to which STDOUT will be written
 #SBATCH --error=run_outputs/batch_curvature_%j.err  # File to which STDERR will be written
 #SBATCH --gres=gpu:1                    # optionally type and number of gpus
-
 #SBATCH --mail-type=END
 #SBATCH --mail-user=dylan.paiton@uni-tuebingen.de
 
+echo "parameters: $arg1 $arg2 $arg3"
 srun singularity exec --nv /mnt/qb/bethge/shared/dylan_david_shared/singularity/dpaiton_pytorch_latest-2021-10-03-f617935c6553.sif /opt/conda/bin/python3 subspace_curvature.py $arg1 $arg2 $arg3
 
 echo DONE!

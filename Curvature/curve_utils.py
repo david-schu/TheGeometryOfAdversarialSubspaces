@@ -186,7 +186,7 @@ def get_curvature(condition_zip, origin_indices, num_advs, num_iters, num_steps_
                 hessian = hessian.reshape((int(boundary_image.size), int(boundary_image.size))).type(dtype)
                 activation, gradient = paired_activation_and_gradient(model_, torchify(boundary_image[None, ...]), clean_lbl, adv_lbl)
                 gradient = gradient.reshape(-1).type(dtype)
-                curvature = curve_utils.local_response_curvature_isoresponse_surface(gradient, hessian)
+                curvature = curve_utils.local_response_curvature_level_set(gradient, hessian)
                 shape_operators[model_idx, image_idx, adv_idx, ...] = curvature[0].detach().cpu().numpy()
                 principal_curvatures[model_idx, image_idx, adv_idx, :] = curvature[1].detach().cpu().numpy()
                 principal_directions[model_idx, image_idx, adv_idx, ...] = curvature[2].detach().cpu().numpy()
