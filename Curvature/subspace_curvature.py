@@ -46,7 +46,7 @@ if __name__ == "__main__":
     filename_prefix = code_directory+'AdversarialDecomposition/data/'
 
     batch_size = 10
-    num_images = 25#50
+    num_images = 10#50
     num_advs = 8#10
     seed = 0
 

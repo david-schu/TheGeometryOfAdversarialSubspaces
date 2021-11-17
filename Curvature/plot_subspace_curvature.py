@@ -408,6 +408,7 @@ ix = ax.inset(
 )
 ix.format(
     xlim=(0, num_dims), ylim=(-2, 2), metacolor='red7',
+    xticks=[1, 1500, 3000],
     xticklabels=[],
     ytickloc='right',
     yticklabelloc='right',

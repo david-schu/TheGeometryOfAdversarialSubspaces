@@ -80,7 +80,8 @@ def get_batch_predictions(model, data, batch_size=None):
     image_splits = torch.split(torchify(data), batch_size, dim=0)
     model_predictions = []
     for batch in image_splits:
-        model_predictions.append(torch.argmax(model(batch), dim=1).detach().cpu().numpy())
+        with torch.no_grad():
+            model_predictions.append(torch.argmax(model(batch), dim=1).detach().cpu().numpy())
     model_predictions = np.concatenate(model_predictions, axis=0).reshape(-1)
     return model_predictions
 
