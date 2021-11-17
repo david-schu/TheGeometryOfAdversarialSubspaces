@@ -217,7 +217,7 @@ def get_curvature(condition_zip, origin_indices, num_advs, num_iters, num_steps_
     return shape_operators, principal_curvatures, principal_directions
 
 
-def get_subspace_curvature(run_type, model, data, origin_indices, num_advs, num_steps_per_iter, num_iters, batch_size):
+def get_subspace_curvature(run_type, model, data, origin_indices, num_advs, num_steps_per_iter, num_iters, batch_size, dtype):
     cache_filename = os.environ.get("CACHEFILE")
     num_exp_images = len(origin_indices)
     image_size = data['images'][0, ...].size

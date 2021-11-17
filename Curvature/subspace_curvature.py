@@ -185,7 +185,7 @@ if __name__ == "__main__":
         print('experiment ' + run_name)
 
         all_subspace_curvatures, all_subspace_directions = get_subspace_curvature(run_type, model_,
-                data_, origin_indices, num_advs, num_steps_per_iter, num_iters, batch_size)
+                data_, origin_indices, num_advs, num_steps_per_iter, num_iters, batch_size, dtype)
 
         save_dict = {}
         save_dict['origin_indices'] = origin_indices
