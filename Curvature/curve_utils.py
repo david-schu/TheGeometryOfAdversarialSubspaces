@@ -18,6 +18,7 @@ from models.cifar_models import model_zoo
 
 sys.path.insert(0, './../..')
 
+import response_contour_analysis.utils.dataset_generation as data_utils
 import response_contour_analysis.utils.model_handling as model_utils
 import response_contour_analysis.utils.principal_curvature as curve_utils
 

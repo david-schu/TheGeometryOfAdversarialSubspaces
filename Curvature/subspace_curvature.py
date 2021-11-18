@@ -182,7 +182,7 @@ if __name__ == "__main__":
             model_ = model_robust
             data_ = data_robust
             run_name = 'robust_adv_subspace_'
-        print('experiment ' + run_name)
+        print(f'experiment {run_name}')
 
         all_subspace_curvatures, all_subspace_directions = get_subspace_curvature(run_type, model_,
                 data_, origin_indices, num_advs, num_steps_per_iter, num_iters, batch_size, dtype)
