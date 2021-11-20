@@ -188,7 +188,7 @@ def get_curvature(condition_zip, origin_indices, num_advs, num_iters, num_steps_
     image_size = np.prod(image_shape)
     num_dims = image_size - 1 #removes normal direction
     if os.path.isfile(cache_filename):
-        with np.loadz(cache_filename) as data:
+        with np.load(cache_filename) as data:
             shape_operators = data['shape_operators']
             principal_curvatures = data['principal_curvatures']
             principal_directions = data['principal_directions']
@@ -248,7 +248,7 @@ def get_subspace_curvature(run_type, model, data, origin_indices, num_advs, num_
     num_exp_images = len(origin_indices)
     image_size = data['images'][0, ...].size
     if os.path.isfile(cache_filename):
-        with np.loadz(cache_filename) as data:
+        with np.load(cache_filename) as data:
             all_subspace_curvatures = data['all_subspace_curvatures']
             all_subspace_directions = data['all_subspace_directions']
     else:
