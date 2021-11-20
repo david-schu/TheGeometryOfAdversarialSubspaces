@@ -248,9 +248,9 @@ def get_subspace_curvature(run_type, model, data, origin_indices, num_advs, num_
     num_exp_images = len(origin_indices)
     image_size = data['images'][0, ...].size
     if os.path.isfile(cache_filename):
-        with np.load(cache_filename) as data:
-            all_subspace_curvatures = data['all_subspace_curvatures']
-            all_subspace_directions = data['all_subspace_directions']
+        with np.load(cache_filename) as _data:
+            all_subspace_curvatures = _data['all_subspace_curvatures']
+            all_subspace_directions = _data['all_subspace_directions']
     else:
         all_subspace_curvatures = np.empty((num_exp_images, num_advs, num_advs)) * np.nan
         all_subspace_directions = np.empty((num_exp_images, num_advs, image_size, num_advs)) * np.nan
