@@ -9,12 +9,12 @@ def run_attack(model,
                label,
                attack_params,
                save_path,
+               pre_data=None,
                random_start=True,
                input_attack=L2OrthAttack,
                n_adv_dims=3,
                early_stop=3,
                epsilons=[None],
-               verbose=False
     ):
     fmodel = foolbox.models.PyTorchModel(model,  # return logits in shape (bs, n_classes)
                                          bounds=(0., 1.),  # num_classes=10,
@@ -26,19 +26,24 @@ def run_attack(model,
     x_orig = image.flatten()
 
     count = 0
-    pert_lengths = torch.zeros(n_adv_dims, device=dev())
-    adv_class = torch.zeros(n_adv_dims, device=dev(), dtype=int)
-    advs = torch.zeros((n_adv_dims, n_channels * n_pixel), device=dev())
-    adv_dirs = torch.zeros((n_adv_dims, n_channels * n_pixel), device=dev())
-    dirs=[]
+    if pre_data is None:
+        pert_lengths = torch.zeros(n_adv_dims, device=dev())
+        adv_class = torch.zeros(n_adv_dims, device=dev(), dtype=int)
+        advs = torch.zeros((n_adv_dims, n_channels * n_pixel), device=dev())
+        adv_dirs = torch.zeros((n_adv_dims, n_channels * n_pixel), device=dev())
+        dirs=[]
+    else:
+        advs = torch.tensor(pre_data['advs'][0], device=dev())
+        adv_dirs = torch.tensor(pre_data['dirs'][0], device=dev())
+        pert_lengths = torch.tensor(pre_data['pert_lengths'][0], device=dev())
+        adv_class = torch.tensor(pre_data['adv_class'][0], device=dev())
+        pre_dims = (~(pert_lengths[0]==0)).sum()
+        dirs = adv_dirs[:, :pre_dims]
 
-    dim = 0
-    run = 0
+
+    dim = len(dirs)
     while dim < n_adv_dims:
 
-        if verbose:
-            print('Run %d' % (run + 1))
-        run += 1
         attack = OrthogonalAttack(input_attack=input_attack,
                                   params=attack_params,
                                   adv_dirs=dirs,

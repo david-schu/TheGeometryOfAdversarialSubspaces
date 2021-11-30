@@ -1,5 +1,6 @@
 import sys
 sys.path.insert(0, './..')
+import os
 
 import numpy as np
 import torch
@@ -10,15 +11,13 @@ from attacks import L2OrthAttack
 from run_attack import run_attack
 
 if __name__ == "__main__":
-    batchsize = int(sys.argv[1])
-    is_natural = int(sys.argv[2])
-    batch_n = int(sys.argv[3])
+    is_natural = int(sys.argv[1])
+    batch_n = int(sys.argv[2])
     ## user initialization
 
     # set number of images per class for attack
     n_images = 10
     dset = 'CIFAR'
-    model_seed = 0  #only required for MNIST
 
     # set attack parameters
     attack_params = {
@@ -41,6 +40,7 @@ if __name__ == "__main__":
 
     # load a model
     if dset == 'MNIST':
+        model_seed = 0  # only required for MNIST
         if is_natural:
             model_path = './../models/natural_' + str(model_seed) + '.pt'
             save_path = '../data/minst_natural_' + str(batch_n) + '.npy'
@@ -50,10 +50,10 @@ if __name__ == "__main__":
     elif dset == 'CIFAR':
         if is_natural:
             model_path = './../models/cifar_models/nat_diff_new.pt'
-            save_path = '../data/cifar_natural_' + str(batch_n) + '.npy'
+            save_path = '../data/cifar_wrn/cifar_natural_' + str(batch_n) + '.npy'
         else:
             model_path = './../models/cifar_models/rob_diff_new.pt'
-            save_path = '../data/cifar_robust_' + str(batch_n) + '.npy'
+            save_path = '../data/cifar_wrn/cifar_robust_' + str(batch_n) + '.npy'
     else:
         raise ValueError('No valid dataset specification')
 
@@ -69,34 +69,28 @@ if __name__ == "__main__":
         labels = torch.cat((labels, all_labels[all_labels == l][:n_images]), 0)
     del all_images, all_labels
 
-    images = images[(batch_n*batchsize):(batch_n*batchsize+batchsize)]
-    labels = labels[(batch_n*batchsize):(batch_n*batchsize+batchsize)]
+    image = images[batch_n]
+    label = labels[batch_n]
 
-    images = images.to(dev())
-    labels = labels.to(dev())
+    image = image.to(dev()).unsqueeze(0)
+    label = label.to(dev()).unsqueeze(0)
 
-    # initialize data arrays
-    advs = np.zeros((batchsize, params['n_adv_dims'], images[0].shape[0] * images[0].shape[-1]**2))
-    dirs = np.zeros((batchsize, params['n_adv_dims'], images[0].shape[0] * images[0].shape[-1]**2))
-    pert_lengths = np.zeros((batchsize, params['n_adv_dims']))
-    adv_class = np.zeros((batchsize, params['n_adv_dims']))
+    if os.path.exists(save_path):
+        pre_data = np.load(save_path, allow_pickle=True).item()
+    else:
+        pre_data = None
+
 
     # run decomposition over batches
-    for i in range(len(images)):
-        new_advs, new_dirs, new_classes, new_pert_lengths = run_attack(model, images[i].unsqueeze(0), labels[i].unsqueeze(0),
-                                                                       attack_params, save_path, **params)
-        advs[i] = new_advs.cpu().detach().numpy()
-        dirs[i] = new_dirs.cpu().detach().numpy()
-        adv_class[i] = new_classes.cpu().detach().numpy()
-        pert_lengths[i] = new_pert_lengths.cpu().detach().numpy()
+    advs, dirs, adv_class, pert_lengths = run_attack(model, image, label, attack_params, save_path, pre_data, **params)
 
-        data = {
-            'advs': advs,
-            'dirs': dirs,
-            'adv_class': adv_class,
-            'pert_lengths': pert_lengths,
-            'images': images.detach().cpu().numpy(),
-            'labels': labels.detach().cpu().numpy(),
-        }
+    data = {
+        'advs': advs.unsqueeze(0).cpu().detach().numpy(),
+        'dirs': dirs.unsqueeze(0).cpu().detach().numpy(),
+        'adv_class': adv_class.unsqueeze(0).cpu().detach().numpy(),
+        'pert_lengths': pert_lengths.unsqueeze(0).cpu().detach().numpy(),
+        'images': image.detach().cpu().numpy(),
+        'labels': label.detach().cpu().numpy(),
+    }
 
-        np.save(save_path, data)
+    np.save(save_path, data)

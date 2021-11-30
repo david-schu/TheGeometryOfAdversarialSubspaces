@@ -10,18 +10,18 @@ import tqdm
 if __name__ == "__main__":
     batch_n = int(sys.argv[1])
     is_natural = int(sys.argv[2])
-    dset='CIFAR'
-    batchsize=1
+    dset = 'CIFAR'
+    batchsize = 1
     with torch.no_grad():
         #load model
         if is_natural:
             model_path = './models/cifar_models/nat_diff_new.pt'
             data_path = './data/cifar_runs/cifar_natural_wrn.npy'
-            save_path = './data/dists_to_bnd_natural_wrn'+str(batch_n)+'.npy'
+            save_path = './data/dists_to_bnd_natural_wrn' + str(batch_n) + '.npy'
         else:
             model_path = './models/cifar_models/rob_diff_new.pt'
             data_path = './data/cifar_runs/cifar_robust_wrn.npy'
-            save_path = './data/dists_to_bnd_robust_wrn_'+str(batch_n)+'.npy'
+            save_path = './data/dists_to_bnd_robust_wrn_' + str(batch_n) + '.npy'
 
         model = load_model(resume_path=model_path, dataset=dset)
 
