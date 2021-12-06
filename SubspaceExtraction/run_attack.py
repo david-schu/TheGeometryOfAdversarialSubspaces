@@ -1,5 +1,5 @@
 import torch
-from attacks import OrthogonalAttack, L2OrthAttack
+from SubspaceExtraction.attacks import OrthogonalAttack, L2OrthAttack
 from utils import classification, dev
 import foolbox
 import numpy as np ###

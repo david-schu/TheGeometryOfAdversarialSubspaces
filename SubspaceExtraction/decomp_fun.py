@@ -8,8 +8,8 @@ import torch
 
 # own modules
 from utils import dev, load_stable_data, load_model
-from attacks import L2OrthAttack
-from run_attack import run_attack
+from SubspaceExtraction.attacks import L2OrthAttack
+from SubspaceExtraction.run_attack import run_attack
 
 if __name__ == "__main__":
     is_natural = int(sys.argv[1])
