@@ -70,7 +70,7 @@ def load_stable_data(d_set='MNIST'):
     if d_set == 'MNIST':
         data = np.load('../data/MNIST/stable_data.npy', allow_pickle=True).item()
     elif d_set == 'CIFAR':
-        data = np.load('../data/CIFAR/stable_data_new.npy', allow_pickle=True).item()
+        data = np.load('../data/CIFAR/stable_data_wrn.npy', allow_pickle=True).item()
     else:
         raise ValueError('Invalid Dataset')
     return data
