@@ -31,14 +31,14 @@ def run_attack(model,
         adv_class = torch.zeros(n_adv_dims, device=dev(), dtype=int)
         advs = torch.zeros((n_adv_dims, n_channels * n_pixel), device=dev())
         adv_dirs = torch.zeros((n_adv_dims, n_channels * n_pixel), device=dev())
-        dirs=[]
+        dirs = []
     else:
         advs = torch.tensor(pre_data['advs'][0], device=dev())
         adv_dirs = torch.tensor(pre_data['dirs'][0], device=dev())
         pert_lengths = torch.tensor(pre_data['pert_lengths'][0], device=dev())
         adv_class = torch.tensor(pre_data['adv_class'][0], device=dev())
-        pre_dims = (~(pert_lengths[0]==0)).sum()
-        dirs = adv_dirs[:, :pre_dims]
+        pre_dims = (~(pert_lengths == 0)).sum()
+        dirs = adv_dirs[:pre_dims]
 
 
     dim = len(dirs)
