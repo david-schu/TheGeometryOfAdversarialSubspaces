@@ -40,8 +40,9 @@ def run_attack(model,
         pre_dims = (~(pert_lengths == 0)).sum()
         dirs = adv_dirs[:pre_dims]
 
-
     dim = len(dirs)
+    print(dim)
+
     while dim < n_adv_dims:
 
         attack = OrthogonalAttack(input_attack=input_attack,
