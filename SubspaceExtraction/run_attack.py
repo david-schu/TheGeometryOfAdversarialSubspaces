@@ -38,7 +38,7 @@ def run_attack(model,
         pert_lengths = torch.tensor(pre_data['pert_lengths'][0], device=dev())
         adv_class = torch.tensor(pre_data['adv_class'][0], device=dev())
         pre_dims = (~(pert_lengths == 0)).sum()
-        dirs = adv_dirs[:pre_dims]
+        dirs = torch.tensor(adv_dirs[:pre_dims], device=dev())
 
     dim = len(dirs)
     print(dim)
