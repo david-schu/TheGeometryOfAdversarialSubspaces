@@ -16,11 +16,11 @@ if __name__ == "__main__":
         #load model
         if is_natural:
             model_path = './models/cifar_models/nat_diff_new.pt'
-            data_path = './data/cifar_runs/cifar_natural_wrn.npy'
+            data_path = './data/CIFAR/cifar_natural_wrn.npy'
             save_path = './data/dists_to_bnd_natural_wrn' + str(batch_n) + '.npy'
         else:
             model_path = './models/cifar_models/rob_diff_new.pt'
-            data_path = './data/cifar_runs/cifar_robust_wrn.npy'
+            data_path = './data/CIFAR/cifar_robust_wrn.npy'
             save_path = './data/dists_to_bnd_robust_wrn_' + str(batch_n) + '.npy'
 
         model = load_model(resume_path=model_path, dataset=dset)
@@ -33,7 +33,7 @@ if __name__ == "__main__":
         labels = data['labels'][(batch_n*batchsize):(batch_n*batchsize+batchsize)]
 
         n_samples = 100
-        n_dims = 20
+        n_dims = 30
 
         #natural
         min_dists = pert_lengths[:, 0]
