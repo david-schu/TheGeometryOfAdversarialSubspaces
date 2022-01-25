@@ -21,6 +21,7 @@ import torch as ch
 from . import cifar_models
 from torchvision import datasets
 
+from . import data_augmentation as da
 from . import loaders
 
 ###
