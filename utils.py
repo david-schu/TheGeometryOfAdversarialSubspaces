@@ -3,6 +3,9 @@ import torch
 import torchvision.datasets as datasets
 from models.mnist_models import model as model_loader
 from models.cifar_models import model_zoo
+from models.cifar_models.resnet50.datasets import CIFAR
+import dill
+from models.cifar_models.resnet50.cifar_models.resnet import CifarPretrained
 
 
 def classification(img, model, is_adv=True, orig_label=None):
@@ -74,6 +77,25 @@ def load_stable_data(d_set='MNIST'):
     else:
         raise ValueError('Invalid Dataset')
     return data
+
+
+def load_resnet(resume_path):
+    ds = CIFAR('../data/cifar-10-batches-py')
+    classifier_model = ds.get_model('resnet50', False)
+    model = CifarPretrained(classifier_model, ds)
+
+    checkpoint = torch.load(resume_path, pickle_module=dill, map_location=torch.device(dev()))
+
+    state_dict_path = 'model'
+    if not ('model' in checkpoint):
+        state_dict_path = 'state_dict'
+    sd = checkpoint[state_dict_path]
+    sd = {k[len('module.'):]: v for k, v in sd.items()}
+    model.load_state_dict(sd)
+    model.to(dev())
+    model.double()
+    model.eval()
+    return model
 
 
 def load_model(resume_path, dataset):
