@@ -6,7 +6,7 @@ sys.path.insert(0, './..')
 sys.path.insert(0, '../data')
 from models.cifar_models.new_model import WideResNet, Swish
 from robustness import train, defaults
-from cifar_models import model_utils
+from models.cifar_models.resnet50 import model_utils
 from robustness.datasets import CIFAR
 
 # We use cox (http://github.com/MadryLab/cox) to log, store and analyze
