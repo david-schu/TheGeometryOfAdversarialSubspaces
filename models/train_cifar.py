@@ -4,28 +4,28 @@ import torch
 
 sys.path.insert(0, './..')
 sys.path.insert(0, '../data')
-from models.cifar_models.new_model import WideResNet, Swish
+from models.cifar_models.model_zoo import WideResNet, Swish
 from robustness import train, defaults
 from models.cifar_models.resnet50 import model_utils
 from robustness.datasets import CIFAR
+from cox.utils import Parameters
+import cox.store
 
 # We use cox (http://github.com/MadryLab/cox) to log, store and analyze
 # results. Read more at https//cox.readthedocs.io.
 
 
-model = WideResNet(depth=70, width=16, activation_fn=Swish)
-params = torch.load('./cifar_models/rob_diff_new.pt')
-model.load_state_dict(params)
-
-from cox.utils import Parameters
-import cox.store
-
 # Hard-coded dataset, architecture, batch size, workers
 ds = CIFAR('../data')
-model, _ = model_utils.make_and_restore_model(arch='resnet50', dataset=ds)
 train_loader, val_loader = ds.make_loaders(batch_size=128, workers=8)
 
-# # Create a cox store for logging
+# # load model
+# model = WideResNet(depth=70, width=16, activation_fn=Swish)               # WideResNet
+model, _ = model_utils.make_and_restore_model(arch='resnet50', dataset=ds)  # ResNet50
+
+
+# # Natural Model Training
+# Create a cox store for logging
 # out_store = cox.store.Store('./nat')
 #
 # # Hard-coded base parameters
@@ -45,6 +45,7 @@ train_loader, val_loader = ds.make_loaders(batch_size=128, workers=8)
 # train.train_model(train_args, model, (train_loader, val_loader), store=out_store)
 
 
+# # Robust Model Training
 # Create a cox store for logging
 out_store = cox.store.Store('./rob_new')
 
