@@ -2,7 +2,7 @@
 *.png
 *.npy
 *.npz
-.vscode/*
+.vscode/
 .idea/*
 
 *.mp4
