@@ -71,27 +71,25 @@ def load_stable_data(d_set='MNIST'):
         data [dict] a dictionary that includes data which is balanced and correctly classified for all relevant models
     """
     if d_set == 'MNIST':
-        data = np.load('../data/MNIST/stable_data.npy', allow_pickle=True).item()
+        data = np.load('./data/MNIST/stable_data.npy', allow_pickle=True).item()
     elif d_set == 'CIFAR':
-        data = np.load('../data/CIFAR/stable_data_wrn.npy', allow_pickle=True).item()
+        data = np.load('./data/CIFAR/stable_data_wrn.npy', allow_pickle=True).item()
     else:
         raise ValueError('Invalid Dataset')
     return data
 
 
-def load_resnet(resume_path):
-    ds = CIFAR('../data/cifar-10-batches-py')
-    classifier_model = ds.get_model('resnet50', False)
-    model = CifarPretrained(classifier_model, ds)
+def load_wrn(resume_path):
 
-    checkpoint = torch.load(resume_path, pickle_module=dill, map_location=torch.device(dev()))
+    model = model_zoo.WideResNet(
+        num_classes=10, depth=70, width=16,
+        activation_fn=model_zoo.Swish,
+        mean=model_zoo.CIFAR10_MEAN,
+        std=model_zoo.CIFAR10_STD)
 
-    state_dict_path = 'model'
-    if not ('model' in checkpoint):
-        state_dict_path = 'state_dict'
-    sd = checkpoint[state_dict_path]
-    sd = {k[len('module.'):]: v for k, v in sd.items()}
-    model.load_state_dict(sd)
+    # The model was trained without biases for the batch norm (thankfully those are initialized to zero) :/
+    params = torch.load(resume_path)
+    model.load_state_dict(params, strict=False)
     model.to(dev())
     model.double()
     model.eval()
@@ -111,27 +109,28 @@ def load_model(resume_path, dataset):
         model = model_loader.Madry()
         model.load_state_dict(
             torch.load(resume_path, map_location=torch.device(dev())))
-        model.to(dev())
-        model.double()
-        model.eval()
 
     elif dataset == 'CIFAR':
-        # ds = CIFAR('./data')
-        # model, _ = model_utils.make_and_restore_model(arch='resnet50', dataset=ds)
-        model = model_zoo.WideResNet(
-            num_classes=10, depth=70, width=16,
-            activation_fn=model_zoo.Swish,
-            mean=model_zoo.CIFAR10_MEAN,
-            std=model_zoo.CIFAR10_STD)
+        ds = CIFAR('../data/cifar-10-batches-py')
+        classifier_model = ds.get_model('resnet50', False)
+        model = CifarPretrained(classifier_model, ds)
 
-        # The model was trained without biases for the batch norm (thankfully those are initialized to zero) :/
-        params = torch.load(resume_path)
-        model.load_state_dict(params, strict=False)
-        model.to(dev())
-        model.double()
-        model.eval()
+        checkpoint = torch.load(resume_path, pickle_module=dill, map_location=torch.device(dev()))
+
+        state_dict_path = 'model'
+        if not ('model' in checkpoint):
+            state_dict_path = 'state_dict'
+        sd = checkpoint[state_dict_path]
+        sd = {k[len('module.'):]: v for k, v in sd.items()}
+        model.load_state_dict(sd)
+
     else:
         raise ValueError('Invalid Dataset')
+    
+    model.to(dev())
+    model.double()
+    model.eval()
+
     return model
 
 

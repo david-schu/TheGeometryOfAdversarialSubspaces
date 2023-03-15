@@ -7,17 +7,17 @@ import utils as u
 
 
 # Evaluate results on clean data
-def evalClean(model1=None, test_loader=None):
+def evalClean(model=None, test_loader=None):
     print("Evaluating single model results on clean data")
     total = 0
     correct = 0
     with torch.no_grad():
-        model1.eval()
+        model.eval()
         for xs, ys in test_loader:
             xs, ys = Variable(xs), Variable(ys)
             if torch.cuda.is_available():
                 xs, ys = xs.cuda(), ys.cuda()
-            preds1 = model1(xs)
+            preds1 = model(xs)
             preds_np1 = preds1.cpu().detach().numpy()
             finalPred = np.argmax(preds_np1, axis=1)
             correct += (finalPred == ys.cpu().detach().numpy()).sum()

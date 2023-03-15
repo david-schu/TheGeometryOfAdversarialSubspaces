@@ -2,6 +2,7 @@
 *.png
 *.npy
 *.npz
+.vscode
 .idea/*
 
 *.mp4
@@ -15,6 +16,4 @@
 data/*
 
 .ipynb_checkpoints/*
-models/.ipynb_checkpoints*
-SubspaceExtraction/.ipynb_checkpoints*
-Curvature/.ipynb_checkpoints*
+*.ipynb_checkpoints*

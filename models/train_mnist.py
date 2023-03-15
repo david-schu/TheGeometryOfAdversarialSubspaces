@@ -11,16 +11,18 @@ nb_epochs = 1
 train_loader = torch.utils.data.DataLoader(
     datasets.MNIST('./data', train=True, download=True,
                    transform=transforms.Compose([
-                       transforms.ToTensor()])),
+                       transforms.ToTensor(),
+                       transforms.Lambda(lambda x: x.double())])),
     batch_size=train_batch_size, shuffle=False)
 
 test_loader = torch.utils.data.DataLoader(
     datasets.MNIST('./data', train=False,
                    transform=transforms.Compose([
-                       transforms.ToTensor()])),
+                       transforms.ToTensor(),
+                       transforms.Lambda(lambda x: x.double())])),
     batch_size=eval_batch_size)
 
-seeds = [12, 69, 420, 1202, 3000]
+seeds = [12]#, 69, 420, 1202, 3000]
 
 for i, seed in enumerate(seeds):
 
@@ -38,7 +40,7 @@ for i, seed in enumerate(seeds):
 
     # Evaluation
     eval.evalClean(model_nat, test_loader)
-    eval.evalAdvAttack(model_nat, train_loader, epsilon=epsilon)
+    eval.evalAdvAttack(model_nat, test_loader, epsilon=epsilon)
     torch.save(model_nat.state_dict(), 'models/natural_' + str(i) + '.pt')
 
     print("Training on Adversarial Samples")

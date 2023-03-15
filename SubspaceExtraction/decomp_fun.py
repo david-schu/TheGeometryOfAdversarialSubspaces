@@ -14,11 +14,12 @@ from SubspaceExtraction.run_attack import run_attack
 if __name__ == "__main__":
     is_natural = int(sys.argv[1])
     batch_n = int(sys.argv[2])
+
     ## user initialization
 
     # set number of images per class for attack
-    n_images = 10
-    dset = 'CIFAR'
+    n_images = 1
+    dset = 'MNIST'
 
     # set attack parameters
     attack_params = {
@@ -43,17 +44,17 @@ if __name__ == "__main__":
     if dset == 'MNIST':
         model_seed = 0  # only required for MNIST
         if is_natural:
-            model_path = './../models/natural_' + str(model_seed) + '.pt'
+            model_path = 'models/mnist_models/natural_' + str(model_seed) + '.pt'
             save_path = '../data/minst_natural_' + str(batch_n) + '.npy'
         else:
-            model_path = './../models/robust_' + str(model_seed) + '.pt'
+            model_path = 'models/robust_' + str(model_seed) + '.pt'
             save_path = '../data/mnist_robust_' + str(batch_n) + '.npy'
     elif dset == 'CIFAR':
         if is_natural:
-            model_path = './../models/cifar_models/nat_diff_new.pt'
+            model_path = 'models/cifar_models/nat_diff_new.pt'
             save_path = '../data/cifar_wrn/cifar_natural_' + str(batch_n) + '.npy'
         else:
-            model_path = './../models/cifar_models/rob_diff_new.pt'
+            model_path = 'models/cifar_models/rob_diff_new.pt'
             save_path = '../data/cifar_wrn/cifar_robust_' + str(batch_n) + '.npy'
     else:
         raise ValueError('No valid dataset specification')

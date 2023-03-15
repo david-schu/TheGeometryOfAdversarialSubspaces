@@ -55,7 +55,7 @@ class L2OrthAttack(fa.L2CarliniWagnerAttack):
             classes = criterion_.target_classes
             change_classes_logits = -self.confidence
         else:
-            raise ValueError("unsupported 500criterion")
+            raise ValueError("unsupported criterion")
 
         def is_adversarial(perturbed: ep.Tensor, logits: ep.Tensor) -> ep.Tensor:
             if change_classes_logits != 0:

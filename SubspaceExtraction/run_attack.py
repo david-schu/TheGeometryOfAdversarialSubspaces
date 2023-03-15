@@ -75,17 +75,17 @@ def run_attack(model,
         dirs = adv_dirs[:dim+1].detach().cpu().numpy()
         dim += 1
         
-        ###
-        data = {
-            'advs': advs.unsqueeze(0).cpu().detach().numpy(),
-            'dirs': adv_dirs.unsqueeze(0).cpu().detach().numpy(),
-            'adv_class': adv_class.unsqueeze(0).cpu().detach().numpy(),
-            'pert_lengths': pert_lengths.unsqueeze(0).cpu().detach().numpy(),
-            'images': image.detach().cpu().numpy(),
-            'labels': label.detach().cpu().numpy(),
-        }
+        ### intermediate saving
+        # data = {
+        #     'advs': advs.unsqueeze(0).cpu().detach().numpy(),
+        #     'dirs': adv_dirs.unsqueeze(0).cpu().detach().numpy(),
+        #     'adv_class': adv_class.unsqueeze(0).cpu().detach().numpy(),
+        #     'pert_lengths': pert_lengths.unsqueeze(0).cpu().detach().numpy(),
+        #     'images': image.detach().cpu().numpy(),
+        #     'labels': label.detach().cpu().numpy(),
+        # }
 
-        np.save(save_path, data)
+        # np.save(save_path, data)
         ####
 
     print('Dimensions' + str(dim))
