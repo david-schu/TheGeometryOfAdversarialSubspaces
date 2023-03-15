@@ -8,7 +8,7 @@ The data for each subject is parsed from raw data files into pandas DataFrames w
 
 ## Jupyter Notebooks
 
-Paper figures are created in two juypter notebooks - `CIFAR analysis <https://github.com/david-schu/AdversarialDecomposition/blob/camera_ready/analysis_notebooks/cifar_analysis.ipynb>`_ and `MNIST analysis <https://github.com/david-schu/AdversarialDecomposition/blob/camera_ready/analysis_notebooks/mnist_analysis.ipynb>`_
+Paper figures are created in two juypter notebooks - [CIFAR analysis](https://github.com/david-schu/AdversarialDecomposition/blob/camera_ready/analysis_notebooks/cifar_analysis.ipynb) and [MNIST analysis](https://github.com/david-schu/AdversarialDecomposition/blob/camera_ready/analysis_notebooks/mnist_analysis.ipynb)
 
 ## Models and data
 
