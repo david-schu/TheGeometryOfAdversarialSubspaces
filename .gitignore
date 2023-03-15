@@ -2,9 +2,7 @@
 *.png
 *.npy
 *.npz
-.vscode/
-.idea/*
-
+*.ipynb_checkpoints*
 *.mp4
 *.gif
 *.pt
@@ -13,7 +11,9 @@
 *.pdf
 *.sif
 
-data/*
+data
+figures
+.vscode
+.idea
 
-.ipynb_checkpoints/*
-*.ipynb_checkpoints*
+
