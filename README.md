@@ -1,4 +1,4 @@
-# The Geometry of Adversrial Subspaces
+# The Geometry of Adversarial Subspaces
 
 code for the paper "PAPER TITLE"
 
