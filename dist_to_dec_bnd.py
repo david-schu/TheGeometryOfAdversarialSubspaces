@@ -1,8 +1,8 @@
 import numpy as np
 import torch
+import sys
 
 from utils import load_model
-import sys
 from utils import get_dist_dec
 
 import tqdm
@@ -11,17 +11,17 @@ if __name__ == "__main__":
     batch_n = int(sys.argv[1])
     is_natural = int(sys.argv[2])
     dset = 'CIFAR'
-    batchsize = 1
+    batchsize = 100
     with torch.no_grad():
         #load model
         if is_natural:
-            model_path = './models/cifar_models/nat_diff_new.pt'
-            data_path = './data/CIFAR/cifar_natural_wrn.npy'
-            save_path = './data/dists_to_bnd_natural_wrn' + str(batch_n) + '.npy'
+            model_path = './models/cifar_models/nat_resNet50.pt'
+            data_path = './data/CIFAR/cifar_natural_resNet50.npy'
+            save_path = './data/CIFAR/dists_to_bnd_natural_resNet50_' + str(batch_n) + '.npy'
         else:
-            model_path = './models/cifar_models/rob_diff_new.pt'
-            data_path = './data/CIFAR/cifar_robust_wrn.npy'
-            save_path = './data/dists_to_bnd_robust_wrn_' + str(batch_n) + '.npy'
+            model_path = './models/cifar_models/rob_resNet50.pt'
+            data_path = './data/CIFAR/cifar_robust_resNet50.npy'
+            save_path = './data/CIFAR/dists_to_bnd_robust_resNet50_' + str(batch_n) + '.npy'
 
         model = load_model(resume_path=model_path, dataset=dset)
 
@@ -33,7 +33,7 @@ if __name__ == "__main__":
         labels = data['labels'][(batch_n*batchsize):(batch_n*batchsize+batchsize)]
 
         n_samples = 100
-        n_dims = 30
+        n_dims = 50
 
         #natural
         min_dists = pert_lengths[:, 0]

@@ -96,7 +96,7 @@ def load_wrn(resume_path):
     return model
 
 
-def load_model(resume_path, dataset):
+def load_model(resume_path, dataset='CIFAR'):
     """
     Load a PyTorch model
     Parameters:

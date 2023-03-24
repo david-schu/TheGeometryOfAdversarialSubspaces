@@ -10,10 +10,10 @@
 *.out
 *.pdf
 *.sif
+*.sh
 
 data
 figures
 .vscode
 .idea
-
 
