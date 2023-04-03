@@ -22,7 +22,7 @@ test_loader = torch.utils.data.DataLoader(
                        transforms.Lambda(lambda x: x.double())])),
     batch_size=eval_batch_size)
 
-seeds = [12]#, 69, 420, 1202, 3000]
+seeds = [12, 69, 420, 1202, 3000]
 
 for i, seed in enumerate(seeds):
 

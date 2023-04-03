@@ -1,7 +1,5 @@
 import sys
 
-import torch
-
 sys.path.insert(0, './..')
 sys.path.insert(0, '../data')
 from models.cifar_models.model_zoo import WideResNet, Swish
@@ -26,23 +24,23 @@ model, _ = model_utils.make_and_restore_model(arch='resnet50', dataset=ds)  # Re
 
 # # Natural Model Training
 # Create a cox store for logging
-# out_store = cox.store.Store('./nat')
-#
-# # Hard-coded base parameters
-# train_kwargs = {
-#     'out_dir': "./nat/train_out",
-#     'adv_train': 0,
-# }
-# train_args = Parameters(train_kwargs)
-#
-# # Fill whatever parameters are missing from the defaults
-# train_args = defaults.check_and_fill_args(train_args, defaults.CONFIG_ARGS, CIFAR)
-# train_args = defaults.check_and_fill_args(train_args,
-#                         defaults.TRAINING_ARGS, CIFAR)
-#
-#
-# # Train a model
-# train.train_model(train_args, model, (train_loader, val_loader), store=out_store)
+out_store = cox.store.Store('./nat')
+
+# Hard-coded base parameters
+train_kwargs = {
+    'out_dir': "./nat/train_out",
+    'adv_train': 0,
+}
+train_args = Parameters(train_kwargs)
+
+# Fill whatever parameters are missing from the defaults
+train_args = defaults.check_and_fill_args(train_args, defaults.CONFIG_ARGS, CIFAR)
+train_args = defaults.check_and_fill_args(train_args,
+                        defaults.TRAINING_ARGS, CIFAR)
+
+
+# Train a model
+train.train_model(train_args, model, (train_loader, val_loader), store=out_store)
 
 
 # # Robust Model Training
